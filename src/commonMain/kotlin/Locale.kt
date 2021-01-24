@@ -1,0 +1,43 @@
+import kotlinx.serialization.Serializable
+
+/**
+ * Language and optional Region for a translation
+ *
+ * The default is mandatory, it's what the system will default to if the user's chosen language/region is unavailable
+ * Every language should include a default (null) region, and then override for regional differences as needed
+ *
+ * @param language: The base language
+ * @param region: An optional regional dialect, or null for the default version
+ * */
+@Serializable
+data class Locale(val language: Language, val region: Region? = null) {
+    // Must use a getter until this is resolved: https://github.com/Kotlin/kotlinx.serialization/issues/716
+    val isoCode: LocaleIsoCode get() = language.isoCode + region?.isoCode?.let { "_$it" }.orEmpty()
+    val name get() = "$isoCode [${language.name}${region?.name?.let { " ($it)" }.orEmpty()}]"
+
+    /**
+     * @property default: The current locale set as default. Android and iOS handle this differently.
+     * With Android, the base values folder gets the default strings, and values-en, values-de, etc get the localized translations
+     * With iOS, there is no base folder, all localizations are placed in their respective folders, e.g. en.proj, es.proj, de.proj
+     * */
+    companion object {
+        var default = "en"
+//        const val path = "/locales"
+
+//        val all: List<Locale>
+//            get() = Language.names.keys.fold(mutableListOf()) { acc, languageIsoCode ->
+//                acc.add(Locale(language = Language[languageIsoCode]))
+////                val regions = Language.regionCodes(languageIsoCode)
+////                regions?.forEach { regionIsoCode -> acc.add(Locale(language = Language[languageIsoCode], region = Region[regionIsoCode])) }
+//                acc
+//            }
+    }
+}
+
+typealias LocaleIsoCode = String
+
+val LocaleIsoCode.isDefault: Boolean get() = this == Locale.default
+
+
+
+
