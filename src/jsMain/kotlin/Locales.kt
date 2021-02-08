@@ -13,7 +13,7 @@ import styled.*
 
 private val scope = MainScope()
 
-val App = functionalComponent<RProps> { _ ->
+val Locales = functionalComponent<RProps> { _ ->
     val (languages, setLanguages) = useState(emptyMap<LanguageIsoCode, String>())
     val (regions, setRegions) = useState(emptyMap<RegionIsoCode, String>())
     val (languageRegions, setLanguageRegions) = useState(emptyMap<LanguageIsoCode, List<RegionIsoCode>>())
@@ -21,9 +21,9 @@ val App = functionalComponent<RProps> { _ ->
 
     useEffect(dependencies = listOf()) {
         scope.launch {
-            setLanguages(getLanguages())
-            setRegions(getRegions())
-            setLanguageRegions(getLanguageRegions())
+            setLanguages(getStaticLanguages())
+            setRegions(getStaticRegions())
+            setLanguageRegions(getStaticLanguageRegions())
         }
     }
 

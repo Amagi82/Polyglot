@@ -11,19 +11,26 @@ val jsonClient = HttpClient {
     install(JsonFeature) { serializer = KotlinxSerializer() }
 }
 
-//suspend fun getLocales(): List<Locale> = jsonClient.get("$endpoint/locales")
-//
-//suspend fun addLocale(locale: Locale) {
-//    jsonClient.post<Unit>("$endpoint/locales") {
-//        contentType(ContentType.Application.Json)
-//        body = locale
-//    }
-//}
-//
-//suspend fun deleteLocale(locale: Locale) {
-//    jsonClient.delete<Unit>("$endpoint/locales/${locale.isoCode}")
-//}
+/** Static resources */
+suspend fun getStaticLanguages(): Map<LanguageIsoCode, String> = jsonClient.get("$endpoint/languages.json")
+suspend fun getStaticLanguageRegions(): Map<LanguageIsoCode, List<RegionIsoCode>> = jsonClient.get("$endpoint/language_regions.json")
+suspend fun getStaticRegions(): Map<RegionIsoCode, String> = jsonClient.get("$endpoint/regions.json")
 
-suspend fun getLanguages(): Map<LanguageIsoCode, String> = jsonClient.get("$endpoint/languages")
-suspend fun getLanguageRegions(): Map<LanguageIsoCode, List<RegionIsoCode>> = jsonClient.get("$endpoint/language_regions")
-suspend fun getRegions(): Map<RegionIsoCode, String> = jsonClient.get("$endpoint/regions")
+/** Locales */
+suspend fun getLocales(): List<Locale> = jsonClient.get("$endpoint/locales")
+suspend fun addLocale(locale: Locale) = jsonClient.post<Unit>("$endpoint/locales") {
+    contentType(ContentType.Application.Json)
+    body = locale
+}
+
+suspend fun deleteLocale(locale: Locale) = jsonClient.delete<Unit>("$endpoint/locales/${locale.isoCode}")
+
+
+/** Resources */
+suspend fun getResources(): List<Resource> = jsonClient.get("$endpoint/resources")
+suspend fun addResource(resource: Resource) = jsonClient.post<Unit>("$endpoint/resources") {
+    contentType(ContentType.Application.Json)
+    body = resource
+}
+
+suspend fun deleteResource(resource: Resource) = jsonClient.delete<Unit>("$endpoint/resources/${resource.id}")
