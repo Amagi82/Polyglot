@@ -11,6 +11,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class Resource {
     abstract val id: String
+    abstract val name: String
+    abstract val description: String
+    abstract val tags: List<String>
+    abstract val imageUrl: String?
     abstract val platforms: List<Platform>?
     abstract val locales: Set<LocaleIsoCode>
 
@@ -23,67 +27,77 @@ sealed class Resource {
     protected fun validateId() {
         if (id.toLowerCase() != id) throw IllegalArgumentException("Resource ids must be all lower case")
     }
-}
 
-@Serializable
-data class Str(
-    override val id: String,
-    override val platforms: List<Platform>? = null,
-    private val localizations: Localizations
-) : Resource() {
-    operator fun get(key: LocaleIsoCode) = localizations.getRequired(key)
-    val hasTranslations = localizations.hasTranslations
-    override val locales: Set<LocaleIsoCode> get() = localizations.locales
+    @Serializable
+    data class Str(
+        override val id: String,
+        override val name: String = "",
+        override val description: String = "",
+        override val tags: List<String> = listOf(),
+        override val imageUrl: String? = null,
+        override val platforms: List<Platform>? = null,
+        val localizations: Localizations
+    ) : Resource() {
+        override val locales: Set<LocaleIsoCode> get() = localizations.locales
 
-    override fun shouldSkip(locale: LocaleIsoCode) = !locale.isDefault && locale !in localizations
+        override fun shouldSkip(locale: LocaleIsoCode) = !locale.isDefault && locale !in localizations
 
-    init {
-        validateId()
-    }
-}
-
-@Serializable
-data class Plural(
-    override val id: String,
-    override val platforms: List<Platform>? = null,
-    val zero: Localizations? = null,
-    val one: Localizations?,
-    val two: Localizations? = null,
-    val few: Localizations? = null,
-    val many: Localizations? = null,
-    val other: Localizations
-) : Resource() {
-    fun quantity(quantity: Quantities) = when (quantity) {
-        Quantities.ZERO -> zero
-        Quantities.ONE -> one
-        Quantities.TWO -> two
-        Quantities.FEW -> few
-        Quantities.MANY -> many
-        Quantities.OTHER -> other
+        init {
+            validateId()
+        }
     }
 
-    override val locales: Set<LocaleIsoCode> get() = other.locales
+    @Serializable
+    data class Plural(
+        override val id: String,
+        override val name: String = "",
+        override val description: String = "",
+        override val tags: List<String> = listOf(),
+        override val imageUrl: String? = null,
+        override val platforms: List<Platform>? = null,
+        val zero: Localizations? = null,
+        val one: Localizations?,
+        val two: Localizations? = null,
+        val few: Localizations? = null,
+        val many: Localizations? = null,
+        val other: Localizations
+    ) : Resource() {
+        fun quantity(quantity: Quantities) = when (quantity) {
+            Quantities.ZERO -> zero
+            Quantities.ONE -> one
+            Quantities.TWO -> two
+            Quantities.FEW -> few
+            Quantities.MANY -> many
+            Quantities.OTHER -> other
+        }
 
-    // Other is required. All others are optional
-    override fun shouldSkip(locale: LocaleIsoCode) = !locale.isDefault && locale !in other
+        override val locales: Set<LocaleIsoCode> get() = other.locales
 
-    init {
-        validateId()
+        // Other is required. All others are optional
+        override fun shouldSkip(locale: LocaleIsoCode) = !locale.isDefault && locale !in other
+
+        init {
+            validateId()
+        }
     }
-}
 
-@Serializable
-data class StringArray(
-    override val id: String,
-    override val platforms: List<Platform>? = null,
-    val items: List<Localizations>
-) : Resource() {
-    override val locales: Set<LocaleIsoCode> get() = items.first().locales
+    @Serializable
+    data class StringArray(
+        override val id: String,
+        override val name: String = "",
+        override val description: String = "",
+        override val tags: List<String> = listOf(),
+        override val imageUrl: String? = null,
+        override val platforms: List<Platform>? = null,
+        val items: List<Localizations>
+    ) : Resource() {
+        override val locales: Set<LocaleIsoCode> get() = items.first().locales
 
-    // All entries must be translated
-    override fun shouldSkip(locale: LocaleIsoCode) = !locale.isDefault && items.none { it.contains(locale) }
+        // All entries must be translated
+        override fun shouldSkip(locale: LocaleIsoCode) = !locale.isDefault && items.none { it.contains(locale) }
 
-    init {
-        validateId()
+        init {
+            validateId()
+        }
     }
 }

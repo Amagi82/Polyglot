@@ -38,20 +38,24 @@ class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, f
         addAll(resources)
     }
 
-    override fun add(res: Resource) {
-        when (res) {
-            is Str -> addString(res)
-            is Plural -> addPlurals(res)
-            is StringArray -> addStringArray(res)
-        }
-    }
-
     override fun generateFiles() {
         stringsWriter.close()
         transformer.transform(pluralsDocument, localizationFolder, "Localizable.stringsdict")
         transformer.transform(arraysDocument, localizationFolder, "LocalizableArrays.plist")
         generateReferences()
         generateStringLocalizationExtensions()
+    }
+
+    override fun addString(res: Resource.Str) {
+        // "identifier" = "Localized text";
+        val txt = res.localizations.getRequired(locale).sanitized(isXml = false)
+        stringsWriter.appendLine("\"${res.id}\" = \"$txt\";")
+        stringReferences?.apply {
+            appendLine()
+            appendReferenceComment(txt)
+            if (txt.contains('%')) appendReferenceFormattingArgs(res.id, txt, false)
+            else appendLine("\t\tstatic let ${res.id} = \"${res.id}\".localized()")
+        }
     }
 
     /**
@@ -72,7 +76,7 @@ class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, f
      *   </dict>
      * </dict>
      */
-    private fun addPlurals(res: Plural) {
+    override fun addPlurals(res: Resource.Plural) {
         var exampleText: String? = null
         pluralsResourceElement.appendChild(pluralsDocument, KEY, res.id)
         pluralsResourceElement.appendChild(pluralsDocument.createElement("dict").apply {
@@ -93,27 +97,30 @@ class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, f
                 }
             })
         })
-        addReference(res, exampleText.orEmpty())
+        pluralReferences?.apply {
+            appendLine()
+            appendReferenceComment(exampleText.orEmpty())
+            appendReferenceFormattingArgs(res.id, exampleText.orEmpty(), true)
+        }
     }
 
-    private fun addReference(res: Resource, exampleText: String) {
-        when (res) {
-            is Str -> stringReferences?.apply {
-                appendLine()
-                appendReferenceComment(exampleText)
-                if (exampleText.contains('%')) appendReferenceFormattingArgs(res.id, exampleText, false)
-                else appendLine("\t\tstatic let ${res.id} = \"${res.id}\".localized()")
+    /**
+     * <key>alert_cancel_reasons</key>
+     * <array>
+     *   <string>Time</string>
+     *   <string>Wage</string>
+     * </array>
+     */
+    override fun addStringArray(res: Resource.StringArray) {
+        arraysResourceElement.appendChild(arraysDocument, KEY, res.id)
+        arraysResourceElement.appendChild(arraysDocument.createElement("array").apply {
+            for (item in res.items) {
+                appendChild(arraysDocument, STRING, item.getRequired(locale).sanitized(isXml = true))
             }
-            is Plural -> pluralReferences?.apply {
-                appendLine()
-                appendReferenceComment(exampleText)
-                appendReferenceFormattingArgs(res.id, exampleText, true)
-            }
-            is StringArray -> stringArrayReferences?.apply {
-                appendLine()
-                appendReferenceComment(exampleText)
-                appendLine("\t\tstatic let ${res.id} = \"${res.id}\".localizedArray()")
-            }
+        })
+        stringArrayReferences?.apply {
+            appendLine()
+            appendLine("\t\tstatic let ${res.id} = \"${res.id}\".localizedArray()")
         }
     }
 
@@ -159,30 +166,6 @@ class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, f
         }
         appendLine(')')
         appendLine("\t\t}")
-    }
-
-    private fun addString(res: Str) {
-        // "identifier" = "Localized text";
-        val txt = res[locale].sanitized(isXml = false)
-        stringsWriter.appendLine("\"${res.id}\" = \"$txt\";")
-        addReference(res, txt)
-    }
-
-    /**
-     * <key>alert_cancel_reasons</key>
-     * <array>
-     *   <string>Time</string>
-     *   <string>Wage</string>
-     * </array>
-     */
-    private fun addStringArray(res: StringArray) {
-        arraysResourceElement.appendChild(arraysDocument, KEY, res.id)
-        arraysResourceElement.appendChild(arraysDocument.createElement("array").apply {
-            for (item in res.items) {
-                appendChild(arraysDocument, STRING, item.getRequired(locale).sanitized(isXml = true))
-            }
-        })
-        addReference(res, "")
     }
 
     private fun generateReferences() {

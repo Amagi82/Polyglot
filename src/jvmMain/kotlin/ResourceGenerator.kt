@@ -12,7 +12,6 @@ import javax.xml.transform.stream.StreamResult
 
 abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters: List<StringFormatter>) {
     abstract fun generateFiles()
-    protected abstract fun add(res: Resource)
     protected abstract val platform: Platform
 
     private val formatters: List<StringFormatter> = formatters.filter { it.platforms?.contains(platform) != false }
@@ -22,12 +21,18 @@ abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters
      * */
     protected fun addAll(resources: Collection<Resource>) {
         for (res in resources) {
-            if (res.platforms?.contains(platform) != false && !res.shouldSkip(locale)) add(res)
+            if (res.platforms?.contains(platform) != false && !res.shouldSkip(locale)) {
+                when (res) {
+                    is Resource.Str -> addString(res)
+                    is Resource.Plural -> addPlurals(res)
+                    is Resource.StringArray -> addStringArray(res)
+                }
+            }
         }
     }
 
     protected fun Element.appendChild(document: Document, tagName: String, textNode: String) {
-        appendChild(document.createElement(tagName).also { it.appendChild(document.createTextNode(textNode)) })
+        appendChild(document.createElement(tagName).apply { appendChild(document.createTextNode(textNode)) })
     }
 
     protected fun File.createChildFile(filename: String) = File(this, filename).also(File::createNewFile)
@@ -64,6 +69,10 @@ abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters
         }
         return out.toString()
     }
+
+    protected abstract fun addString(res: Resource.Str)
+    protected abstract fun addStringArray(res: Resource.StringArray)
+    protected abstract fun addPlurals(res: Resource.Plural)
 
     companion object {
         private val transformerFactory: TransformerFactory by lazy { TransformerFactory.newInstance() }

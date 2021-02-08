@@ -20,14 +20,6 @@ class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, forma
         addAll(resources)
     }
 
-    override fun add(res: Resource) {
-        when (res) {
-            is Str -> addString(res)
-            is Plural -> addPlurals(res)
-            is StringArray -> addStringArray(res)
-        }
-    }
-
     override fun generateFiles() {
         transformer.transform(document, valuesFolder, "strings.xml")
     }
@@ -39,7 +31,7 @@ class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, forma
      *     <item quantity="other">Znaleziono %d piosenek.</item>
      * </plurals>
      */
-    private fun addPlurals(res: Plural) {
+    override fun addPlurals(res: Resource.Plural) {
         resourceElement.appendChild(document.createElement("plurals").apply {
             setAttribute("name", res.id)
             Quantities.values().forEach { quantity ->
@@ -53,13 +45,13 @@ class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, forma
         })
     }
 
-    private fun addString(res: Str) {
-        val txt = res[locale].sanitized()
+    override fun addString(res: Resource.Str) {
+        val txt = res.localizations.getRequired(locale).sanitized()
         if (txt.isBlank()) return
         /** <string name="app_name" translatable="false">Cool</string> */
         resourceElement.appendChild(document.createElement("string").apply {
             setAttribute("name", res.id)
-            if (locale.isDefault && !res.hasTranslations) setAttribute("translatable", "false")
+            if (locale.isDefault && !res.localizations.hasTranslations) setAttribute("translatable", "false")
             appendChild(document.createTextNode(txt))
         })
     }
@@ -70,7 +62,7 @@ class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, forma
      *      <item>Germany</item>
      * </string-array>
      */
-    private fun addStringArray(res: StringArray) {
+    override fun addStringArray(res: Resource.StringArray) {
         resourceElement.appendChild(document.createElement("string-array").apply {
             setAttribute("name", res.id)
             if (!res.items.first().hasTranslations) setAttribute("tools:ignore", "MissingTranslation")

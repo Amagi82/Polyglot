@@ -11,9 +11,9 @@ data class Localizations(private val map: Map<LocaleIsoCode, String>) {
 
     fun get(locale: LocaleIsoCode, isRequired: Boolean = locale.isDefault): String? = if (isRequired) getRequired(locale) else map[locale]
 
-    fun getRequired(locale: LocaleIsoCode) = map[locale] ?: throw MissingResourceException("localization for $locale missing in $map")
+    fun getRequired(locale: LocaleIsoCode): String = map[locale] ?: throw MissingResourceException("localization for $locale missing in $map")
 
     val hasTranslations get() = map.size > 1
 
-    val locales get() = map.keys
+    val locales: Set<LocaleIsoCode> get() = map.keys
 }

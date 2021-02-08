@@ -10,10 +10,16 @@ import kotlinx.serialization.Serializable
  * @param region: An optional regional dialect, or null for the default version
  * */
 @Serializable
-data class Locale(val language: Language, val region: Region? = null) {
+data class Locale(val language: Language, val region: Region? = null) : Comparable<Locale> {
     // Must use a getter until this is resolved: https://github.com/Kotlin/kotlinx.serialization/issues/716
     val isoCode: LocaleIsoCode get() = language.isoCode + region?.isoCode?.let { "_$it" }.orEmpty()
     val name get() = "$isoCode [${language.name}${region?.name?.let { " ($it)" }.orEmpty()}]"
+
+    override fun compareTo(other: Locale): Int = when {
+        language.isoCode == default && other.language.isoCode != default -> -1
+        other.language.isoCode == default && language.isoCode != default -> 1
+        else -> isoCode.compareTo(other.isoCode)
+    }
 
     /**
      * @property default: The current locale set as default. Android and iOS handle this differently.
