@@ -1,30 +1,28 @@
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
 import kotlinx.css.*
-import kotlinx.css.properties.border
 import kotlinx.css.properties.borderBottom
-import kotlinx.css.properties.borderLeft
-import kotlinx.css.properties.borderTop
 import kotlinx.html.TBODY
-import kotlinx.html.TD
-import react.*
+import react.RProps
+import react.child
 import react.dom.*
+import react.functionalComponent
+import react.useState
 import styled.*
 
 private val scope = MainScope()
 
 val Editor = functionalComponent<RProps> { _ ->
-    val locales = mutableListOf(
+    val es = "es"
+    val fr = "fr"
+    val de = "de"
+    val (locales, setLocales) = useState(mutableListOf(
         Locale(Language(isoCode = "en", name = "English"), null),
         Locale(Language(isoCode = "en", name = "English"), Region(isoCode = "GB", name = "British")),
         Locale(Language(isoCode = "es", name = "Spanish"), null),
         Locale(Language(isoCode = "fr", name = "French"), null),
         Locale(Language(isoCode = "de", name = "German"), null)
-    ).apply { sort() }
-    val es = "es"
-    val fr = "fr"
-    val de = "de"
-    val resources = mutableListOf(
+    ).sorted())
+    val (resources, setResources) = useState(listOf(
         string(
             id = "color",
             default = "color",
@@ -174,10 +172,8 @@ val Editor = functionalComponent<RProps> { _ ->
             ),
             platforms = Platform.iosOnly
         )
-    )
-//    val (resources, setResources) = useState(emptyList<Resource>())
-//    val (locales, setLocales) = useState(emptyList<Locale>())
-//
+    ))
+
 //    useEffect(dependencies = listOf()) {
 //        scope.launch {
 //            setResources(getResources())
@@ -186,13 +182,9 @@ val Editor = functionalComponent<RProps> { _ ->
 //    }
 
     styledDiv {
-        css {
-            margin(16.pt)
-        }
+        css { +ComponentStyles.wrapper }
 
-        h1 {
-            +"Polyglot Editor"
-        }
+        h1 { +"Polyglot Editor" }
 
         styledTable {
             css {
@@ -214,9 +206,18 @@ val Editor = functionalComponent<RProps> { _ ->
                     cellTitleRow(res)
                     locales.forEach { locale ->
                         when (res) {
-                            is Resource.Str -> cellRow(res, locale)
-                            is Resource.Plural -> cellRows(res, locale)
-                            is Resource.StringArray -> cellRows(res, locale)
+                            is Resource.Str -> child(stringCell){
+                                attrs.res = res
+                                attrs.locale = locale
+                            }
+                            is Resource.Plural -> child(pluralCell){
+                                attrs.res = res
+                                attrs.locale = locale
+                            }
+                            is Resource.StringArray -> child(stringArrayCell){
+                                attrs.res = res
+                                attrs.locale = locale
+                            }
                         }
                     }
                 }
@@ -228,47 +229,29 @@ val Editor = functionalComponent<RProps> { _ ->
 private fun RDOMBuilder<TBODY>.cellTitleRow(res: Resource) {
     styledTr {
         styledTd {
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
+            css { +ComponentStyles.tableCell }
             res.platforms?.forEach {
                 img(src = "$endpoint/${it.iconUrl}") {}
             }
         }
         styledTd {
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
+            css { +ComponentStyles.tableCell }
             +res.name
         }
         styledTd {
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
+            css { +ComponentStyles.tableCell }
             +res.id
         }
         styledTd {
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
+            css { +ComponentStyles.tableCell }
             +res.description
         }
         styledTd {
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
+            css { +ComponentStyles.tableCell }
             +res.tags.joinToString()
         }
         styledTd {
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
+            css { +ComponentStyles.tableCell }
             img(src = res.imageUrl) {
                 attrs {
                     width = "24pt"
@@ -287,22 +270,37 @@ private fun RDOMBuilder<TBODY>.cellTitleRow(res: Resource) {
     }
 }
 
-private fun RDOMBuilder<TBODY>.cellRow(res: Resource.Str, locale: Locale) {
+external interface CellProps: RProps{
+    var locale: Locale
+}
+
+external interface StringCellProps: CellProps{
+    var res: Resource.Str
+}
+
+external interface PluralCellProps: CellProps{
+    var res: Resource.Plural
+}
+
+external interface PluralCellRowProps: PluralCellProps{
+    var quantity: Quantities
+}
+
+external interface StringArrayCellProps: CellProps{
+    var res: Resource.StringArray
+}
+
+val stringCell = functionalComponent<StringCellProps>{ props ->
     tr {
+        key = props.res.id
         styledTd {
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
-            +localeName(locale)
+            css { +ComponentStyles.tableCell }
+            +localeName(props.locale)
         }
         styledTd {
             attrs.colSpan = "5"
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
-            +res.localizations.get(locale.isoCode).orEmpty()
+            css { +ComponentStyles.tableCell }
+            +props.res.localizations.get(props.locale.isoCode).orEmpty()
         }
         styledTd {
             css {
@@ -315,35 +313,34 @@ private fun RDOMBuilder<TBODY>.cellRow(res: Resource.Str, locale: Locale) {
     }
 }
 
-private fun RDOMBuilder<TBODY>.cellRows(res: Resource.Plural, locale: Locale) {
+val pluralCell = functionalComponent<PluralCellProps> { props ->
     Quantities.values().forEach { quantity ->
-        cellRow(res, quantity, locale)
+        child(pluralCellRow){
+            attrs {
+                res = props.res
+                this.quantity = quantity
+                locale = props.locale
+            }
+        }
     }
 }
 
-private fun RDOMBuilder<TBODY>.cellRow(res: Resource.Plural, quantity: Quantities, locale: Locale) {
+
+val pluralCellRow = functionalComponent<PluralCellRowProps>{ props ->
     tr {
+        key = props.res.id
         styledTd {
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
-            if (quantity == Quantities.ZERO) +localeName(locale)
+            css { +ComponentStyles.tableCell }
+            if (props.quantity == Quantities.ZERO) +localeName(props.locale)
         }
         styledTd {
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
-            +quantity.label
+            css { +ComponentStyles.tableCell }
+            +props.quantity.label
         }
         styledTd {
             attrs.colSpan = "4"
-            css {
-                padding(4.pt)
-                borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-            }
-            +res.quantity(quantity)?.get(locale.isoCode).orEmpty()
+            css { +ComponentStyles.tableCell }
+            +props.res.quantity(props.quantity)?.get(props.locale.isoCode).orEmpty()
         }
         styledTd {
             css {
@@ -357,23 +354,21 @@ private fun RDOMBuilder<TBODY>.cellRow(res: Resource.Plural, quantity: Quantitie
 }
 
 
-private fun RDOMBuilder<TBODY>.cellRows(res: Resource.StringArray, locale: Locale) {
-    val items = res.items.mapNotNull { it.get(locale.isoCode) }.let { if (it.isEmpty()) listOf("") else it }
+val stringArrayCell = functionalComponent<StringArrayCellProps>{ props ->
+    val items = props.res.items.mapNotNull { it.get(props.locale.isoCode) }.let { if (it.isEmpty()) listOf("") else it }
     items.forEach { item ->
         tr {
+            key = props.res.id
             styledTd {
                 css {
                     padding(4.pt)
                     borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
                 }
-                if (item == items.first()) +localeName(locale)
+                if (item == items.first()) +localeName(props.locale)
             }
             styledTd {
                 attrs.colSpan = "5"
-                css {
-                    padding(4.pt)
-                    borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
-                }
+                css { +ComponentStyles.tableCell }
                 +item
             }
             styledTd {
@@ -390,6 +385,15 @@ private fun RDOMBuilder<TBODY>.cellRows(res: Resource.StringArray, locale: Local
 
 private fun localeName(locale: Locale) = if (locale.region == null) locale.language.name else "    ${locale.region.name}"
 
+object ComponentStyles : StyleSheet("ComponentStyles", isStatic = true) {
+    val wrapper by css {
+        padding(16.pt)
+    }
+    val tableCell by css{
+        padding(4.pt)
+        borderBottom(1.pt, BorderStyle.solid, Color.darkGreen)
+    }
+}
 
 fun string(
     id: String,
