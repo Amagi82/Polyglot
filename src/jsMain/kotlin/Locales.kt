@@ -141,7 +141,7 @@ val Locales = functionalComponent<RProps> { _ ->
                         }
                         attrs.value = languageIsoCode
                     }
-                    dataList {
+                    datalist {
                         attrs.id = "languageIsoCode"
                         languages.keys.forEach {
                             option(content = it)
@@ -164,7 +164,7 @@ val Locales = functionalComponent<RProps> { _ ->
                         }
                         attrs.value = languageName
                     }
-                    dataList {
+                    datalist {
                         attrs.id = "languageName"
                         languages.values.forEach {
                             option(content = it)
@@ -184,7 +184,7 @@ val Locales = functionalComponent<RProps> { _ ->
                         }
                         attrs.value = regionIsoCode
                     }
-                    dataList {
+                    datalist {
                         attrs.id = "regionIsoCode"
                         regions.keys.forEach {
                             option(content = it)
@@ -203,7 +203,7 @@ val Locales = functionalComponent<RProps> { _ ->
                         }
                         attrs.value = regionName
                     }
-                    dataList {
+                    datalist {
                         attrs.id = "regionName"
                         regions.values.forEach {
                             option(content = it)

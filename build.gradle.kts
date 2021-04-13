@@ -1,9 +1,9 @@
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 
 plugins {
-    kotlin("multiplatform") version "1.4.21"
+    kotlin("multiplatform") version "1.4.32"
     application //to run JVM part
-    kotlin("plugin.serialization") version "1.4.21"
+    kotlin("plugin.serialization") version "1.4.32"
 }
 
 group = "com.dapperlizard"
@@ -11,13 +11,13 @@ version = "0.1.0"
 
 repositories {
     mavenCentral()
-    jcenter()
-    maven("https://kotlin.bintray.com/kotlin-js-wrappers/") // react, styled, ...
+    maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
+    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers") // react, styled, ...
 }
 
 kotlin {
     jvm {
-        withJava()
+//        withJava()
     }
     js {
         browser {
@@ -28,17 +28,17 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
-                implementation("io.ktor:ktor-client-core:1.5.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0")
+                implementation("io.ktor:ktor-client-core:1.5.3")
             }
         }
 
         val jvmMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-serialization:1.5.0")
-                implementation("io.ktor:ktor-server-core:1.5.0")
-                implementation("io.ktor:ktor-server-netty:1.5.0")
-                implementation("io.ktor:ktor-websockets:1.5.0")
+                implementation("io.ktor:ktor-serialization:1.5.3")
+                implementation("io.ktor:ktor-server-core:1.5.3")
+                implementation("io.ktor:ktor-server-netty:1.5.3")
+                implementation("io.ktor:ktor-websockets:1.5.3")
                 implementation("ch.qos.logback:logback-classic:1.2.3")
             }
         }
@@ -52,15 +52,16 @@ kotlin {
 
         val jsMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-js:1.5.0") //include http&websockets
-                implementation("io.ktor:ktor-client-json-js:1.5.0")
-                implementation("io.ktor:ktor-client-serialization-js:1.5.0")
-                implementation("org.jetbrains:kotlin-react:17.0.1-pre.141-kotlin-1.4.21")
-                implementation("org.jetbrains:kotlin-react-dom:17.0.1-pre.141-kotlin-1.4.21")
-                implementation(npm("react", "17.0.1"))
-                implementation(npm("react-dom", "17.0.1"))
-                implementation("org.jetbrains:kotlin-styled:5.2.0-pre.141-kotlin-1.4.21")
-                implementation(npm("styled-components", "~5.2.0"))
+                implementation("io.ktor:ktor-client-js:1.5.3") //include http&websockets
+                implementation("io.ktor:ktor-client-json-js:1.5.3")
+                implementation("io.ktor:ktor-client-serialization-js:1.5.3")
+                implementation("org.jetbrains:kotlin-react:17.0.2-pre.153-kotlin-1.4.32")
+                implementation("org.jetbrains:kotlin-react-dom:17.0.2-pre.153-kotlin-1.4.32")
+                implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.3")
+                implementation(npm("react", "17.0.2"))
+                implementation(npm("react-dom", "17.0.2"))
+                implementation("org.jetbrains:kotlin-styled:5.2.3-pre.153-kotlin-1.4.32")
+                implementation(npm("styled-components", "~5.2.3"))
                 implementation(npm("inline-style-prefixer", "~6.0.0"))
             }
         }
