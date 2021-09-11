@@ -1,29 +1,16 @@
-/*
- * Copyright (C) 2018 Jim Pekarek.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package generators
 
-package utils
-
-import models.Language
-import models.Platform
-import models.Platform.*
-import models.Platform.Companion.ALL
-import models.StringFormatter
-import models.Resource
+import locales.LanguageIsoCode
+import locales.Locale
+import locales.LocaleIsoCode
+import resources.Platform
+import resources.Plural
+import resources.Resource
+import resources.Str
+import resources.StringArray
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import java.awt.Desktop
 import java.io.File
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
@@ -33,17 +20,35 @@ import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
-abstract class ResourceGenerator(val platform: Platform, formatters: List<StringFormatter>) {
+abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters: List<StringFormatter>) {
+    protected abstract val platform: Platform
+    protected abstract fun addString(res: Str)
+    protected abstract fun addStringArray(res: StringArray)
+    protected abstract fun addPlurals(res: Plural)
     abstract fun generateFiles()
-    abstract fun add(res: Resource)
 
-    private val formatters: List<StringFormatter> = formatters.filter { platform in it.platforms }
+    private val formatters: List<StringFormatter> = formatters.filter { it.platforms?.contains(platform) != false }
 
-    protected fun Element.appendChild(document: Document, tagName: String, textNode: String) {
-        appendChild(document.createElement(tagName).also { it.appendChild(document.createTextNode(textNode)) })
+    /**
+     * Should be called in the init block of the resource generator
+     * */
+    protected fun addAll(resources: Collection<Resource>) {
+        for (res in resources) {
+            if (res.platforms?.contains(platform) != false && !res.shouldSkip(locale)) {
+                when (res) {
+                    is Str -> addString(res)
+                    is Plural -> addPlurals(res)
+                    is StringArray -> addStringArray(res)
+                }
+            }
+        }
     }
 
-    protected fun File.createChildFile(filename: String) = File(this, filename).also { it.createNewFile() }
+    protected fun Element.appendChild(document: Document, tagName: String, textNode: String) {
+        appendChild(document.createElement(tagName).apply { appendChild(document.createTextNode(textNode)) })
+    }
+
+    protected fun File.createChildFile(filename: String) = File(this, filename).also(File::createNewFile)
 
     protected fun Transformer.transform(document: Document, folder: File, filename: String) {
         transform(DOMSource(document), StreamResult(folder.createChildFile(filename)))
@@ -92,36 +97,37 @@ abstract class ResourceGenerator(val platform: Platform, formatters: List<String
 
         fun generateFiles(
             resources: Collection<Resource>,
-            vararg languages: Language,
-            androidFolder: File = File(defaultOutputFolder, "android"),
-            iosFolder: File = File(defaultOutputFolder, "ios"),
+            defaultLanguage: LanguageIsoCode,
+            platforms: List<Platform> = listOf(Platform.Android, Platform.iOS),
             formatters: List<StringFormatter> = StringFormatter.defaultFormatters,
-            platforms: Array<Platform> = ALL,
-            openFolder: Boolean = true
-        ) {
-            if (ANDROID in platforms) {
-                androidFolder.mkdirs()
-                for (lang in languages) {
-                    AndroidResourceGenerator(androidFolder, lang, formatters, resources).generateFiles()
+            outputFile: (Platform) -> File = { File(defaultOutputFolder, it.name) },
+            openFolder: Boolean = true,
+            generator: (
+                platform: Platform,
+                localeIsoCode: LocaleIsoCode,
+                formatters: List<StringFormatter>
+            ) -> ResourceGenerator? = { platform, localeIsoCode, fmt ->
+                val folder = outputFile(platform).also(File::mkdirs)
+                when (platform) {
+                    Platform.Android -> AndroidResourceGenerator(folder, localeIsoCode, fmt, resources)
+                    Platform.iOS -> IosResourceGenerator(folder, localeIsoCode, fmt, resources)
+                    else -> null
                 }
-                if (openFolder) openFolder(androidFolder)
             }
-            if (IOS in platforms) {
-                iosFolder.mkdirs()
-                for (lang in languages) {
-                    IosResourceGenerator(iosFolder, lang, formatters, resources).generateFiles()
+        ) {
+            Locale.default = defaultLanguage
+            val locales = resources.flatMapTo(mutableSetOf(), Resource::locales)
+            for (locale in locales) {
+                for (platform in platforms) {
+                    generator(platform, locale, formatters)?.generateFiles()
+                    if (openFolder) openFolder(outputFile(platform))
                 }
-                if (openFolder) openFolder(iosFolder)
             }
         }
 
         private fun openFolder(folder: File) {
             try {
-                val osName = System.getProperty("os.name")
-                when {
-                    osName.contains("Mac") -> Runtime.getRuntime().exec("open -R ${folder.canonicalPath}")
-                    osName.contains("Windows") -> Runtime.getRuntime().exec("explorer ${folder.canonicalPath}")
-                }
+                Desktop.getDesktop().open(folder)
             } catch (e: Exception) {
                 System.err.println("unable to open folder: $e")
             }
