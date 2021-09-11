@@ -19,6 +19,7 @@ package utils
 import models.Language
 import models.Platform
 import models.Platform.*
+import models.Platform.Companion.ALL
 import models.StringFormatter
 import models.Resource
 import org.w3c.dom.Document
@@ -32,23 +33,23 @@ import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
-
-abstract class ResourceGenerator(private val platform: Platform, private val formatters: List<StringFormatter>) {
+abstract class ResourceGenerator(val platform: Platform, formatters: List<StringFormatter>) {
     abstract fun generateFiles()
     abstract fun add(res: Resource)
-    abstract fun addAll(resources: Collection<Resource>)
 
-    internal fun Element.appendChild(document: Document, tagName: String, textNode: String) {
+    private val formatters: List<StringFormatter> = formatters.filter { platform in it.platforms }
+
+    protected fun Element.appendChild(document: Document, tagName: String, textNode: String) {
         appendChild(document.createElement(tagName).also { it.appendChild(document.createTextNode(textNode)) })
     }
 
-    internal fun File.createChildFile(filename: String) = File(this, filename).also { it.createNewFile() }
+    protected fun File.createChildFile(filename: String) = File(this, filename).also { it.createNewFile() }
 
-    internal fun Transformer.transform(document: Document, folder: File, filename: String) {
+    protected fun Transformer.transform(document: Document, folder: File, filename: String) {
         transform(DOMSource(document), StreamResult(folder.createChildFile(filename)))
     }
 
-    internal fun String.sanitized(isXml: Boolean = true): String {
+    protected fun String.sanitized(isXml: Boolean = true): String {
         if (isEmpty()) return this
 
         val out = StringBuilder()
@@ -62,17 +63,15 @@ abstract class ResourceGenerator(private val platform: Platform, private val for
             var isConsumed = false
             for (formatter in formatters) {
                 if (char != formatter.arg[0]) continue
-                if (formatter.platform != ALL && formatter.platform != platform) continue
-                if (i + formatter.arg.length >= length) continue
-                if (substring(i, i + formatter.arg.length) == formatter.arg) {
-                    out.append(formatter.formatter(i, isXml))
+                if (regionMatches(thisOffset = i, other = formatter.arg, otherOffset = 0, length = formatter.arg.length)) {
+                    out.append(formatter.formatter(argIndex, isXml))
                     isConsumed = true
                     if (formatter.isIndexed) argIndex++
                     next = formatter.arg.length
                     break
                 }
             }
-            if(!isConsumed) out.append(char)
+            if (!isConsumed) out.append(char)
             i += next
         }
         return out.toString()
@@ -81,9 +80,10 @@ abstract class ResourceGenerator(private val platform: Platform, private val for
     companion object {
         private val transformerFactory: TransformerFactory by lazy { TransformerFactory.newInstance() }
         private val documentBuilder: DocumentBuilder by lazy { DocumentBuilderFactory.newInstance().newDocumentBuilder() }
-        private fun getDefaultRootFolder() = File(System.getProperty("user.home") + File.separator + "Desktop" + File.separator + "localization").also { it.mkdirs() }
-        internal fun createDocument(): Document = documentBuilder.newDocument().apply { xmlStandalone = true }
-        internal fun createTransformer(): Transformer = transformerFactory.newTransformer().apply {
+        private val defaultOutputFolder = File("out")
+
+        fun createDocument(): Document = documentBuilder.newDocument().apply { xmlStandalone = true }
+        fun createTransformer(): Transformer = transformerFactory.newTransformer().apply {
             setOutputProperty(OutputKeys.ENCODING, "UTF-8")
             setOutputProperty(OutputKeys.INDENT, "yes")
             setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4")
@@ -91,26 +91,31 @@ abstract class ResourceGenerator(private val platform: Platform, private val for
         }
 
         fun generateFiles(
-                rootFolder: File = getDefaultRootFolder(),
-                formatters: List<StringFormatter> = StringFormatter.defaultFormatters,
-                resources: Collection<Resource>,
-                platform: Platform = ALL,
-                languages: Array<out Language>) {
-            val androidFolder = File(rootFolder, "android").also { it.mkdirs() }
-            val iosFolder = File(rootFolder, "ios").also { it.mkdirs() }
-            iosFolder.listFiles { file -> file.name == "R.swift" }.forEach { it.delete() }
-            for (lang in languages) {
-                if (platform != IOS) AndroidResourceGenerator(androidFolder, lang, formatters).apply { addAll(resources) }.generateFiles()
-                if (platform != ANDROID) IosResourceGenerator(iosFolder, lang, formatters).apply { addAll(resources) }.generateFiles()
+            resources: Collection<Resource>,
+            vararg languages: Language,
+            androidFolder: File = File(defaultOutputFolder, "android"),
+            iosFolder: File = File(defaultOutputFolder, "ios"),
+            formatters: List<StringFormatter> = StringFormatter.defaultFormatters,
+            platforms: Array<Platform> = ALL,
+            openFolder: Boolean = true
+        ) {
+            if (ANDROID in platforms) {
+                androidFolder.mkdirs()
+                for (lang in languages) {
+                    AndroidResourceGenerator(androidFolder, lang, formatters, resources).generateFiles()
+                }
+                if (openFolder) openFolder(androidFolder)
             }
-            openFolder(rootFolder)
+            if (IOS in platforms) {
+                iosFolder.mkdirs()
+                for (lang in languages) {
+                    IosResourceGenerator(iosFolder, lang, formatters, resources).generateFiles()
+                }
+                if (openFolder) openFolder(iosFolder)
+            }
         }
 
-        fun generateFiles(resources: Collection<Resource>, vararg languages: Language) {
-            generateFiles(resources = resources, languages = languages)
-        }
-
-        private fun openFolder(folder: File){
+        private fun openFolder(folder: File) {
             try {
                 val osName = System.getProperty("os.name")
                 when {

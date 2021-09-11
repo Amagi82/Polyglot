@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package utils
+package models
 
-import models.LocalizationType
-
-
-typealias Str = LocalizationType.Str
-typealias Plural = LocalizationType.Plural
-typealias StringArray = LocalizationType.StringArray
+/**
+ * Localized text for a given language
+ */
+data class Localization(val language: Language, val txt: String)
