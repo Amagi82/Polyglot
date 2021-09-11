@@ -16,19 +16,22 @@
 
 package models
 
-/*
- * @param isoCode - this is used for folder names on Android, e.g. values or values.en,
- *                  and on iOS, e.g. en.lproj or es.lproj. If you encounter any cases where
- *                  these values should be different, please open an issue or submit a
- *                  pull request. English, Spanish, French, and German have been added as
- *                  examples.
+/**
+ * Different languages have different grammatical rules for quantity.
+ * e.g. English, 1 book, 2 books
+ *
+ * Not all languages use all rules, and some languages, like Chinese, only use "other"
+ *
+ * More information:
+ * https://developer.android.com/guide/topics/resources/string-resource#Plurals
  */
-abstract class Language(val isoCode: String)
+enum class Quantity {
+    ZERO,
+    ONE,
+    TWO,
+    FEW,
+    MANY,
+    OTHER;
 
-object English: Language("en")
-
-object Spanish: Language("es")
-
-object French: Language("fr")
-
-object German: Language("de")
+    val label: String = name.lowercase()
+}

@@ -16,20 +16,15 @@
 
 package models
 
-/*
- * Different languages have different grammatical rules for quantity.
- * e.g. English, 1 book, 2 books
- *
- * Not all languages use all rules, and some languages, like Chinese, only use "other"
- *
- * More information:
- * https://developer.android.com/guide/topics/resources/string-resource#Plurals
+/**
+ * Make a resource platform-specific
  */
-enum class Quantities(val label: String){
-    ZERO("zero"),
-    ONE("one"),
-    TWO("two"),
-    FEW("few"),
-    MANY("many"),
-    OTHER("other")
+enum class Platform {
+    ANDROID, IOS;
+
+    companion object {
+        val ALL = arrayOf(ANDROID, IOS)
+        val ANDROID_ONLY = arrayOf(ANDROID)
+        val IOS_ONLY = arrayOf(IOS)
+    }
 }

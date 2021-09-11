@@ -22,11 +22,16 @@ import org.w3c.dom.Element
 import javax.xml.transform.Transformer
 import java.io.File
 
-/*
+/**
  * Generates Android resources for a given language in the specified folder
  */
-class AndroidResourceGenerator(androidFolder: File, private val language: Language, formatters: List<StringFormatter>) :
-        ResourceGenerator(Platform.ANDROID, formatters.filter { it.platform != Platform.IOS }) {
+class AndroidResourceGenerator(
+    androidFolder: File,
+    private val language: Language,
+    formatters: List<StringFormatter>,
+    resources: Collection<Resource>
+) : ResourceGenerator(Platform.ANDROID, formatters) {
+
     private val subFolder = File(androidFolder, "values${if (language == English) "" else "-${language.isoCode}"}").also { it.mkdirs() }
     private val document: Document = createDocument()
     private val resourceElement: Element = document.createElement("resources").also {
@@ -34,35 +39,51 @@ class AndroidResourceGenerator(androidFolder: File, private val language: Langua
         document.appendChild(it)
     }
 
-    override fun add(res: Resource) {
-        if (res.platform == Platform.IOS) return
-        when (res.localizationType) {
-            is Str -> addString(res.id, res.localizationType)
-            is Plural -> addPlurals(res.id, res.localizationType)
-            is StringArray -> addStringArray(res.id, res.localizationType)
-        }
+    private var prevPrefix = ""
+
+    init {
+        resources.forEach(::add)
     }
 
-    override fun addAll(resources: Collection<Resource>) {
-        resources.forEach(::add)
+    override fun add(res: Resource) {
+        if (platform !in res.platforms) return
+        val prefix = res.id.takeWhile { it != '_' }
+        if (prefix != prevPrefix) {
+            prevPrefix = prefix
+            val comment = when (prefix) {
+                "btn" -> "Buttons"
+                "acc" -> "Accessibility hints"
+                "daily" -> "Daily Challenges"
+                "icp" -> "Individual Course Pages"
+
+                else -> prefix.replaceFirstChar(Char::titlecaseChar)
+            }
+            resourceElement.appendChild(document.createTextNode("\n"))
+            resourceElement.appendChild(document.createComment(comment))
+        }
+        when (res.localizationType) {
+            is Str -> addString(res.id, res.localizationType)
+            is Quantities -> addPlurals(res.id, res.localizationType)
+            is StringArray -> addStringArray(res.id, res.localizationType)
+        }
     }
 
     override fun generateFiles() {
         transformer.transform(document, subFolder, "strings.xml")
     }
 
-    /*
+    /**
      * <plurals name="numberOfSongsAvailable">
      *     <item quantity="one">Znaleziono %d piosenkę.</item>
      *     <item quantity="few">Znaleziono %d piosenki.</item>
      *     <item quantity="other">Znaleziono %d piosenek.</item>
      * </plurals>
      */
-    private fun addPlurals(id: String, plural: Plural) {
+    private fun addPlurals(id: String, quantities: Quantities) {
         resourceElement.appendChild(document.createElement("plurals").apply {
             setAttribute("name", id)
-            Quantities.values().forEach { quantity ->
-                val item = plural.quantity(quantity) ?: return@forEach
+            Quantity.values().forEach { quantity ->
+                val item = quantities.quantity(quantity) ?: return@forEach
                 appendChild(document.createElement("item").apply {
                     setAttribute("quantity", quantity.label)
                     appendChild(document.createTextNode(item.fromLocale(language).sanitized()))
@@ -73,16 +94,17 @@ class AndroidResourceGenerator(androidFolder: File, private val language: Langua
 
     private fun addString(id: String, str: Str) {
         val txt = str.fromLocale(language).sanitized()
-        if (txt.isBlank()) return
-        //<string name="app_name"  translatable="false">Cool</string>
+        if (txt.isBlank()) {
+            println("blank string found for id: $id")
+        }
+        //<string name="dragon">Trogdor the Burninator</string>
         resourceElement.appendChild(document.createElement("string").apply {
             setAttribute("name", id)
-            if (language == English && str.localizations.size == 1) setAttribute("translatable", "false")
             appendChild(document.createTextNode(txt))
         })
     }
 
-    /*
+    /**
      * <string-array name="country_names">
      *      <item>France</item>
      *      <item>Germany</item>
