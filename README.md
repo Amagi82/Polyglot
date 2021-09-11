@@ -11,4 +11,4 @@ Polyglot makes it simple to export shared strings for Android and iOS. It'll aut
 
 String formatting can be customized, but by default escapes unacceptable characters for xml on both platforms, and handles strings %s, integers %d, and floats %f.
 
-By default it'll place these files on the desktop and open Finder, but you could easily customize it to export directly to your project. 
+By default it'll place these files in the /out folder and open Finder, but you could easily customize it to export directly to your project. 
