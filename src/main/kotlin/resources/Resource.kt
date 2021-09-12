@@ -1,8 +1,11 @@
 package resources
 
+import androidx.compose.runtime.Stable
 import locales.LocaleIsoCode
 import locales.Localizations
 import locales.isDefault
+import kotlinx.serialization.Serializable
+import locales.locales
 
 /**
  * A resources.Resource is a String, resources.Plural, or String Array resource to be localized.
@@ -12,14 +15,15 @@ import locales.isDefault
  * @property platforms: specify this resource should only be localized for a given platform
  * @property locales - a set of all locales
  */
-//@Serializable
+@Stable
+@Serializable
 sealed class Resource {
     abstract val id: String
+    abstract val group: String
     abstract val name: String
     abstract val description: String
     abstract val tags: List<String>
-    abstract val imageUrl: String?
-    abstract val platforms: List<Platform>?
+    abstract val platforms: List<Platform>
     abstract val locales: Set<LocaleIsoCode>
 
     /**
@@ -33,14 +37,15 @@ sealed class Resource {
     }
 }
 
-//@Serializable
+@Stable
+@Serializable
 data class Str(
     override val id: String,
+    override val group: String = "",
     override val name: String = "",
     override val description: String = "",
     override val tags: List<String> = listOf(),
-    override val imageUrl: String? = null,
-    override val platforms: List<Platform>? = null,
+    override val platforms: List<Platform> = Platform.ALL,
     val localizations: Localizations
 ) : Resource() {
     override val locales: Set<LocaleIsoCode> get() = localizations.locales
@@ -52,14 +57,15 @@ data class Str(
     }
 }
 
-//@Serializable
+@Stable
+@Serializable
 data class Plural(
     override val id: String,
+    override val group: String = "",
     override val name: String = "",
     override val description: String = "",
     override val tags: List<String> = listOf(),
-    override val imageUrl: String? = null,
-    override val platforms: List<Platform>? = null,
+    override val platforms: List<Platform> = Platform.ALL,
     val zero: Localizations? = null,
     val one: Localizations?,
     val two: Localizations? = null,
@@ -86,14 +92,15 @@ data class Plural(
     }
 }
 
-//@Serializable
+@Stable
+@Serializable
 data class StringArray(
     override val id: String,
+    override val group: String = "",
     override val name: String = "",
     override val description: String = "",
     override val tags: List<String> = listOf(),
-    override val imageUrl: String? = null,
-    override val platforms: List<Platform>? = null,
+    override val platforms: List<Platform> = Platform.ALL,
     val items: List<Localizations>
 ) : Resource() {
     override val locales: Set<LocaleIsoCode> get() = items.first().locales

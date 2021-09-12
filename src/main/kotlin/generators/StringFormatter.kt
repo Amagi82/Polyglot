@@ -29,12 +29,12 @@ class StringFormatter(
         val defaultFormatters: List<StringFormatter> by lazy {
             listOf(
                 StringFormatter("\n") { _, _ -> "\\n" },
-                StringFormatter("\'", Platform.AndroidOnly) { _, _ -> "\\'" },
-                StringFormatter("%s", Platform.AndroidOnly, isIndexed = true) { index, _ -> "%$index\$s" },
-                StringFormatter("%d", Platform.AndroidOnly, isIndexed = true) { index, _ -> "%$index\$d" },
-                StringFormatter("%f", Platform.AndroidOnly, isIndexed = true) { index, _ -> "%$index\$f" },
-                StringFormatter("%s", Platform.iosOnly) { _, _ -> "%@" },
-                StringFormatter("\"", Platform.iosOnly) { _, isXml -> if (isXml) "\\\"" else "\"" })
+                StringFormatter("\'", Platform.ANDROID_ONLY) { _, _ -> "\\'" },
+                StringFormatter("%s", Platform.ANDROID_ONLY, isIndexed = true) { index, _ -> "%$index\$s" },
+                StringFormatter("%d", Platform.ANDROID_ONLY, isIndexed = true) { index, _ -> "%$index\$d" },
+                StringFormatter("%f", Platform.ANDROID_ONLY, isIndexed = true) { index, _ -> "%$index\$f" },
+                StringFormatter("%s", Platform.IOS_ONLY) { _, _ -> "%@" },
+                StringFormatter("\"", Platform.IOS_ONLY) { _, isXml -> if (isXml) "\\\"" else "\"" })
         }
     }
 }

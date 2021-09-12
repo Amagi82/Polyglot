@@ -1,15 +1,20 @@
 package resources
 
+import androidx.compose.runtime.Stable
+import kotlinx.serialization.Serializable
+
 /**
  * Make a resource platform-specific
  */
-//@Serializable
-data class Platform(val name: String, val iconUrl: String) {
-    companion object {
-        val Android = Platform(name = "Android", iconUrl = "src/main/resources/android.png")
-        val iOS = Platform(name = "iOS", iconUrl = "src/main/resources/apple.png")
+@Stable
+@Serializable
+enum class Platform(val iconFileName: String) {
+    ANDROID("android_black_24dp.svg"),
+    IOS("apple_black_24dp.svg");
 
-        val AndroidOnly = listOf(Android)
-        val iosOnly = listOf(iOS)
+    companion object {
+        val ANDROID_ONLY = listOf(ANDROID)
+        val IOS_ONLY = listOf(IOS)
+        val ALL = listOf(ANDROID, IOS)
     }
 }

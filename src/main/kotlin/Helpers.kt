@@ -1,3 +1,4 @@
+import locales.Locale
 import locales.LocaleIsoCode
 import locales.Localizations
 import resources.Platform
@@ -9,11 +10,11 @@ fun string(
     id: String,
     default: String,
     vararg translations: Pair<LocaleIsoCode, String>,
-    platforms: List<Platform>? = null,
+    platforms: List<Platform> = Platform.ALL,
 ) = Str(
     id = id,
     platforms = platforms,
-    localizations = Localizations(default, *translations)
+    localizations = mapOf(Locale.default to default, *translations)
 )
 
 fun plural(
@@ -24,11 +25,11 @@ fun plural(
     few: Localizations? = null,
     many: Localizations? = null,
     other: Localizations,
-    platforms: List<Platform>? = null
+    platforms: List<Platform> = Platform.ALL
 ) = Plural(id = id, platforms = platforms, zero = zero, one = one, two = two, few = few, many = many, other = other)
 
-fun stringArray(
-    id: String,
-    vararg items: Localizations,
-    platforms: List<Platform>? = null
-) = StringArray(id = id, platforms = platforms, items = items.toList())
+//fun stringArray(
+//    id: String,
+//    vararg items: Localizations,
+//    platforms: List<Platform> = Platform.ALL
+//) = StringArray(id = id, platforms = platforms, items = items.toList())

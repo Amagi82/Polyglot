@@ -1,6 +1,8 @@
 package generators
 
 import locales.LocaleIsoCode
+import locales.get
+import locales.getRequired
 import resources.Platform
 import resources.Plural
 import resources.Quantity
@@ -25,7 +27,7 @@ import javax.xml.transform.Transformer
  */
 class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, formatters: List<StringFormatter>, resources: Collection<Resource>) :
     ResourceGenerator(locale, formatters) {
-    override val platform: Platform get() = Platform.iOS
+    override val platform: Platform = Platform.IOS
     private val localizationFolder = File(iosFolder, "$locale.lproj").also(File::mkdirs)
 
     private val stringsWriter = BufferedWriter(FileWriter(localizationFolder.createChildFile("Localizable.strings")))
