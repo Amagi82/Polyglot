@@ -1,5 +1,8 @@
 package locales
 
+import androidx.compose.runtime.Stable
+import kotlinx.serialization.Serializable
+
 /**
  * locales.Language and optional locales.Region for a translation
  *
@@ -9,7 +12,8 @@ package locales
  * @param language: The base language
  * @param region: An optional regional dialect, or null for the default version
  * */
-//@Serializable
+@Stable
+@Serializable
 data class Locale(val language: Language, val region: Region? = null) : Comparable<Locale> {
     // Must use a getter until this is resolved: https://github.com/Kotlin/kotlinx.serialization/issues/716
     val isoCode: LocaleIsoCode get() = language.isoCode + region?.isoCode?.let { "_$it" }.orEmpty()

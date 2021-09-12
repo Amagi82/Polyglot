@@ -34,7 +34,7 @@ abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters
      * */
     protected fun addAll(resources: Collection<Resource>) {
         for (res in resources) {
-            if (res.platforms?.contains(platform) != false && !res.shouldSkip(locale)) {
+            if (res.platforms.contains(platform) && !res.shouldSkip(locale)) {
                 when (res) {
                     is Str -> addString(res)
                     is Plural -> addPlurals(res)
@@ -98,7 +98,7 @@ abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters
         fun generateFiles(
             resources: Collection<Resource>,
             defaultLanguage: LanguageIsoCode,
-            platforms: List<Platform> = listOf(Platform.Android, Platform.iOS),
+            platforms: List<Platform> = Platform.ALL,
             formatters: List<StringFormatter> = StringFormatter.defaultFormatters,
             outputFile: (Platform) -> File = { File(defaultOutputFolder, it.name) },
             openFolder: Boolean = true,
@@ -109,9 +109,8 @@ abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters
             ) -> ResourceGenerator? = { platform, localeIsoCode, fmt ->
                 val folder = outputFile(platform).also(File::mkdirs)
                 when (platform) {
-                    Platform.Android -> AndroidResourceGenerator(folder, localeIsoCode, fmt, resources)
-                    Platform.iOS -> IosResourceGenerator(folder, localeIsoCode, fmt, resources)
-                    else -> null
+                    Platform.ANDROID -> AndroidResourceGenerator(folder, localeIsoCode, fmt, resources)
+                    Platform.IOS -> IosResourceGenerator(folder, localeIsoCode, fmt, resources)
                 }
             }
         ) {

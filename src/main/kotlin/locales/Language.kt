@@ -1,5 +1,8 @@
 package locales
 
+import androidx.compose.runtime.Stable
+import kotlinx.serialization.Serializable
+
 /**
  * Two or Three digit code (e.g. en, es, fr, de, tzm), used to place the translation in the appropriate folder, e.g.
  * Android: values.en, values.es, etc
@@ -22,7 +25,8 @@ typealias LanguageIsoCode = String
  *
  * English, Spanish, French, and German have been added for convenience.
  */
-//@Serializable
+@Stable
+@Serializable
 data class Language(val isoCode: LanguageIsoCode, val name: String) {
     init {
         when {

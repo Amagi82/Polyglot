@@ -1,6 +1,8 @@
 package generators
 
 import locales.LocaleIsoCode
+import locales.get
+import locales.getRequired
 import resources.Platform
 import resources.Plural
 import resources.Quantity
@@ -18,7 +20,7 @@ import java.io.File
  */
 class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, formatters: List<StringFormatter>, resources: Collection<Resource>) :
     ResourceGenerator(locale, formatters) {
-    override val platform: Platform = Platform.Android
+    override val platform: Platform = Platform.ANDROID
     private val valuesFolder = File(androidFolder, "values${if (locale.isDefault) "" else "-$locale"}").also(File::mkdirs)
     private val document: Document = createDocument()
     private val resourceElement: Element = document.createElement("resources").also {
@@ -74,7 +76,6 @@ class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, forma
     override fun addStringArray(res: StringArray) {
         resourceElement.appendChild(document.createElement("string-array").apply {
             setAttribute("name", res.id)
-            if (!res.items.first().hasTranslations) setAttribute("tools:ignore", "MissingTranslation")
             for (item in res.items) {
                 appendChild(document, "item", item.getRequired(locale).sanitized())
             }

@@ -1,5 +1,8 @@
 package locales
 
+import androidx.compose.runtime.Stable
+import kotlinx.serialization.Serializable
+
 /**
  * Two digit code, e.g. US, AR, GF
  * Android: values.en_US, values.es_AR, values.fr_GF, etc
@@ -10,7 +13,8 @@ typealias RegionIsoCode = String
 /**
  * locales.Region
  */
-//@Serializable
+@Stable
+@Serializable
 data class Region(val isoCode: RegionIsoCode, val name: String) {
     companion object {
 //        operator fun get(isoCode: locales.RegionIsoCode) = locales.Region(isoCode = isoCode, name = names[isoCode] ?: "Unknown")
