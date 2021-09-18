@@ -1,6 +1,6 @@
 package generators
 
-import resources.Platform
+import project.Platform
 
 /**
  * generators.StringFormatter is used to replace arguments in your shared strings file to export properly across platforms.

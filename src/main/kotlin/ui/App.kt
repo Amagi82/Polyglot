@@ -1,9 +1,9 @@
 package ui
 
+import R
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.desktop.DesktopMaterialTheme
-import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,219 +22,173 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import json
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.ExperimentalSerializationApi
 import locales.Locale
-import locales.Localizations
-import resources.Plural
-import resources.Resource
-import resources.Str
-import resources.StringArray
-import java.io.File
+import project.*
 
-@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class, kotlinx.serialization.ExperimentalSerializationApi::class)
+@OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class, ExperimentalSerializationApi::class)
 @Composable
-@Preview
-fun App() {
-    DesktopMaterialTheme {
-        val scope = rememberCoroutineScope()
-        var isFilterMenuVisible by remember { mutableStateOf(false) }
-        val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
-        var projectName by remember { mutableStateOf("Brilliant") }
-        var resources by remember { mutableStateOf<List<Resource>>(listOf()) }
-        val resourcesFile by remember { derivedStateOf { File("src/main/resources") } }
-        val projectFile by remember { derivedStateOf { File(resourcesFile, "$projectName.json").apply(File::createNewFile) } }
-        var expandedIds by remember { mutableStateOf(listOf<String>()) }
-//        val tempFile by remember { derivedStateOf { File.createTempFile(projectName, "json", resourcesFile) } }
+fun App(project: Project, updateResources: (List<Resource>) -> Unit, toggleDarkTheme: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
+    var expandedIds by remember { mutableStateOf(listOf<String>()) }
 
-        LaunchedEffect("loadResources") {
-            scope.launch(Dispatchers.IO) {
-                projectFile.bufferedReader().use {
-                    try {
-                        resources = json.decodeFromString(it.readText())
-                    } catch (e: Exception) {
-                        println("Failed to load $projectName.json with $e")
+    BackdropScaffold(
+        appBar = {
+            TopAppBar(
+                title = { Text("Polyglot - ${project.name}") },
+                navigationIcon = {
+                    IconButton(onClick = { scope.launch { if (scaffoldState.isRevealed) scaffoldState.conceal() else scaffoldState.reveal() } }) {
+                        Icon(painterResource(R.drawable.language), contentDescription = "Edit locales")
                     }
+                },
+                actions = {
+                    IconButton(onClick = toggleDarkTheme) {
+                        Icon(painterResource(R.drawable.darkMode), contentDescription = "Toggle dark theme")
+                    }
+                    IconButton(onClick = {}) {
+                        Icon(painterResource(R.drawable.importExport), contentDescription = "Import or Export")
+                    }
+                    IconButton(onClick = {
+                        scope.launch {
+                            project.save()
+                            scaffoldState.snackbarHostState.showSnackbar("Saved ${project.name}")
+                        }
+                    }) {
+                        Icon(painterResource(R.drawable.save), contentDescription = "Save")
+                    }
+                    IconButton(onClick = {}) {
+                        Icon(Icons.Default.Build, contentDescription = "Build")
+                    }
+                },
+                elevation = 0.dp,
+                backgroundColor = Color.Transparent
+            )
+        },
+        backLayerContent = {
+            Column(Modifier.padding(16.dp).background(MaterialTheme.colors.primary)) {
+                TextField(
+                    value = project.name, onValueChange = {},
+                    label = { Text("project.Project name") },
+                    readOnly = true,
+                    singleLine = true
+                )
+            }
+        },
+        frontLayerContent = {
+            LazyColumn(Modifier.background(MaterialTheme.colors.surface).padding(horizontal = 16.dp).fillMaxSize()) {
+                stickyHeader {
+                    var sortingState by remember { mutableStateOf<SortingState?>(null) }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        SortingColumn.values().forEach { column ->
+                            TableColumnHeader(column, sortingState = sortingState) { state ->
+                                sortingState = state
+                                if (state != null) updateResources(state.sort(project.resources))
+                            }
+                        }
+                        Text(
+                            "description",
+                            modifier = Modifier.padding(16.dp).weight(1f).wrapContentWidth(),
+                            style = MaterialTheme.typography.button
+                        )
+                        Text(
+                            "tags",
+                            modifier = Modifier.padding(16.dp).weight(1f).wrapContentWidth(),
+                            style = MaterialTheme.typography.button
+                        )
+                        Text(
+                            "platforms",
+                            modifier = Modifier.padding(16.dp).weight(0.4f),
+                            style = MaterialTheme.typography.button
+                        )
+                        var expandAll by remember { mutableStateOf(false) }
+                        IconButton(
+                            onClick = {
+                                expandAll = !expandAll
+                                expandedIds = if (expandAll) project.resources.map { it.id } else listOf()
+                            },
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        ) {
+                            Icon(
+                                painterResource(if (expandAll) R.drawable.expand else R.drawable.compress),
+                                contentDescription = "toggle expand"
+                            )
+                        }
+                    }
+                    Divider()
+                }
+
+                items(project.resources) { res ->
+                    val isEditable = expandedIds.contains(res.id)
+                    Row(
+                        modifier = Modifier.clickable {
+                            expandedIds = if (isEditable) expandedIds.minus(res.id) else expandedIds.plus(res.id)
+                        },
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BasicTextField(value = res.id, onValueChange = {}, modifier = Modifier.weight(1f), readOnly = !isEditable)
+                        BasicTextField(value = res.group, onValueChange = {}, modifier = Modifier.weight(1f), readOnly = !isEditable)
+                        BasicTextField(value = res.name, onValueChange = {}, modifier = Modifier.weight(1f), readOnly = !isEditable)
+                        BasicTextField(value = res.description, onValueChange = {}, modifier = Modifier.weight(1f), readOnly = !isEditable)
+                        BasicTextField(value = res.tags.joinToString(), onValueChange = {}, modifier = Modifier.weight(1f), readOnly = !isEditable)
+                        Box(modifier = Modifier.weight(0.4f)) {
+                            res.platforms.forEach {
+                                Icon(painterResource(it.iconFileName), contentDescription = it.name)
+                            }
+                        }
+                        IconButton(onClick = {
+                            val index = project.resources.indexOf(res)
+                            updateResources(project.resources.minus(res))
+                            scope.launch {
+                                if (scaffoldState.snackbarHostState.showSnackbar(
+                                        "Removed ${res.id}",
+                                        actionLabel = "Undo"
+                                    ) == SnackbarResult.ActionPerformed
+                                ) {
+                                    updateResources(project.resources.toMutableList().apply { add(index, res) })
+                                }
+                            }
+                        }, modifier = Modifier.padding(horizontal = 16.dp)) {
+                            Icon(Icons.Default.Delete, contentDescription = "Remove")
+                        }
+                    }
+                    AnimatedVisibility(visible = isEditable) {
+                        Column {
+                            when (res) {
+                                is Str -> res.localizations.forEach {
+                                    Row {
+                                        Text(it.key, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                                        Text(it.value, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                                    }
+                                }
+                                is Plural -> {
+
+                                }
+                                is StringArray -> {
+
+                                }
+                            }
+                        }
+                    }
+                    Divider()
                 }
             }
-        }
 
-        BackdropScaffold(
-            appBar = {
-                TopAppBar(
-                    title = { Text("Polyglot - $projectName") },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { if (scaffoldState.isRevealed) scaffoldState.conceal() else scaffoldState.reveal() } }) {
-                            Icon(painterResource("language_black_24dp.svg"), contentDescription = "Edit locales")
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { isFilterMenuVisible = !isFilterMenuVisible }) {
-                            Icon(painterResource("filter_list_black_24dp.svg"), contentDescription = "Filter")
-                        }
-                        IconButton(onClick = {}) {
-                            Icon(painterResource("import_export_black_24dp.svg"), contentDescription = "Import or Export")
-                        }
-
-                        var isSaving by remember { mutableStateOf(false) }
-                        IconButton(onClick = {
-                            if (!isSaving) {
-                                scope.launch { scaffoldState.snackbarHostState.showSnackbar("Saving to $projectFile") }
-                                isSaving = true
-                                scope.launch(Dispatchers.IO) {
-                                    projectFile.bufferedWriter().use {
-                                        it.write(json.encodeToString(resources))
-                                    }
-                                    isSaving = false
-                                }
-                            }
-                        }) {
-                            if (isSaving) {
-                                CircularProgressIndicator()
-                            } else {
-                                Icon(painterResource("save_black_24dp.svg"), contentDescription = "Save")
-                            }
-                        }
-                        IconButton(onClick = {}) {
-                            Icon(Icons.Default.Build, contentDescription = "Build")
-                        }
-                    },
-                    elevation = 0.dp,
-                    backgroundColor = Color.Transparent
-                )
-            },
-            backLayerContent = {
-                Column(Modifier.padding(16.dp)) {
-                    TextField(
-                        value = projectName, onValueChange = { projectName = it },
-                        label = { Text("Project name", color = MaterialTheme.colors.onPrimary) },
-                        singleLine = true
-                    )
-                }
-            },
-            frontLayerContent = {
-                Row(Modifier.padding(horizontal = 16.dp)) {
-                    LazyColumn(Modifier.weight(1f)) {
-                        stickyHeader {
-                            var sortingState by remember { mutableStateOf<SortingState?>(null) }
-
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                SortingColumn.values().forEach { column ->
-                                    TableColumnHeader(column, sortingState = sortingState) { state ->
-                                        sortingState = state
-                                        if (state != null) resources = state.sort(resources)
-                                    }
-                                }
-                                Text(
-                                    "description",
-                                    modifier = Modifier.padding(16.dp).weight(1f).wrapContentWidth(),
-                                    color = MaterialTheme.colors.primary,
-                                    style = MaterialTheme.typography.button
-                                )
-                                Text(
-                                    "tags",
-                                    modifier = Modifier.padding(16.dp).weight(1f).wrapContentWidth(),
-                                    color = MaterialTheme.colors.primary,
-                                    style = MaterialTheme.typography.button
-                                )
-                                Text(
-                                    "platforms",
-                                    modifier = Modifier.padding(16.dp).weight(0.4f),
-                                    color = MaterialTheme.colors.primary,
-                                    style = MaterialTheme.typography.button
-                                )
-                                var expandAll by remember { mutableStateOf(false) }
-                                IconButton(
-                                    onClick = {
-                                        expandAll = !expandAll
-                                        expandedIds = if (expandAll) resources.map { it.id } else listOf()
-                                    },
-                                    modifier = Modifier.padding(horizontal = 16.dp)
-                                ) {
-                                    Icon(
-                                        painterResource(if (expandAll) "expand_black_24dp.svg" else "compress_black_24dp.svg"),
-                                        contentDescription = "toggle expand",
-                                        tint = MaterialTheme.colors.primary
-                                    )
-                                }
-                            }
-                            Divider()
-                        }
-
-                        items(resources) { res ->
-                            val isEditable = expandedIds.contains(res.id)
-                            Row(
-                                modifier = Modifier.clickable {
-                                    expandedIds = if (isEditable) expandedIds.minus(res.id) else expandedIds.plus(res.id)
-                                },
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                BasicTextField(value = res.id, onValueChange = {}, modifier = Modifier.weight(1f), readOnly = !isEditable)
-                                BasicTextField(value = res.group, onValueChange = {}, modifier = Modifier.weight(1f), readOnly = !isEditable)
-                                BasicTextField(value = res.name, onValueChange = {}, modifier = Modifier.weight(1f), readOnly = !isEditable)
-                                BasicTextField(value = res.description, onValueChange = {}, modifier = Modifier.weight(1f), readOnly = !isEditable)
-                                BasicTextField(value = res.tags.joinToString(), onValueChange = {}, modifier = Modifier.weight(1f), readOnly = !isEditable)
-                                Box(modifier = Modifier.weight(0.4f)) {
-                                    res.platforms.forEach {
-                                        Icon(painterResource(it.iconFileName), contentDescription = it.name)
-                                    }
-                                }
-                                IconButton(onClick = {
-                                    val index = resources.indexOf(res)
-                                    resources = resources.minus(res)
-                                    scope.launch {
-                                        if (scaffoldState.snackbarHostState.showSnackbar(
-                                                "Removed ${res.id}",
-                                                actionLabel = "Undo"
-                                            ) == SnackbarResult.ActionPerformed
-                                        ) {
-                                            resources = resources.toMutableList().apply { add(index, res) }
-                                        }
-                                    }
-                                }, modifier = Modifier.padding(horizontal = 16.dp)) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Remove")
-                                }
-                            }
-                            AnimatedVisibility(visible = isEditable){
-                                Column {
-                                    when (res) {
-                                        is Str -> res.localizations.forEach {
-                                            Row {
-                                                Text(it.key, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-                                                Text(it.value, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-                                            }
-                                        }
-                                        is Plural -> {
-
-                                        }
-                                        is StringArray -> {
-
-                                        }
-                                    }
-                                }
-                            }
-                            Divider()
-                        }
-                    }
-                }
-
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
-                    FloatingActionButton(onClick = {
-                        resources = resources.plus(Str(id = "new", localizations = mapOf(Locale.default to "Edit me")))
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+                FloatingActionButton(onClick = {
+                    updateResources(project.resources.plus(Str(id = "new", localizations = mapOf(Locale.default to "Edit me"))))
 //                        resources = resources.plus(Plural(id = "new", one = null, other = Localizations("")))
 //                        resources = resources.plus(StringArray(id = "new", items = listOf()))
-                    }, modifier = Modifier.padding(16.dp)) {
-                        Icon(Icons.Default.Add, contentDescription = "Add new resource")
-                    }
+                }, modifier = Modifier.padding(16.dp)) {
+                    Icon(Icons.Default.Add, contentDescription = "Add new resource")
                 }
-            },
-            scaffoldState = scaffoldState
-        )
-    }
+            }
+        },
+        scaffoldState = scaffoldState
+    )
 }
 
 //enum class ResourceTab {
@@ -309,7 +263,7 @@ Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arra
                 textfieldSize = coordinates.size.toSize()
             },
             readOnly = !isEditingProjectName,
-            label = { Text("Project", color = MaterialTheme.colors.onPrimary) },
+            label = { Text("project.Project", color = MaterialTheme.colors.onPrimary) },
             trailingIcon = {
                 if (isEditingProjectName) {
                     IconButton(onClick = { isEditingProjectName = false }) {

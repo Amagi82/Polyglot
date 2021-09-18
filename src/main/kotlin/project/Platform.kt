@@ -1,4 +1,4 @@
-package resources
+package project
 
 import androidx.compose.runtime.Stable
 import kotlinx.serialization.Serializable
@@ -9,8 +9,8 @@ import kotlinx.serialization.Serializable
 @Stable
 @Serializable
 enum class Platform(val iconFileName: String) {
-    ANDROID("android_black_24dp.svg"),
-    IOS("apple_black_24dp.svg");
+    ANDROID(R.drawable.android),
+    IOS(R.drawable.apple);
 
     companion object {
         val ANDROID_ONLY = listOf(ANDROID)

@@ -32,22 +32,19 @@ data class Locale(val language: Language, val region: Region? = null) : Comparab
      * */
     companion object {
         var default = "en"
-//        const val path = "/locales"
 
-//        val all: List<locales.Locale>
-//            get() = locales.Language.names.keys.fold(mutableListOf()) { acc, languageIsoCode ->
-//                acc.add(locales.Locale(language = locales.Language[languageIsoCode]))
-////                val regions = locales.Language.regionCodes(languageIsoCode)
-////                regions?.forEach { regionIsoCode -> acc.add(locales.Locale(language = locales.Language[languageIsoCode], region = locales.Region[regionIsoCode])) }
-//                acc
-//            }
+        val all: List<Locale> by lazy {
+            Language.names.keys.fold(mutableListOf()) { acc, languageIsoCode ->
+                acc.add(Locale(language = Language[languageIsoCode]))
+                Language.regions[languageIsoCode]?.forEach { regionIsoCode ->
+                    acc.add(Locale(language = Language[languageIsoCode], region = Region[regionIsoCode]))
+                }
+                acc
+            }
+        }
     }
 }
 
 typealias LocaleIsoCode = String
 
 val LocaleIsoCode.isDefault: Boolean get() = this == Locale.default
-
-
-
-
