@@ -1,4 +1,4 @@
-package resources
+package project
 
 /**
  * Different languages have different grammatical rules for quantity.

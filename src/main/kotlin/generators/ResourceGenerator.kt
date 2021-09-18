@@ -3,11 +3,11 @@ package generators
 import locales.LanguageIsoCode
 import locales.Locale
 import locales.LocaleIsoCode
-import resources.Platform
-import resources.Plural
-import resources.Resource
-import resources.Str
-import resources.StringArray
+import project.Platform
+import project.Plural
+import project.Resource
+import project.Str
+import project.StringArray
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import java.awt.Desktop

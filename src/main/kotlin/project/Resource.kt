@@ -1,4 +1,4 @@
-package resources
+package project
 
 import androidx.compose.runtime.Stable
 import locales.LocaleIsoCode
