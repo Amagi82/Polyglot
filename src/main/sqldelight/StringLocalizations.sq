@@ -1,0 +1,50 @@
+import locales.LocaleIsoCode;
+
+CREATE TABLE StringLocalizations (
+  id TEXT NOT NULL,
+  project TEXT NOT NULL,
+  lang TEXT AS LocaleIsoCode NOT NULL,
+  text TEXT NOT NULL,
+  PRIMARY KEY(id, project, lang),
+  FOREIGN KEY(id, project) REFERENCES Resource(id, project)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE
+);
+
+select:
+SELECT text
+FROM StringLocalizations
+WHERE id = ? AND project = ? AND lang = ?
+LIMIT 1;
+
+selectAll:
+SELECT *
+FROM StringLocalizations
+WHERE id = ? AND project = ?;
+
+selectLocales:
+SELECT DISTINCT lang
+FROM StringLocalizations
+WHERE id = ? AND project = ?;
+
+insert:
+INSERT INTO StringLocalizations
+VALUES ?;
+
+updateText:
+UPDATE StringLocalizations
+SET text = ?
+WHERE id = ? AND project = ? AND lang = ?;
+
+updateLocale:
+UPDATE StringLocalizations
+SET lang = :newLang
+WHERE id = ? AND project = ? AND lang = :oldLang;
+
+delete:
+DELETE FROM StringLocalizations
+WHERE id = ? AND project = ? AND lang = ?;
+
+deleteLocale:
+DELETE FROM StringLocalizations
+WHERE project = ? AND lang = ?;

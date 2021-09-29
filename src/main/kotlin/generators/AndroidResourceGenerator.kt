@@ -4,21 +4,20 @@ import locales.LocaleIsoCode
 import locales.get
 import locales.getRequired
 import project.Platform
-import project.Plural
 import project.Quantity
-import project.Resource
-import project.Str
-import project.StringArray
 import locales.isDefault
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import sqldelight.ArrayLocalizations
+import sqldelight.PluralLocalizations
+import sqldelight.StringLocalizations
 import javax.xml.transform.Transformer
 import java.io.File
 
 /**
  * Generates Android resources for a given language in the specified folder
  */
-class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, formatters: List<StringFormatter>, resources: Collection<Resource>) :
+class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, formatters: List<StringFormatter>, strings: List<StringLocalizations>, plurals: List<PluralLocalizations>, arrays: List<ArrayLocalizations>) :
     ResourceGenerator(locale, formatters) {
     override val platform: Platform = Platform.ANDROID
     private val valuesFolder = File(androidFolder, "values${if (locale.isDefault) "" else "-$locale"}").also(File::mkdirs)
@@ -29,7 +28,7 @@ class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, forma
     }
 
     init {
-        addAll(resources)
+//        addAll(resources)
     }
 
     override fun generateFiles() {
@@ -43,28 +42,28 @@ class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, forma
      *     <item quantity="other">Znaleziono %d piosenek.</item>
      * </plurals>
      */
-    override fun addPlurals(res: Plural) {
+    override fun addPlurals(res: PluralLocalizations) {
         resourceElement.appendChild(document.createElement("plurals").apply {
             setAttribute("name", res.id)
             Quantity.values().forEach { quantity ->
-                val item = res.quantity(quantity) ?: return@forEach
-                val text = item.get(locale, isRequired = quantity.isRequired) ?: return@forEach
-                appendChild(document.createElement("item").apply {
-                    setAttribute("quantity", quantity.label)
-                    appendChild(document.createTextNode(text.sanitized()))
-                })
+//                val item = res.quantity(quantity) ?: return@forEach
+//                val text = item.get(locale, isRequired = quantity.isRequired) ?: return@forEach
+//                appendChild(document.createElement("item").apply {
+//                    setAttribute("quantity", quantity.label)
+//                    appendChild(document.createTextNode(text.sanitized()))
+//                })
             }
         })
     }
 
-    override fun addString(res: Str) {
-        val txt = res.localizations.getRequired(locale).sanitized()
-        if (txt.isBlank()) return
-        /** <string name="dragon">Trogdor the Burninator</string> */
-        resourceElement.appendChild(document.createElement("string").apply {
-            setAttribute("name", res.id)
-            appendChild(document.createTextNode(txt))
-        })
+    override fun addString(res: StringLocalizations) {
+//        val txt = res.localizations.getRequired(locale).sanitized()
+//        if (txt.isBlank()) return
+//        /** <string name="dragon">Trogdor the Burninator</string> */
+//        resourceElement.appendChild(document.createElement("string").apply {
+//            setAttribute("name", res.id)
+//            appendChild(document.createTextNode(txt))
+//        })
     }
 
     /**
@@ -73,12 +72,12 @@ class AndroidResourceGenerator(androidFolder: File, locale: LocaleIsoCode, forma
      *      <item>Germany</item>
      * </string-array>
      */
-    override fun addStringArray(res: StringArray) {
+    override fun addStringArray(res: ArrayLocalizations) {
         resourceElement.appendChild(document.createElement("string-array").apply {
             setAttribute("name", res.id)
-            for (item in res.items) {
-                appendChild(document, "item", item.getRequired(locale).sanitized())
-            }
+//            for (item in res.items) {
+//                appendChild(document, "item", item.getRequired(locale).sanitized())
+//            }
         })
     }
 

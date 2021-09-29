@@ -3,15 +3,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
+import data.polyglotDatabase
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import project.Project
+import sqldelight.Project
 import ui.App
 import ui.ProjectPicker
 import ui.theme.PolyglotTheme
 import utils.Settings
-import java.io.FileReader
-import javax.script.ScriptEngineManager
 
 object Config {
     var isDarkTheme = false
@@ -19,16 +17,15 @@ object Config {
 }
 
 fun main() = application {
-    with(ScriptEngineManager().getEngineByExtension("kts")) {
-        eval(FileReader("polyglot/config.kts"))
-    }
+    val db = polyglotDatabase
 
     // Look at https://github.com/adrielcafe/lyricist for localization
 
     println("Config.isDarkTheme: ${Config.isDarkTheme}, currentProject: ${Config.currentProject}")
 
     val scope = rememberCoroutineScope()
-    var project by remember { mutableStateOf(Project.current) }
+
+    var project: Project? by remember { mutableStateOf(Settings.currentProject?.let { db.projectQueries.select(it).executeAsOneOrNull() }) }
     val state = rememberWindowState()
     var darkTheme by remember { mutableStateOf(Settings.isDarkTheme) }
 
@@ -40,9 +37,8 @@ fun main() = application {
         state.position = WindowPosition(Alignment.Center)
     }
 
-    fun saveAndExit(){
+    fun saveAndExit() {
         scope.launch {
-            project?.cache()
             Settings.save()
             exitApplication()
         }
@@ -56,7 +52,7 @@ fun main() = application {
     ) {
         PolyglotTheme(darkTheme = darkTheme) {
             val currentProject = project
-            if (currentProject == null) ProjectPicker(onProjectSelected = {
+            if (currentProject == null) ProjectPicker(projectQueries = db.projectQueries, onProjectSelected = {
                 project = it
                 Settings.currentProject = it.name
             })
@@ -66,7 +62,6 @@ fun main() = application {
                         if (project != null) {
                             Item("Close project") {
                                 scope.launch {
-                                    project?.cache()
                                     project = null
                                     Settings.currentProject = null
                                 }
@@ -76,10 +71,7 @@ fun main() = application {
                     }
                 }
                 App(currentProject,
-                    updateResources = {
-                        project = currentProject.copy(resources = it)
-                        scope.launch { project?.cache() }
-                    },
+                    db = db,
                     toggleDarkTheme = {
                         Settings.isDarkTheme = !darkTheme
                         darkTheme = !darkTheme
@@ -88,5 +80,3 @@ fun main() = application {
         }
     }
 }
-
-val json = Json { prettyPrint = true }

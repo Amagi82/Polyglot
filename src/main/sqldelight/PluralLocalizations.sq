@@ -1,0 +1,80 @@
+import locales.LocaleIsoCode;
+
+CREATE TABLE PluralLocalizations (
+  id TEXT NOT NULL,
+  project TEXT NOT NULL,
+  lang TEXT AS LocaleIsoCode NOT NULL,
+  zero TEXT,
+  one TEXT NOT NULL,
+  two TEXT,
+  few TEXT,
+  many TEXT,
+  other TEXT NOT NULL,
+  PRIMARY KEY(id, project, lang),
+  FOREIGN KEY(id, project) REFERENCES Resource(id, project)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE
+);
+
+select:
+SELECT *
+FROM PluralLocalizations
+WHERE id = ? AND project = ? AND lang = ?
+LIMIT 1;
+
+selectAll:
+SELECT *
+FROM PluralLocalizations
+WHERE id = ? AND project = ?;
+
+selectLocales:
+SELECT DISTINCT lang
+FROM PluralLocalizations
+WHERE id = ? AND project = ?;
+
+insert:
+INSERT INTO PluralLocalizations
+VALUES ?;
+
+updateZero:
+UPDATE PluralLocalizations
+SET zero = ?
+WHERE id = ? AND project = ? AND lang = ?;
+
+updateOne:
+UPDATE PluralLocalizations
+SET one = ?
+WHERE id = ? AND project = ? AND lang = ?;
+
+updateTwo:
+UPDATE PluralLocalizations
+SET two = ?
+WHERE id = ? AND project = ? AND lang = ?;
+
+updateFew:
+UPDATE PluralLocalizations
+SET few = ?
+WHERE id = ? AND project = ? AND lang = ?;
+
+updateMany:
+UPDATE PluralLocalizations
+SET many = ?
+WHERE id = ? AND project = ? AND lang = ?;
+
+updateOther:
+UPDATE PluralLocalizations
+SET other = ?
+WHERE id = ? AND project = ? AND lang = ?;
+
+updateLocale:
+UPDATE PluralLocalizations
+SET lang = :newLang
+WHERE id = ? AND project = ? AND lang = :oldLang;
+
+delete:
+DELETE FROM PluralLocalizations
+WHERE id = ? AND project = ? AND lang = ?;
+
+deleteLocale:
+DELETE FROM PluralLocalizations
+WHERE project = ? AND lang = ?;

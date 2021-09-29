@@ -1,16 +1,15 @@
 package project
 
 import androidx.compose.runtime.Stable
-import kotlinx.serialization.Serializable
+import androidx.compose.ui.graphics.Color
 
 /**
  * Make a resource platform-specific
  */
 @Stable
-@Serializable
-enum class Platform(val iconFileName: String) {
-    ANDROID(R.drawable.android),
-    IOS(R.drawable.apple);
+enum class Platform(val iconId: String, val color: Color) {
+    ANDROID(R.drawable.android, Color.Green),
+    IOS(R.drawable.apple, Color.Blue);
 
     companion object {
         val ANDROID_ONLY = listOf(ANDROID)

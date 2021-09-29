@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.5.30"
-    kotlin("plugin.serialization") version "1.5.30"
+    id("com.squareup.sqldelight") version "1.5.1"
     id("org.jetbrains.compose") version "1.0.0-alpha4-build348"
 }
 
@@ -16,9 +16,10 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0-RC")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.30")
-    implementation("org.jetbrains.kotlin:kotlin-script-runtime")
+//    implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.30")
+//    implementation("org.jetbrains.kotlin:kotlin-script-runtime")
+    implementation("com.squareup.sqldelight:sqlite-driver:1.5.1")
+    implementation("com.squareup.sqldelight:coroutines-extensions-jvm:1.5.1")
 }
 
 tasks.withType<KotlinCompile> {
@@ -45,6 +46,15 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
+}
+
+sqldelight{
+    database("PolyglotDatabase"){
+        packageName = "data"
+        sourceFolders = listOf("")
+        schemaOutputDirectory = file("src/main/sqldelight/databases")
+    }
+    linkSqlite = true
 }
 
 tasks {

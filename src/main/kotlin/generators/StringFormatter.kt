@@ -14,7 +14,6 @@ import project.Platform
  *                   isXml: true if the file being created is in XML format. Always true on Android, false for normal strings in iOS
  *                   returns a String that replaces the arg
  */
-//@Serializable
 class StringFormatter(
     val arg: String,
     val platforms: List<Platform>? = null,

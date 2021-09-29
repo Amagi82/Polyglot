@@ -1,0 +1,38 @@
+import locales.LocaleIsoCode;
+import kotlin.collections.List;
+
+CREATE TABLE Project (
+  name TEXT NOT NULL PRIMARY KEY,
+  androidOutputUrl TEXT,
+  iosOutputUrl TEXT,
+  locales TEXT AS List<LocaleIsoCode> NOT NULL
+);
+
+select:
+SELECT *
+FROM Project
+WHERE name = ?
+LIMIT 1;
+
+selectAll:
+SELECT *
+FROM Project
+ORDER BY name;
+
+insert:
+INSERT INTO Project
+VALUES ?;
+
+updateName:
+UPDATE Project
+SET name = :newName
+WHERE name = :oldName;
+
+updateLocales:
+UPDATE Project
+SET locales = ?
+WHERE name = ?;
+
+delete:
+DELETE FROM Project
+WHERE name = ?;

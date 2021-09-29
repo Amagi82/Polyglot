@@ -1,7 +1,6 @@
 package locales
 
 import androidx.compose.runtime.Stable
-import kotlinx.serialization.Serializable
 
 /**
  * locales.Language and optional locales.Region for a translation
@@ -13,16 +12,15 @@ import kotlinx.serialization.Serializable
  * @param region: An optional regional dialect, or null for the default version
  * */
 @Stable
-@Serializable
 data class Locale(val language: Language, val region: Region? = null) : Comparable<Locale> {
     // Must use a getter until this is resolved: https://github.com/Kotlin/kotlinx.serialization/issues/716
-    val isoCode: LocaleIsoCode get() = language.isoCode + region?.isoCode?.let { "_$it" }.orEmpty()
+    val isoCode: LocaleIsoCode get() = LocaleIsoCode(language.isoCode.value + region?.isoCode?.value?.let { "_$it" }.orEmpty())
     val name get() = "$isoCode [${language.name}${region?.name?.let { " ($it)" }.orEmpty()}]"
 
     override fun compareTo(other: Locale): Int = when {
-        language.isoCode == default && other.language.isoCode != default -> -1
-        other.language.isoCode == default && language.isoCode != default -> 1
-        else -> isoCode.compareTo(other.isoCode)
+        language.isoCode.value == default && other.language.isoCode.value != default -> -1
+        other.language.isoCode.value == default && language.isoCode.value != default -> 1
+        else -> isoCode.value.compareTo(other.isoCode.value)
     }
 
     /**
@@ -33,18 +31,19 @@ data class Locale(val language: Language, val region: Region? = null) : Comparab
     companion object {
         var default = "en"
 
-        val all: List<Locale> by lazy {
-            Language.names.keys.fold(mutableListOf()) { acc, languageIsoCode ->
-                acc.add(Locale(language = Language[languageIsoCode]))
-                Language.regions[languageIsoCode]?.forEach { regionIsoCode ->
-                    acc.add(Locale(language = Language[languageIsoCode], region = Region[regionIsoCode]))
-                }
-                acc
-            }
-        }
+//        val all: List<Locale> by lazy {
+//            Language.names.keys.fold(mutableListOf()) { acc, languageIsoCode ->
+//                acc.add(Locale(language = Language[languageIsoCode]))
+//                Language.regions[languageIsoCode]?.forEach { regionIsoCode ->
+//                    acc.add(Locale(language = Language[languageIsoCode], region = Region[regionIsoCode]))
+//                }
+//                acc
+//            }
+//        }
     }
 }
 
-typealias LocaleIsoCode = String
+@JvmInline
+value class LocaleIsoCode(val value: String)
 
-val LocaleIsoCode.isDefault: Boolean get() = this == Locale.default
+val LocaleIsoCode.isDefault: Boolean get() = value == Locale.default

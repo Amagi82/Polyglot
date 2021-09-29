@@ -1,17 +1,14 @@
 package generators
 
 import locales.LocaleIsoCode
-import locales.get
-import locales.getRequired
 import project.Platform
-import project.Plural
 import project.Quantity
-import project.Resource
-import project.Str
-import project.StringArray
 import locales.isDefault
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import sqldelight.ArrayLocalizations
+import sqldelight.PluralLocalizations
+import sqldelight.StringLocalizations
 import java.io.*
 import java.lang.StringBuilder
 import javax.xml.transform.OutputKeys
@@ -25,7 +22,7 @@ import javax.xml.transform.Transformer
  * R.array.some_array_id, similar to Android, but providing the actual resource, not an integer.
  * Swift extension functions are generated for convenience.
  */
-class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, formatters: List<StringFormatter>, resources: Collection<Resource>) :
+class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, formatters: List<StringFormatter>, strings: List<StringLocalizations>, plurals: List<PluralLocalizations>, arrays: List<ArrayLocalizations>) :
     ResourceGenerator(locale, formatters) {
     override val platform: Platform = Platform.IOS
     private val localizationFolder = File(iosFolder, "$locale.lproj").also(File::mkdirs)
@@ -38,8 +35,8 @@ class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, f
     private val arraysDocument: Document = createDocument()
     private val arraysResourceElement: Element = arraysDocument.createAndAppendPlistElement()
 
-    private val shouldCreatePlurals = resources.any { it is Plural }
-    private val shouldCreateArrays = resources.any { it is StringArray }
+    private val shouldCreatePlurals = plurals.isNotEmpty()
+    private val shouldCreateArrays = arrays.isNotEmpty()
 
     private val shouldCreateReferences = locale.isDefault
     private val stringReferences = if (shouldCreateReferences) StringBuilder() else null
@@ -58,7 +55,7 @@ class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, f
         if (shouldCreateReferences) {
             iosFolder.listFiles { file -> file.name == "R.swift" }?.forEach(File::delete)
         }
-        addAll(resources)
+//        addAll(resources)
     }
 
     override fun generateFiles() {
@@ -73,16 +70,16 @@ class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, f
         generateStringLocalizationExtensions()
     }
 
-    override fun addString(res: Str) {
+    override fun addString(res: StringLocalizations) {
         // "identifier" = "Localized text";
-        val txt = res.localizations.getRequired(locale).sanitized(isXml = false)
-        stringsWriter.appendLine("\"${res.id}\" = \"$txt\";")
-        stringReferences?.apply {
-            appendLine()
-            appendReferenceComment(txt)
-            if (txt.contains('%')) appendReferenceFormattingArgs(res.id, txt, false)
-            else appendLine("\t\tstatic let ${res.id} = \"${res.id}\".localized()")
-        }
+//        val txt = res.localizations.getRequired(locale).sanitized(isXml = false)
+//        stringsWriter.appendLine("\"${res.id}\" = \"$txt\";")
+//        stringReferences?.apply {
+//            appendLine()
+//            appendReferenceComment(txt)
+//            if (txt.contains('%')) appendReferenceFormattingArgs(res.id, txt, false)
+//            else appendLine("\t\tstatic let ${res.id} = \"${res.id}\".localized()")
+//        }
     }
 
     /**
@@ -103,7 +100,7 @@ class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, f
      *   </dict>
      * </dict>
      */
-    override fun addPlurals(res: Plural) {
+    override fun addPlurals(res: PluralLocalizations) {
         var exampleText: String? = null
         pluralsResourceElement.appendChild(pluralsDocument, KEY, res.id)
         pluralsResourceElement.appendChild(pluralsDocument.createElement("dict").apply {
@@ -116,11 +113,11 @@ class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, f
                 appendChild(pluralsDocument, KEY, "NSStringFormatValueTypeKey")
                 appendChild(pluralsDocument, STRING, "d")
                 Quantity.values().forEach { quantity ->
-                    val item = res.quantity(quantity) ?: return@forEach
-                    val txt = (item.get(locale, isRequired = quantity.isRequired) ?: return@forEach).sanitized(isXml = true)
-                    if (exampleText == null) exampleText = txt
-                    appendChild(pluralsDocument, KEY, quantity.label)
-                    appendChild(pluralsDocument, STRING, txt)
+//                    val item = res.quantity(quantity) ?: return@forEach
+//                    val txt = (item.get(locale, isRequired = quantity.isRequired) ?: return@forEach).sanitized(isXml = true)
+//                    if (exampleText == null) exampleText = txt
+//                    appendChild(pluralsDocument, KEY, quantity.label)
+//                    appendChild(pluralsDocument, STRING, txt)
                 }
             })
         })
@@ -138,12 +135,12 @@ class IosResourceGenerator(private val iosFolder: File, locale: LocaleIsoCode, f
      *   <string>Wage</string>
      * </array>
      */
-    override fun addStringArray(res: StringArray) {
+    override fun addStringArray(res: ArrayLocalizations) {
         arraysResourceElement.appendChild(arraysDocument, KEY, res.id)
         arraysResourceElement.appendChild(arraysDocument.createElement("array").apply {
-            for (item in res.items) {
-                appendChild(arraysDocument, STRING, item.getRequired(locale).sanitized(isXml = true))
-            }
+//            for (item in res.items) {
+//                appendChild(arraysDocument, STRING, item.getRequired(locale).sanitized(isXml = true))
+//            }
         })
         stringArrayReferences?.apply {
             appendLine()
