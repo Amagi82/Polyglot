@@ -1,0 +1,51 @@
+import locales.LocaleIsoCode;
+import kotlin.collections.List;
+
+CREATE TABLE ArrayLocalizations (
+  id TEXT NOT NULL,
+  project TEXT NOT NULL,
+  lang TEXT AS LocaleIsoCode NOT NULL,
+  array TEXT AS List<String> NOT NULL,
+  PRIMARY KEY(id, project, lang),
+  FOREIGN KEY(id, project) REFERENCES Resource(id, project)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE
+);
+
+select:
+SELECT array
+FROM ArrayLocalizations
+WHERE id = ? AND project = ? AND lang = ?;
+
+selectAll:
+SELECT *
+FROM ArrayLocalizations
+WHERE id = ? AND project = ?
+ORDER BY lang;
+
+selectLocales:
+SELECT DISTINCT lang
+FROM ArrayLocalizations
+WHERE id = ? AND project = ?;
+
+insert:
+INSERT INTO ArrayLocalizations
+VALUES ?;
+
+update:
+UPDATE ArrayLocalizations
+SET array = ?
+WHERE id = ? AND project = ? AND lang = ?;
+
+updateLocale:
+UPDATE ArrayLocalizations
+SET lang = :newLang
+WHERE id = ? AND project = ? AND lang = :oldLang;
+
+delete:
+DELETE FROM ArrayLocalizations
+WHERE id = ? AND project = ? AND lang = ?;
+
+deleteLocale:
+DELETE FROM ArrayLocalizations
+WHERE project = ? AND lang = ?;

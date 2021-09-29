@@ -1,0 +1,52 @@
+import project.ResourceType;
+import project.Platform;
+import kotlin.collections.List;
+
+CREATE TABLE Resource (
+  id TEXT NOT NULL,
+  project TEXT NOT NULL,
+  type TEXT AS ResourceType NOT NULL,
+  platforms TEXT AS List<Platform> NOT NULL,
+  PRIMARY KEY(id, project),
+  FOREIGN KEY(project) REFERENCES Project(name)
+  ON UPDATE CASCADE
+  ON DELETE CASCADE
+);
+
+exists:
+SELECT EXISTS(
+SELECT 1
+FROM Resource
+WHERE id = ?
+AND project = ?
+);
+
+select:
+SELECT *
+FROM Resource
+WHERE id = ? AND project = ?
+LIMIT 1;
+
+selectAll:
+SELECT *
+FROM Resource
+WHERE project = ?
+ORDER BY id;
+
+insert:
+INSERT INTO Resource
+VALUES ?;
+
+updateId:
+UPDATE Resource
+SET id = :newId
+WHERE id = :oldId AND project = ?;
+
+updatePlatforms:
+UPDATE Resource
+SET platforms = ?
+WHERE id = ? AND project = ?;
+
+delete:
+DELETE FROM Resource
+WHERE id = ? AND project = ?;

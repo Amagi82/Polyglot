@@ -1,15 +1,13 @@
 package generators
 
 import locales.LanguageIsoCode
-import locales.Locale
 import locales.LocaleIsoCode
 import project.Platform
-import project.Plural
-import project.Resource
-import project.Str
-import project.StringArray
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import sqldelight.ArrayLocalizations
+import sqldelight.PluralLocalizations
+import sqldelight.StringLocalizations
 import java.awt.Desktop
 import java.io.File
 import javax.xml.parsers.DocumentBuilder
@@ -22,9 +20,9 @@ import javax.xml.transform.stream.StreamResult
 
 abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters: List<StringFormatter>) {
     protected abstract val platform: Platform
-    protected abstract fun addString(res: Str)
-    protected abstract fun addStringArray(res: StringArray)
-    protected abstract fun addPlurals(res: Plural)
+    protected abstract fun addString(res: StringLocalizations)
+    protected abstract fun addStringArray(res: ArrayLocalizations)
+    protected abstract fun addPlurals(res: PluralLocalizations)
     abstract fun generateFiles()
 
     private val formatters: List<StringFormatter> = formatters.filter { it.platforms?.contains(platform) != false }
@@ -32,17 +30,17 @@ abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters
     /**
      * Should be called in the init block of the resource generator
      * */
-    protected fun addAll(resources: Collection<Resource>) {
-        for (res in resources) {
-            if (res.platforms.contains(platform) && !res.shouldSkip(locale)) {
-                when (res) {
-                    is Str -> addString(res)
-                    is Plural -> addPlurals(res)
-                    is StringArray -> addStringArray(res)
-                }
-            }
-        }
-    }
+//    protected fun addAll(resources: Collection<Resource>) {
+//        for (res in resources) {
+//            if (res.platforms.contains(platform) && !res.shouldSkip(locale)) {
+//                when (res) {
+//                    is Str -> addString(res)
+//                    is Plural -> addPlurals(res)
+//                    is StringArray -> addStringArray(res)
+//                }
+//            }
+//        }
+//    }
 
     protected fun Element.appendChild(document: Document, tagName: String, textNode: String) {
         appendChild(document.createElement(tagName).apply { appendChild(document.createTextNode(textNode)) })
@@ -96,7 +94,9 @@ abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters
         }
 
         fun generateFiles(
-            resources: Collection<Resource>,
+            strings: List<StringLocalizations>,
+            plurals: List<PluralLocalizations>,
+            arrays: List<ArrayLocalizations>,
             defaultLanguage: LanguageIsoCode,
             platforms: List<Platform> = Platform.ALL,
             formatters: List<StringFormatter> = StringFormatter.defaultFormatters,
@@ -109,19 +109,19 @@ abstract class ResourceGenerator(protected val locale: LocaleIsoCode, formatters
             ) -> ResourceGenerator? = { platform, localeIsoCode, fmt ->
                 val folder = outputFile(platform).also(File::mkdirs)
                 when (platform) {
-                    Platform.ANDROID -> AndroidResourceGenerator(folder, localeIsoCode, fmt, resources)
-                    Platform.IOS -> IosResourceGenerator(folder, localeIsoCode, fmt, resources)
+                    Platform.ANDROID -> AndroidResourceGenerator(folder, localeIsoCode, fmt, strings, plurals, arrays)
+                    Platform.IOS -> IosResourceGenerator(folder, localeIsoCode, fmt, strings, plurals, arrays)
                 }
             }
         ) {
-            Locale.default = defaultLanguage
-            val locales = resources.flatMapTo(mutableSetOf(), Resource::locales)
-            for (locale in locales) {
-                for (platform in platforms) {
-                    generator(platform, locale, formatters)?.generateFiles()
-                    if (openFolder) openFolder(outputFile(platform))
-                }
-            }
+//            Locale.default = defaultLanguage
+//            val locales = resources.flatMapTo(mutableSetOf(), Resource::locales)
+//            for (locale in locales) {
+//                for (platform in platforms) {
+//                    generator(platform, locale, formatters)?.generateFiles()
+//                    if (openFolder) openFolder(outputFile(platform))
+//                }
+//            }
         }
 
         private fun openFolder(folder: File) {
