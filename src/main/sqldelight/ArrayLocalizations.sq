@@ -19,8 +19,7 @@ WHERE resId = ? AND locale = ?;
 selectAllWithId:
 SELECT *
 FROM ArrayLocalizations
-WHERE resId = ?
-ORDER BY locale;
+WHERE resId = ?;
 
 selectAllWithLocale:
 SELECT *

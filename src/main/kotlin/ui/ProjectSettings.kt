@@ -54,117 +54,66 @@ fun ProjectSettings(db: PolyglotDatabase, project: Project, updateProject: (Proj
             updateProject(project.copy(iosOutputUrl = it))
         }
 
-        Text("Add/Remove Locales", modifier = Modifier.padding(vertical = 8.dp))
-
-        var projectLocales by remember { mutableStateOf(project.locales) }
-        projectLocales.forEach { isoCode ->
-            Chip(isoCode.value, hasClose = isoCode != project.defaultLocale, close = {
-                scope.launch { deleteLocale(db = db, project = project, locale = isoCode, updateProject = updateProject) }
-                projectLocales = projectLocales.minus(isoCode)
-            })
+        val locales = remember {
+            Locale.getAvailableLocales()
+                .filter { it.language.isNotEmpty() && it.variant.isEmpty() && it.script.isEmpty() }
+                .map(Locale::toString)
+                .sorted()
+                .map(::LocaleIsoCode)
         }
-
-        val focusManager = LocalFocusManager.current
-        val locales = remember { Locale.getAvailableLocales().sortedBy { it.toString() } }
-        var newLanguage by remember { mutableStateOf("") }
-        var newRegion by remember { mutableStateOf("") }
+        var newLocale by remember { mutableStateOf(LocaleIsoCode("")) }
+        var isDropdownExpanded by remember { mutableStateOf(false) }
+        val filteredLocales by remember(newLocale) { derivedStateOf { locales.filter { it.value.startsWith(newLocale.value, ignoreCase = true) } } }
+        var projectLocales by remember { mutableStateOf(project.locales) }
 
         Box {
-            val languages = remember { locales.filter { it.country.isEmpty() } }
-            val filteredLanguages by remember(newLanguage) {
-                derivedStateOf {
-                    languages.filter {
-                        it.language.startsWith(newLanguage, ignoreCase = true) || it.displayLanguage.startsWith(newLanguage, ignoreCase = true)
-                    }
-                }
-            }
-
-            var isDropdownExpanded by remember { mutableStateOf(false) }
             OutlinedTextField(
-                value = newLanguage,
+                value = newLocale.value,
                 onValueChange = {
-                    newLanguage = it
-                    isDropdownExpanded = it.isNotEmpty()
+                    newLocale = LocaleIsoCode(it)
+                    isDropdownExpanded = it.isNotBlank()
                 },
-                modifier = Modifier.onPressEnter {
-                    languages.find { locale ->
-                        locale.language.equals(newLanguage, ignoreCase = true) || locale.displayLanguage.equals(newLanguage, ignoreCase = true)
-                    }?.let {
-                        focusManager.moveFocus(FocusDirection.Down)
-                        isDropdownExpanded = false
+                modifier = Modifier.padding(top = 16.dp).fillMaxWidth().onPressEnter {
+                    if (newLocale !in projectLocales && newLocale in locales) {
+                        projectLocales = projectLocales.plus(newLocale)
+                        addLocale(db, project = project, locale = newLocale, updateProject = updateProject)
                     }
-                    false
+                    true
                 },
-                label = { Text("Language") },
+                label = { Text("Add locale") },
+                trailingIcon = {
+                    if (newLocale !in projectLocales && newLocale in locales) {
+                        IconButton(onClick = {
+                            projectLocales = projectLocales.plus(newLocale)
+                            addLocale(db, project = project, locale = newLocale, updateProject = updateProject)
+                        }) {
+                            Icon(Icons.Default.Add, contentDescription = "Add locale")
+                        }
+                    }
+                },
                 singleLine = true
             )
-
             DropdownMenu(
-                expanded = isDropdownExpanded && filteredLanguages.isNotEmpty(),
+                expanded = isDropdownExpanded && filteredLocales.isNotEmpty(),
                 onDismissRequest = { isDropdownExpanded = false },
                 focusable = false
             ) {
-                filteredLanguages.forEach { language ->
+                filteredLocales.take(15).forEach { isoCode ->
                     DropdownMenuItem(onClick = {
                         isDropdownExpanded = false
-                        newLanguage = language.displayLanguage
+                        newLocale = isoCode
                     }) {
-                        Text(language.displayLanguage)
-                    }
-                }
-            }
-        }
-        val regionsForLanguage by remember(newLanguage) { derivedStateOf { locales.filter { it.displayLanguage == newLanguage } } }
-        if (regionsForLanguage.isNotEmpty()) {
-            Box {
-                var isDropdownExpanded by remember { mutableStateOf(false) }
-                OutlinedTextField(
-                    value = newRegion,
-                    onValueChange = {
-                        newRegion = it
-                        isDropdownExpanded = true
-                    },
-                    modifier = Modifier.onPressEnter {
-                        regionsForLanguage.find { locale ->
-                            locale.language.equals(newLanguage, ignoreCase = true) || locale.displayLanguage.equals(newLanguage, ignoreCase = true)
-                        }?.let {
-                            focusManager.moveFocus(FocusDirection.Down)
-                            isDropdownExpanded = false
-                        }
-                        false
-                    },
-                    label = { Text("Region") },
-                    singleLine = true
-                )
-
-                val filteredRegionsForLanguage by remember {
-                    derivedStateOf {
-                        regionsForLanguage.filter {
-                            (it.country.startsWith(newRegion, ignoreCase = true) || it.displayCountry.startsWith(newRegion, ignoreCase = true)) &&
-                                    LocaleIsoCode(it.toString()) !in project.locales
-                        }
-                    }
-                }
-                DropdownMenu(
-                    expanded = isDropdownExpanded,
-                    onDismissRequest = { isDropdownExpanded = false },
-                    focusable = false
-                ) {
-                    filteredRegionsForLanguage.forEach { locale ->
-                        DropdownMenuItem(onClick = {
-                            isDropdownExpanded = false
-                            newRegion = locale.displayCountry
-                        }) {
-                            Text(locale.displayCountry)
-                        }
+                        Text(isoCode.value)
                     }
                 }
             }
         }
 
-        IconButton(onClick = {
-        }) {
-            Icon(Icons.Default.Add, contentDescription = "Add locale")
+        projectLocales.forEach { isoCode ->
+            Chip(isoCode.value, hasClose = isoCode != project.defaultLocale, close = {
+                projectLocales = projectLocales.minus(isoCode)
+                scope.launch { deleteLocale(db = db, project = project, locale = isoCode, updateProject = updateProject) }
+            })
         }
     }
 }
@@ -245,9 +194,7 @@ fun Chip(text: String, hasClose: Boolean, close: () -> Unit) {
     ) {
         Text(text, modifier = Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.body2)
         if (hasClose) {
-            IconButton(onClick = close) {
-                Icon(Icons.Default.Close, contentDescription = "Remove $text", modifier = Modifier.size(18.dp))
-            }
+            Icon(Icons.Default.Close, contentDescription = "Remove $text", modifier = Modifier.padding(end = 8.dp).size(18.dp).clickable { close() })
         }
     }
 }

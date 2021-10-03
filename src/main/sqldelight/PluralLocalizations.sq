@@ -24,8 +24,7 @@ LIMIT 1;
 selectAllWithId:
 SELECT *
 FROM PluralLocalizations
-WHERE resId = ?
-ORDER BY locale;
+WHERE resId = ?;
 
 selectAllWithLocale:
 SELECT *

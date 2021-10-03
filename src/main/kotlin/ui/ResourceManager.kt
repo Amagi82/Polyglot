@@ -251,7 +251,7 @@ fun StringRows(id: String, queries: StringLocalizationsQueries) {
                     scope.launch { queries.updateText(text = newText, resId = id, locale = loc.locale) }
                 }
             },
-            label = { Text(Locale.forLanguageTag(loc.locale.value).displayName) })
+            label = { Text("${Locale.forLanguageTag(loc.locale.value.take(2)).displayName} (${loc.locale.value})") })
     }
 }
 
