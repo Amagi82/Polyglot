@@ -1,10 +1,8 @@
 package utils.extensions
 
 import R
-import project.Platform
 import project.Quantity
 import sqldelight.PluralLocalizations
-import sqldelight.Project
 import java.net.URL
 
 fun loadResource(resource: String): URL? = R::class.java.classLoader.getResource(resource)

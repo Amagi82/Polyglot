@@ -1,45 +1,55 @@
 package project
 
 import androidx.compose.runtime.Stable
+import locales.LocaleIsoCode
 import utils.Settings
+import utils.extensions.prop
 import java.io.File
+import java.util.*
 
-//@Stable
-//data class Project(
-//    val name: String,
-//    val resources: Map<String, Resource>,
-//) {
-//    private val sourceFile get() = File(saveFolder, "$name.json").apply(File::createNewFile)
-//    private val tempFile get() = File(tempFolder, "$name.json").apply(File::createNewFile)
-//
-//    suspend fun cache() = save(file = tempFile)
-//    suspend fun save() = save(file = sourceFile)
-//
-//    private suspend fun save(file: File) {
-////        withContext(Dispatchers.IO) {
-////            file.bufferedWriter().use {
-////                runCatching { it.write(json.encodeToString(this@Project)) }
-////                    .onFailure { println("Failed to load $name.json with $it") }
-////            }
-////        }
-//    }
-//
-//    companion object {
-//        private val saveFolder = File("polyglot/saved").apply(File::mkdirs)
-//        private val tempFolder = File("polyglot/tmp").apply(File::mkdirs)
-//
-//        val all = buildList<Project> {
-////            tempFolder.listFiles()?.forEach { file ->
-////                add(json.decodeFromStream(file.inputStream()))
-////            }
-////            saveFolder.listFiles()?.forEach { file ->
-////                if (none { it.name == file.nameWithoutExtension }) {
-////                    add(json.decodeFromStream(file.inputStream()))
-////                }
-////            }
-//            sortBy { it.name }
-//        }
-//
-//        val current: Project? get() = Settings.currentProject?.let { current -> all.find { it.name == current } }
-//    }
-//}
+@Stable
+data class Project(
+    val name: String,
+    val androidOutputUrl: String = "output/android",
+    val iosOutputUrl: String = "output/ios",
+    val locales: List<LocaleIsoCode> = listOf(LocaleIsoCode("en")),
+    val defaultLocale: LocaleIsoCode = LocaleIsoCode("en")
+) {
+
+    fun save() {
+        val file = file(name)
+        val props = Properties()
+        props.setProperty(PROP_ANDROID_OUTPUT, androidOutputUrl)
+        props.setProperty(PROP_IOS_OUTPUT, iosOutputUrl)
+        props.setProperty(PROP_LOCALES, locales.joinToString(",") { it.value })
+        props.setProperty(PROP_DEFAULT_LOCALE, defaultLocale.value)
+        runCatching { props.store(file.outputStream(), "") }.onFailure {
+            println("Failed to save settings with $it")
+        }
+    }
+
+    companion object {
+        private const val PROP_ANDROID_OUTPUT = "androidOutputUrl"
+        private const val PROP_IOS_OUTPUT = "iosOutputUrl"
+        private const val PROP_LOCALES = "locales"
+        private const val PROP_DEFAULT_LOCALE = "defaultLocale"
+
+        private val folder = File("polyglot/projects").apply(File::mkdirs)
+
+        val files = folder.listFiles()?.filter { it.extension == "properties" }.orEmpty()
+
+        private fun file(name: String) = File(folder, "${name}.properties").apply(File::createNewFile)
+
+        fun load(projectName: String): Project {
+            val file = file(projectName)
+            val props = Properties().apply { load(file.inputStream()) }
+            return Project(
+                name = projectName,
+                androidOutputUrl = props.getProperty(PROP_ANDROID_OUTPUT, "output/android"),
+                iosOutputUrl = props.getProperty(PROP_IOS_OUTPUT, "output/ios"),
+                locales = props.getProperty(PROP_LOCALES)?.split(",")?.map(::LocaleIsoCode).orEmpty(),
+                defaultLocale = LocaleIsoCode(props.getProperty(PROP_DEFAULT_LOCALE, "en"))
+            )
+        }
+    }
+}

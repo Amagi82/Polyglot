@@ -5,9 +5,9 @@ import project.Platform
 import project.Quantity
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import project.Project
 import sqldelight.ArrayLocalizations
 import sqldelight.PluralLocalizations
-import sqldelight.Project
 import sqldelight.StringLocalizations
 import utils.extensions.quantity
 import javax.xml.transform.Transformer
@@ -51,7 +51,7 @@ class AndroidResourceGenerator(
      */
     override fun addPlurals(res: PluralLocalizations) {
         resourceElement.appendChild(document.createElement("plurals").apply {
-            setAttribute("name", res.id)
+            setAttribute("name", res.resId)
             Quantity.values().forEach { quantity ->
                 val text = res.quantity(quantity) ?: return@forEach
                 appendChild(document.createElement("item").apply {
@@ -67,7 +67,7 @@ class AndroidResourceGenerator(
         if (txt.isBlank()) return
         /** <string name="dragon">Trogdor the Burninator</string> */
         resourceElement.appendChild(document.createElement("string").apply {
-            setAttribute("name", res.id)
+            setAttribute("name", res.resId)
             appendChild(document.createTextNode(txt))
         })
     }
@@ -80,7 +80,7 @@ class AndroidResourceGenerator(
      */
     override fun addStringArray(res: ArrayLocalizations) {
         resourceElement.appendChild(document.createElement("string-array").apply {
-            setAttribute("name", res.id)
+            setAttribute("name", res.resId)
             for (text in res.array) {
                 appendChild(document, "item", text.sanitized())
             }

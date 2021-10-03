@@ -2,12 +2,11 @@ import locales.LocaleIsoCode;
 import kotlin.collections.List;
 
 CREATE TABLE ArrayLocalizations (
-  id TEXT NOT NULL,
-  project TEXT NOT NULL,
+  resId TEXT NOT NULL,
   locale TEXT AS LocaleIsoCode NOT NULL,
   array TEXT AS List<String> NOT NULL,
-  PRIMARY KEY(id, project, locale),
-  FOREIGN KEY(id, project) REFERENCES Resource(id, project)
+  PRIMARY KEY(resId, locale),
+  FOREIGN KEY(resId) REFERENCES Resource(id)
   ON UPDATE CASCADE
   ON DELETE CASCADE
 );
@@ -15,19 +14,19 @@ CREATE TABLE ArrayLocalizations (
 select:
 SELECT array
 FROM ArrayLocalizations
-WHERE id = ? AND project = ? AND locale = ?;
+WHERE resId = ? AND locale = ?;
 
 selectAllWithId:
 SELECT *
 FROM ArrayLocalizations
-WHERE id = ? AND project = ?
+WHERE resId = ?
 ORDER BY locale;
 
 selectAllWithLocale:
 SELECT *
 FROM ArrayLocalizations
-WHERE locale = ? AND project = ?
-ORDER BY id;
+WHERE locale = ?
+ORDER BY resId;
 
 insert:
 INSERT INTO ArrayLocalizations
@@ -36,17 +35,17 @@ VALUES ?;
 update:
 UPDATE ArrayLocalizations
 SET array = ?
-WHERE id = ? AND project = ? AND locale = ?;
+WHERE resId = ? AND locale = ?;
 
 updateLocale:
 UPDATE ArrayLocalizations
 SET locale = :newlocale
-WHERE id = ? AND project = ? AND locale = :oldlocale;
+WHERE resId = ? AND locale = :oldlocale;
 
 delete:
 DELETE FROM ArrayLocalizations
-WHERE id = ? AND project = ? AND locale = ?;
+WHERE resId = ? AND locale = ?;
 
 deleteLocale:
 DELETE FROM ArrayLocalizations
-WHERE project = ? AND locale = ?;
+WHERE locale = ?;

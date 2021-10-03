@@ -1,14 +1,13 @@
 import locales.LocaleIsoCode;
 
 CREATE TABLE StringLocalizations (
-  _id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  resId INTEGER NOT NULL,
+  resId TEXT NOT NULL,
   locale TEXT AS LocaleIsoCode NOT NULL,
   text TEXT NOT NULL,
-  FOREIGN KEY(resId) REFERENCES Resource(_id)
+  PRIMARY KEY(resId, locale),
+  FOREIGN KEY(resId) REFERENCES Resource(id)
   ON UPDATE CASCADE
-  ON DELETE CASCADE,
-  UNIQUE(resId, locale)
+  ON DELETE CASCADE
 );
 
 select:
@@ -17,7 +16,7 @@ FROM StringLocalizations
 WHERE resId = ? AND locale = ?
 LIMIT 1;
 
-selectAllWithResId:
+selectAllWithId:
 SELECT *
 FROM StringLocalizations
 WHERE resId = ?
@@ -26,7 +25,8 @@ ORDER BY locale;
 selectAllWithLocale:
 SELECT *
 FROM StringLocalizations
-WHERE locale = ? AND resId = ?;
+WHERE locale = ?
+ORDER BY resId;
 
 insert:
 INSERT INTO StringLocalizations
@@ -45,3 +45,7 @@ WHERE resId = ? AND locale = :oldlocale;
 delete:
 DELETE FROM StringLocalizations
 WHERE resId = ? AND locale = ?;
+
+deleteLocale:
+DELETE FROM StringLocalizations
+WHERE locale = ?;
