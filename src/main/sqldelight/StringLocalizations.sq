@@ -19,8 +19,7 @@ LIMIT 1;
 selectAllWithId:
 SELECT *
 FROM StringLocalizations
-WHERE resId = ?
-ORDER BY locale;
+WHERE resId = ?;
 
 selectAllWithLocale:
 SELECT *
