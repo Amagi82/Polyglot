@@ -1,7 +1,5 @@
 package utils
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 import kotlin.properties.ReadWriteProperty
@@ -22,12 +20,9 @@ object Settings {
             override fun getValue(thisRef: Settings, property: KProperty<*>): T = props.getProperty(property.name).convert()
             override fun setValue(thisRef: Settings, property: KProperty<*>, value: T) {
                 props.setProperty(property.name, "$value")
+                runCatching { props.store(file.outputStream(), "Polyglot settings") }.onFailure {
+                    println("Failed to save settings with $it")
+                }
             }
         }
-
-    suspend fun save() = withContext(Dispatchers.IO) {
-        runCatching { props.store(file.outputStream(), "Polyglot settings") }.onFailure {
-            println("Failed to save settings with $it")
-        }
-    }
 }

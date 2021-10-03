@@ -4,9 +4,9 @@ import kotlin.collections.List;
 CREATE TABLE ArrayLocalizations (
   id TEXT NOT NULL,
   project TEXT NOT NULL,
-  lang TEXT AS LocaleIsoCode NOT NULL,
+  locale TEXT AS LocaleIsoCode NOT NULL,
   array TEXT AS List<String> NOT NULL,
-  PRIMARY KEY(id, project, lang),
+  PRIMARY KEY(id, project, locale),
   FOREIGN KEY(id, project) REFERENCES Resource(id, project)
   ON UPDATE CASCADE
   ON DELETE CASCADE
@@ -15,18 +15,19 @@ CREATE TABLE ArrayLocalizations (
 select:
 SELECT array
 FROM ArrayLocalizations
-WHERE id = ? AND project = ? AND lang = ?;
+WHERE id = ? AND project = ? AND locale = ?;
 
-selectAll:
+selectAllWithId:
 SELECT *
 FROM ArrayLocalizations
 WHERE id = ? AND project = ?
-ORDER BY lang;
+ORDER BY locale;
 
-selectLocales:
-SELECT DISTINCT lang
+selectAllWithLocale:
+SELECT *
 FROM ArrayLocalizations
-WHERE id = ? AND project = ?;
+WHERE locale = ? AND project = ?
+ORDER BY id;
 
 insert:
 INSERT INTO ArrayLocalizations
@@ -35,17 +36,17 @@ VALUES ?;
 update:
 UPDATE ArrayLocalizations
 SET array = ?
-WHERE id = ? AND project = ? AND lang = ?;
+WHERE id = ? AND project = ? AND locale = ?;
 
 updateLocale:
 UPDATE ArrayLocalizations
-SET lang = :newLang
-WHERE id = ? AND project = ? AND lang = :oldLang;
+SET locale = :newlocale
+WHERE id = ? AND project = ? AND locale = :oldlocale;
 
 delete:
 DELETE FROM ArrayLocalizations
-WHERE id = ? AND project = ? AND lang = ?;
+WHERE id = ? AND project = ? AND locale = ?;
 
 deleteLocale:
 DELETE FROM ArrayLocalizations
-WHERE project = ? AND lang = ?;
+WHERE project = ? AND locale = ?;

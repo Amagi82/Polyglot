@@ -1,31 +1,32 @@
 import locales.LocaleIsoCode;
 
 CREATE TABLE StringLocalizations (
-  id TEXT NOT NULL,
-  project TEXT NOT NULL,
-  lang TEXT AS LocaleIsoCode NOT NULL,
+  _id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  resId INTEGER NOT NULL,
+  locale TEXT AS LocaleIsoCode NOT NULL,
   text TEXT NOT NULL,
-  PRIMARY KEY(id, project, lang),
-  FOREIGN KEY(id, project) REFERENCES Resource(id, project)
+  FOREIGN KEY(resId) REFERENCES Resource(_id)
   ON UPDATE CASCADE
-  ON DELETE CASCADE
+  ON DELETE CASCADE,
+  UNIQUE(resId, locale)
 );
 
 select:
 SELECT text
 FROM StringLocalizations
-WHERE id = ? AND project = ? AND lang = ?
+WHERE resId = ? AND locale = ?
 LIMIT 1;
 
-selectAll:
+selectAllWithResId:
 SELECT *
 FROM StringLocalizations
-WHERE id = ? AND project = ?;
+WHERE resId = ?
+ORDER BY locale;
 
-selectLocales:
-SELECT DISTINCT lang
+selectAllWithLocale:
+SELECT *
 FROM StringLocalizations
-WHERE id = ? AND project = ?;
+WHERE locale = ? AND resId = ?;
 
 insert:
 INSERT INTO StringLocalizations
@@ -34,17 +35,13 @@ VALUES ?;
 updateText:
 UPDATE StringLocalizations
 SET text = ?
-WHERE id = ? AND project = ? AND lang = ?;
+WHERE resId = ? AND locale = ?;
 
 updateLocale:
 UPDATE StringLocalizations
-SET lang = :newLang
-WHERE id = ? AND project = ? AND lang = :oldLang;
+SET locale = :newlocale
+WHERE resId = ? AND locale = :oldlocale;
 
 delete:
 DELETE FROM StringLocalizations
-WHERE id = ? AND project = ? AND lang = ?;
-
-deleteLocale:
-DELETE FROM StringLocalizations
-WHERE project = ? AND lang = ?;
+WHERE resId = ? AND locale = ?;
