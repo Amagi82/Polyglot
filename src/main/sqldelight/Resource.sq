@@ -3,15 +3,17 @@ import project.Platform;
 import kotlin.collections.List;
 
 CREATE TABLE Resource (
+  _id INTEGER AS Int NOT NULL PRIMARY KEY AUTOINCREMENT,
   id TEXT NOT NULL,
   project TEXT NOT NULL,
   type TEXT AS ResourceType NOT NULL,
   platforms TEXT AS List<Platform> NOT NULL,
-  PRIMARY KEY(id, project),
   FOREIGN KEY(project) REFERENCES Project(name)
   ON UPDATE CASCADE
   ON DELETE CASCADE
 );
+
+CREATE UNIQUE INDEX resIds ON Resource(project, id);
 
 exists:
 SELECT EXISTS(

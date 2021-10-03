@@ -7,7 +7,7 @@ import locales.LocaleIsoCode
 import project.Platform
 import sqldelight.*
 
-private val langAdapter = object : ColumnAdapter<LocaleIsoCode, String> {
+private val localeIsoCodeAdapter = object : ColumnAdapter<LocaleIsoCode, String> {
     override fun decode(databaseValue: String): LocaleIsoCode = LocaleIsoCode(databaseValue)
     override fun encode(value: LocaleIsoCode): String = value.value
 }
@@ -27,13 +27,11 @@ private val localesAdapter = object : ColumnAdapter<List<LocaleIsoCode>, String>
     override fun encode(value: List<LocaleIsoCode>): String = value.joinToString(",") { it.value }
 }
 
-val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY + "polyglot/polyglot.db")
-
 val polyglotDatabase = PolyglotDatabase(
-    driver = driver,
-    ArrayLocalizationsAdapter = ArrayLocalizations.Adapter(langAdapter = langAdapter, arrayAdapter = arrayAdapter),
-    PluralLocalizationsAdapter = PluralLocalizations.Adapter(langAdapter = langAdapter),
-    ProjectAdapter = Project.Adapter(localesAdapter = localesAdapter),
+    driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY + "polyglot/polyglot.db"),
+    ArrayLocalizationsAdapter = ArrayLocalizations.Adapter(localeAdapter = localeIsoCodeAdapter, arrayAdapter = arrayAdapter),
+    PluralLocalizationsAdapter = PluralLocalizations.Adapter(localeAdapter = localeIsoCodeAdapter),
+    ProjectAdapter = Project.Adapter(localesAdapter = localesAdapter, defaultLocaleAdapter = localeIsoCodeAdapter),
     ResourceAdapter = Resource.Adapter(platformsAdapter = platformsAdapter, typeAdapter = EnumColumnAdapter()),
-    StringLocalizationsAdapter = StringLocalizations.Adapter(langAdapter = langAdapter)
+    StringLocalizationsAdapter = StringLocalizations.Adapter(localeAdapter = localeIsoCodeAdapter)
 )

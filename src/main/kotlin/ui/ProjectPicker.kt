@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
@@ -19,6 +21,7 @@ import kotlinx.coroutines.launch
 import locales.LocaleIsoCode
 import sqldelight.Project
 import sqldelight.ProjectQueries
+import ui.utils.onPressEnter
 
 @Composable
 fun ProjectPicker(projectQueries: ProjectQueries, onProjectSelected: (Project) -> Unit) {
@@ -54,32 +57,38 @@ fun ProjectPicker(projectQueries: ProjectQueries, onProjectSelected: (Project) -
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 private fun ProjectPickerCreateDialog(projectQueries: ProjectQueries, projects: List<Project>, onProjectSelected: (Project) -> Unit, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     var newProjectName by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf("") }
 
+    val onClickCreate: () -> Unit = {
+        when {
+            newProjectName.isBlank() -> errorMsg = "Name required"
+            projects.any { it.name == newProjectName } -> errorMsg = "Project already exists"
+            else -> scope.launch {
+                val newProject = Project(
+                    name = newProjectName,
+                    androidOutputUrl = "output/Android",
+                    iosOutputUrl = "output/iOS",
+                    locales = listOf(LocaleIsoCode("en")), defaultLocale = LocaleIsoCode("en")
+                )
+                scope.launch { projectQueries.insert(newProject) }
+                onProjectSelected(newProject)
+            }
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                when {
-                    newProjectName.isBlank() -> errorMsg = "Name required"
-                    projects.any { it.name == newProjectName } -> errorMsg = "Project already exists"
-                    else -> scope.launch {
-                        val newProject = Project(newProjectName, null, null, listOf(LocaleIsoCode("en")))
-                        scope.launch { projectQueries.insert(newProject) }
-                        onProjectSelected(newProject)
-                    }
-                }
-            }) { Text("Create") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(onClick = onClickCreate, enabled = newProjectName.isNotBlank()) { Text("Create") } },
+        dismissButton = { if (projects.isNotEmpty()) TextButton(onClick = onDismiss) { Text("Cancel") } },
         title = { Text("Create new project") },
         text = {
             Column {
+                val requester = FocusRequester()
                 OutlinedTextField(
                     value = newProjectName,
                     onValueChange = {
@@ -88,11 +97,18 @@ private fun ProjectPickerCreateDialog(projectQueries: ProjectQueries, projects: 
                             errorMsg = ""
                         }
                     },
+                    modifier = Modifier.onPressEnter { newProjectName.isNotBlank().also { isValid -> if (isValid) onClickCreate() } }.focusRequester(requester),
                     label = { Text("Name") },
-                    isError = errorMsg.isNotEmpty()
+                    isError = errorMsg.isNotEmpty(),
+                    singleLine = true
                 )
                 if (errorMsg.isNotEmpty()) {
                     Text(errorMsg, color = MaterialTheme.colors.error)
+                }
+
+                // OutlinedTextField doesn't get focus automatically
+                LaunchedEffect("reqFocus") {
+                    requester.requestFocus()
                 }
             }
         })

@@ -1,11 +1,12 @@
-import locales.LocaleIsoCode;
 import kotlin.collections.List;
+import locales.LocaleIsoCode;
 
 CREATE TABLE Project (
   name TEXT NOT NULL PRIMARY KEY,
-  androidOutputUrl TEXT,
-  iosOutputUrl TEXT,
-  locales TEXT AS List<LocaleIsoCode> NOT NULL
+  androidOutputUrl TEXT NOT NULL,
+  iosOutputUrl TEXT NOT NULL,
+  locales TEXT AS List<LocaleIsoCode> NOT NULL,
+  defaultLocale TEXT AS LocaleIsoCode NOT NULL DEFAULT "en"
 );
 
 select:
@@ -31,6 +32,16 @@ WHERE name = :oldName;
 updateLocales:
 UPDATE Project
 SET locales = ?
+WHERE name = ?;
+
+updateAndroidOutputFolder:
+UPDATE Project
+SET androidOutputUrl = ?
+WHERE name = ?;
+
+updateIOSOutputFolder:
+UPDATE Project
+SET iosOutputUrl = ?
 WHERE name = ?;
 
 delete:

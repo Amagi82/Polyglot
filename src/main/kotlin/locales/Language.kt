@@ -8,8 +8,8 @@ import utils.extensions.loadResource
  * Android: values.en, values.es, etc
  * iOS: en.lproj, es.lproj, etc
  */
-@JvmInline
-value class LanguageIsoCode(val value: String)
+//@JvmInline
+//value class LanguageIsoCode(val value: String)
 
 /**
  * @param isoCode - ISO 639 language codes + optional ISO 3166 country codes.
@@ -26,29 +26,29 @@ value class LanguageIsoCode(val value: String)
  *
  * English, Spanish, French, and German have been added for convenience.
  */
-@Stable
-data class Language(val isoCode: LanguageIsoCode, val name: String) {
-    init {
-        when {
-            isoCode.value.isBlank() -> throw IllegalArgumentException("locales.Language isoCode cannot be blank")
-            isoCode.value.lowercase() != isoCode.value -> throw IllegalArgumentException("isoCode $isoCode should contain lower case letters only")
-            isoCode.value.length == 2 -> Unit // Good
-            isoCode.value.length == 5 && isoCode.value[2] == '_' -> Unit // Good
-            else -> throw IllegalArgumentException("Invalid language isoCode: $isoCode. Should be in the format \"en\" or \"en_us\"")
-        }
-    }
-
-    companion object {
-//        operator fun get(isoCode: LanguageIsoCode) = Language(isoCode = isoCode, name = names[isoCode]!!)
-
-        /**
-         * Name of language from language isoCode, e.g. ["en"] = English, ["fr"] = French
-         */
-//        val names = loadResource<Map<LanguageIsoCode, String>>("languages.json")
-
-        /**
-         * List of regions where a language is spoken
-         */
-//        val regions = loadResource<Map<LanguageIsoCode, List<RegionIsoCode>>>("language_regions.json")
-    }
-}
+//@Stable
+//data class Language(val isoCode: LanguageIsoCode, val name: String) {
+//    init {
+//        when {
+//            isoCode.value.isBlank() -> throw IllegalArgumentException("locales.Language isoCode cannot be blank")
+//            isoCode.value.lowercase() != isoCode.value -> throw IllegalArgumentException("isoCode $isoCode should contain lower case letters only")
+//            isoCode.value.length == 2 -> Unit // Good
+//            isoCode.value.length == 5 && isoCode.value[2] == '_' -> Unit // Good
+//            else -> throw IllegalArgumentException("Invalid language isoCode: $isoCode. Should be in the format \"en\" or \"en_us\"")
+//        }
+//    }
+//
+//    companion object {
+////        operator fun get(isoCode: LanguageIsoCode) = Language(isoCode = isoCode, name = names[isoCode]!!)
+//
+//        /**
+//         * Name of language from language isoCode, e.g. ["en"] = English, ["fr"] = French
+//         */
+////        val names = loadResource<Map<LanguageIsoCode, String>>("languages.json")
+//
+//        /**
+//         * List of regions where a language is spoken
+//         */
+////        val regions = loadResource<Map<LanguageIsoCode, List<RegionIsoCode>>>("language_regions.json")
+//    }
+//}

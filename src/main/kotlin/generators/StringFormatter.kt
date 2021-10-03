@@ -16,7 +16,7 @@ import project.Platform
  */
 class StringFormatter(
     val arg: String,
-    val platforms: List<Platform>? = null,
+    val platforms: List<Platform>,
     val isIndexed: Boolean = false,
     val formatter: (index: Int, isXml: Boolean) -> String
 ) {
@@ -27,7 +27,7 @@ class StringFormatter(
     companion object {
         val defaultFormatters: List<StringFormatter> by lazy {
             listOf(
-                StringFormatter("\n") { _, _ -> "\\n" },
+                StringFormatter("\n", Platform.ALL) { _, _ -> "\\n" },
                 StringFormatter("\'", Platform.ANDROID_ONLY) { _, _ -> "\\'" },
                 StringFormatter("%s", Platform.ANDROID_ONLY, isIndexed = true) { index, _ -> "%$index\$s" },
                 StringFormatter("%d", Platform.ANDROID_ONLY, isIndexed = true) { index, _ -> "%$index\$d" },
