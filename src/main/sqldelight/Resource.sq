@@ -3,36 +3,27 @@ import project.Platform;
 import kotlin.collections.List;
 
 CREATE TABLE Resource (
-  _id INTEGER AS Int NOT NULL PRIMARY KEY AUTOINCREMENT,
-  id TEXT NOT NULL,
-  project TEXT NOT NULL,
+  id TEXT NOT NULL PRIMARY KEY,
   type TEXT AS ResourceType NOT NULL,
-  platforms TEXT AS List<Platform> NOT NULL,
-  FOREIGN KEY(project) REFERENCES Project(name)
-  ON UPDATE CASCADE
-  ON DELETE CASCADE
+  platforms TEXT AS List<Platform> NOT NULL
 );
-
-CREATE UNIQUE INDEX resIds ON Resource(project, id);
 
 exists:
 SELECT EXISTS(
 SELECT 1
 FROM Resource
 WHERE id = ?
-AND project = ?
 );
 
 select:
 SELECT *
 FROM Resource
-WHERE id = ? AND project = ?
+WHERE id = ?
 LIMIT 1;
 
 selectAll:
 SELECT *
 FROM Resource
-WHERE project = ?
 ORDER BY id;
 
 insert:
@@ -42,13 +33,13 @@ VALUES ?;
 updateId:
 UPDATE Resource
 SET id = :newId
-WHERE id = :oldId AND project = ?;
+WHERE id = :oldId;
 
 updatePlatforms:
 UPDATE Resource
 SET platforms = ?
-WHERE id = ? AND project = ?;
+WHERE id = ?;
 
 delete:
 DELETE FROM Resource
-WHERE id = ? AND project = ?;
+WHERE id = ?;

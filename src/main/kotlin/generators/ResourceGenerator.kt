@@ -4,9 +4,9 @@ import data.PolyglotDatabase
 import project.Platform
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import project.Project
 import sqldelight.ArrayLocalizations
 import sqldelight.PluralLocalizations
-import sqldelight.Project
 import sqldelight.StringLocalizations
 import java.awt.Desktop
 import java.io.File
@@ -81,32 +81,19 @@ abstract class ResourceGenerator {
             db: PolyglotDatabase,
             platforms: List<Platform> = Platform.ALL,
             formatters: List<StringFormatter> = StringFormatter.defaultFormatters,
-            openFolders: Boolean = true,
         ) {
             val androidFormatters = formatters.filter { Platform.ANDROID in it.platforms }
             val iosFormatters = formatters.filter { Platform.IOS in it.platforms }
             for (localeIsoCode in project.locales) {
-                val strings = db.stringLocalizationsQueries.selectAllWithLocale(localeIsoCode, project.name).executeAsList()
-                val plurals = db.pluralLocalizationsQueries.selectAllWithLocale(localeIsoCode, project.name).executeAsList()
-                val arrays = db.arrayLocalizationsQueries.selectAllWithLocale(localeIsoCode, project.name).executeAsList()
+                val strings = db.stringLocalizationsQueries.selectAllWithLocale(localeIsoCode).executeAsList()
+                val plurals = db.pluralLocalizationsQueries.selectAllWithLocale(localeIsoCode).executeAsList()
+                val arrays = db.arrayLocalizationsQueries.selectAllWithLocale(localeIsoCode).executeAsList()
                 for (platform in platforms) {
                     when (platform) {
                         Platform.ANDROID -> AndroidResourceGenerator(project, localeIsoCode, androidFormatters, strings, plurals, arrays)
                         Platform.IOS -> IosResourceGenerator(project, localeIsoCode, iosFormatters, strings, plurals, arrays)
                     }.generateFiles()
                 }
-            }
-            if (openFolders) {
-                project.androidOutputUrl.let(::File).let(::openFolder)
-                project.iosOutputUrl.let(::File).let(::openFolder)
-            }
-        }
-
-        private fun openFolder(folder: File) {
-            try {
-                Desktop.getDesktop().open(folder)
-            } catch (e: Exception) {
-                System.err.println("unable to open folder: $e")
             }
         }
     }

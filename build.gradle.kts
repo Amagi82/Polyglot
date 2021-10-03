@@ -52,7 +52,7 @@ sqldelight{
     database("PolyglotDatabase"){
         packageName = "data"
         sourceFolders = listOf("")
-        schemaOutputDirectory = file("src/main/sqldelight/databases")
+        schemaOutputDirectory = file("build/sqldelight/schemas")
     }
     linkSqlite = true
 }

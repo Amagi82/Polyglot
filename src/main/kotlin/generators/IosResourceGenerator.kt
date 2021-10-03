@@ -5,9 +5,9 @@ import project.Platform
 import project.Quantity
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import project.Project
 import sqldelight.ArrayLocalizations
 import sqldelight.PluralLocalizations
-import sqldelight.Project
 import sqldelight.StringLocalizations
 import utils.extensions.quantity
 import java.io.*
@@ -83,12 +83,12 @@ class IosResourceGenerator(
     override fun addString(res: StringLocalizations) {
         // "identifier" = "Localized text";
         val txt = res.text.sanitized(isXml = false)
-        stringsWriter.appendLine("\"${res.id}\" = \"$txt\";")
+        stringsWriter.appendLine("\"${res.resId}\" = \"$txt\";")
         stringReferences?.apply {
             appendLine()
             appendReferenceComment(txt)
-            if (txt.contains('%')) appendReferenceFormattingArgs(res.id, txt, false)
-            else appendLine("\t\tstatic let ${res.id} = \"${res.id}\".localized()")
+            if (txt.contains('%')) appendReferenceFormattingArgs(res.resId, txt, false)
+            else appendLine("\t\tstatic let ${res.resId} = \"${res.resId}\".localized()")
         }
     }
 
@@ -112,7 +112,7 @@ class IosResourceGenerator(
      */
     override fun addPlurals(res: PluralLocalizations) {
         var exampleText: String? = null
-        pluralsResourceElement.appendChild(pluralsDocument, KEY, res.id)
+        pluralsResourceElement.appendChild(pluralsDocument, KEY, res.resId)
         pluralsResourceElement.appendChild(pluralsDocument.createElement("dict").apply {
             appendChild(pluralsDocument, KEY, "NSStringLocalizedFormatKey")
             appendChild(pluralsDocument, STRING, "%#@value@")
@@ -133,7 +133,7 @@ class IosResourceGenerator(
         pluralReferences?.apply {
             appendLine()
             appendReferenceComment(exampleText.orEmpty())
-            appendReferenceFormattingArgs(res.id, exampleText.orEmpty(), true)
+            appendReferenceFormattingArgs(res.resId, exampleText.orEmpty(), true)
         }
     }
 
@@ -145,7 +145,7 @@ class IosResourceGenerator(
      * </array>
      */
     override fun addStringArray(res: ArrayLocalizations) {
-        arraysResourceElement.appendChild(arraysDocument, KEY, res.id)
+        arraysResourceElement.appendChild(arraysDocument, KEY, res.resId)
         arraysResourceElement.appendChild(arraysDocument.createElement("array").apply {
             for (text in res.array) {
                 appendChild(arraysDocument, STRING, text.sanitized(isXml = true))
@@ -153,7 +153,7 @@ class IosResourceGenerator(
         })
         stringArrayReferences?.apply {
             appendLine()
-            appendLine("\t\tstatic let ${res.id} = \"${res.id}\".localizedArray()")
+            appendLine("\t\tstatic let ${res.resId} = \"${res.resId}\".localizedArray()")
         }
     }
 

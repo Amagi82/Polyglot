@@ -1,8 +1,7 @@
 import locales.LocaleIsoCode;
 
 CREATE TABLE PluralLocalizations (
-  id TEXT NOT NULL,
-  project TEXT NOT NULL,
+  resId TEXT NOT NULL,
   locale TEXT AS LocaleIsoCode NOT NULL,
   zero TEXT,
   one TEXT NOT NULL,
@@ -10,8 +9,8 @@ CREATE TABLE PluralLocalizations (
   few TEXT,
   many TEXT,
   other TEXT NOT NULL,
-  PRIMARY KEY(id, project, locale),
-  FOREIGN KEY(id, project) REFERENCES Resource(id, project)
+  PRIMARY KEY(resId, locale),
+  FOREIGN KEY(resId) REFERENCES Resource(id)
   ON UPDATE CASCADE
   ON DELETE CASCADE
 );
@@ -19,25 +18,25 @@ CREATE TABLE PluralLocalizations (
 select:
 SELECT *
 FROM PluralLocalizations
-WHERE id = ? AND project = ? AND locale = ?
+WHERE resId = ? AND locale = ?
 LIMIT 1;
 
 selectAllWithId:
 SELECT *
 FROM PluralLocalizations
-WHERE id = ? AND project = ?
+WHERE resId = ?
 ORDER BY locale;
 
 selectAllWithLocale:
 SELECT *
 FROM PluralLocalizations
-WHERE locale = ? AND project = ?
-ORDER BY id;
+WHERE locale = ?
+ORDER BY resId;
 
 selectLocales:
 SELECT DISTINCT locale
 FROM PluralLocalizations
-WHERE id = ? AND project = ?;
+WHERE resId = ?;
 
 insert:
 INSERT INTO PluralLocalizations
@@ -46,42 +45,42 @@ VALUES ?;
 updateZero:
 UPDATE PluralLocalizations
 SET zero = ?
-WHERE id = ? AND project = ? AND locale = ?;
+WHERE resId = ? AND locale = ?;
 
 updateOne:
 UPDATE PluralLocalizations
 SET one = ?
-WHERE id = ? AND project = ? AND locale = ?;
+WHERE resId = ? AND locale = ?;
 
 updateTwo:
 UPDATE PluralLocalizations
 SET two = ?
-WHERE id = ? AND project = ? AND locale = ?;
+WHERE resId = ? AND locale = ?;
 
 updateFew:
 UPDATE PluralLocalizations
 SET few = ?
-WHERE id = ? AND project = ? AND locale = ?;
+WHERE resId = ? AND locale = ?;
 
 updateMany:
 UPDATE PluralLocalizations
 SET many = ?
-WHERE id = ? AND project = ? AND locale = ?;
+WHERE resId = ? AND locale = ?;
 
 updateOther:
 UPDATE PluralLocalizations
 SET other = ?
-WHERE id = ? AND project = ? AND locale = ?;
+WHERE resId = ? AND locale = ?;
 
 updateLocale:
 UPDATE PluralLocalizations
 SET locale = :newlocale
-WHERE id = ? AND project = ? AND locale = :oldlocale;
+WHERE resId = ? AND locale = :oldlocale;
 
 delete:
 DELETE FROM PluralLocalizations
-WHERE id = ? AND project = ? AND locale = ?;
+WHERE resId = ? AND locale = ?;
 
 deleteLocale:
 DELETE FROM PluralLocalizations
-WHERE project = ? AND locale = ?;
+WHERE locale = ?;

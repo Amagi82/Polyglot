@@ -1,5 +1,6 @@
 package utils
 
+import utils.extensions.prop
 import java.io.File
 import java.util.*
 import kotlin.properties.ReadWriteProperty
@@ -11,18 +12,12 @@ object Settings {
         load(file.inputStream())
     }
 
-    var isDarkTheme: Boolean by prop { toBoolean() }
-    var currentProject: String? by prop { this }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T> prop(convert: String?.() -> T): ReadWriteProperty<Settings, T> =
-        object : ReadWriteProperty<Settings, T> {
-            override fun getValue(thisRef: Settings, property: KProperty<*>): T = props.getProperty(property.name).convert()
-            override fun setValue(thisRef: Settings, property: KProperty<*>, value: T) {
-                props.setProperty(property.name, "$value")
-                runCatching { props.store(file.outputStream(), "Polyglot settings") }.onFailure {
-                    println("Failed to save settings with $it")
-                }
-            }
+    private fun save() {
+        runCatching { props.store(Settings.file.outputStream(), "Polyglot settings") }.onFailure {
+            println("Failed to save settings with $it")
         }
+    }
+
+    var isDarkTheme: Boolean by props.prop(::save) { toBoolean() }
+    var currentProject: String? by props.prop(::save) { this }
 }

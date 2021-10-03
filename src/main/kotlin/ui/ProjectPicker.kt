@@ -15,17 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
-import com.squareup.sqldelight.runtime.coroutines.asFlow
-import com.squareup.sqldelight.runtime.coroutines.mapToList
-import kotlinx.coroutines.launch
-import locales.LocaleIsoCode
-import sqldelight.Project
-import sqldelight.ProjectQueries
+import project.Project
 import ui.utils.onPressEnter
+import java.io.File
 
 @Composable
-fun ProjectPicker(projectQueries: ProjectQueries, onProjectSelected: (Project) -> Unit) {
-    val projects: List<Project> by projectQueries.selectAll().asFlow().mapToList().collectAsState(listOf())
+fun ProjectPicker(onProjectSelected: (Project) -> Unit) {
+    val projects by remember { derivedStateOf { Project.files } }
     var showDialog by remember { mutableStateOf(projects.isEmpty()) }
 
     Scaffold(
@@ -41,14 +37,13 @@ fun ProjectPicker(projectQueries: ProjectQueries, onProjectSelected: (Project) -
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             projects.forEach { project ->
-                Button(onClick = { onProjectSelected(project) }) {
-                    Text(project.name)
+                Button(onClick = { onProjectSelected(Project.load(project.nameWithoutExtension)) }) {
+                    Text(project.nameWithoutExtension)
                 }
             }
 
             if (showDialog) {
                 ProjectPickerCreateDialog(
-                    projectQueries = projectQueries,
                     projects = projects,
                     onProjectSelected = onProjectSelected,
                     onDismiss = { showDialog = false })
@@ -59,8 +54,7 @@ fun ProjectPicker(projectQueries: ProjectQueries, onProjectSelected: (Project) -
 
 @OptIn(ExperimentalMaterialApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
-private fun ProjectPickerCreateDialog(projectQueries: ProjectQueries, projects: List<Project>, onProjectSelected: (Project) -> Unit, onDismiss: () -> Unit) {
-    val scope = rememberCoroutineScope()
+private fun ProjectPickerCreateDialog(projects: List<File>, onProjectSelected: (Project) -> Unit, onDismiss: () -> Unit) {
     var newProjectName by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf("") }
 
@@ -68,16 +62,7 @@ private fun ProjectPickerCreateDialog(projectQueries: ProjectQueries, projects: 
         when {
             newProjectName.isBlank() -> errorMsg = "Name required"
             projects.any { it.name == newProjectName } -> errorMsg = "Project already exists"
-            else -> scope.launch {
-                val newProject = Project(
-                    name = newProjectName,
-                    androidOutputUrl = "output/Android",
-                    iosOutputUrl = "output/iOS",
-                    locales = listOf(LocaleIsoCode("en")), defaultLocale = LocaleIsoCode("en")
-                )
-                scope.launch { projectQueries.insert(newProject) }
-                onProjectSelected(newProject)
-            }
+            else -> onProjectSelected(Project(name = newProjectName))
         }
     }
 
