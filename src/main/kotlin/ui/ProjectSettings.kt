@@ -1,27 +1,22 @@
 package ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import data.PolyglotDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
+import locales.Locale
 import locales.LocaleIsoCode
 import project.Platform
 import project.Project
@@ -31,7 +26,6 @@ import sqldelight.PluralLocalizations
 import sqldelight.StringLocalizations
 import ui.utils.onPressEnter
 import java.io.File
-import java.util.*
 import javax.swing.JFileChooser
 
 
@@ -54,13 +48,7 @@ fun ProjectSettings(db: PolyglotDatabase, project: Project, updateProject: (Proj
             updateProject(project.copy(iosOutputUrl = it))
         }
 
-        val locales = remember {
-            Locale.getAvailableLocales()
-                .filter { it.language.isNotEmpty() && it.variant.isEmpty() && it.script.isEmpty() }
-                .map(Locale::toString)
-                .sorted()
-                .map(::LocaleIsoCode)
-        }
+        val locales = remember { Locale.all.keys }
         var newLocale by remember { mutableStateOf(LocaleIsoCode("")) }
         var isDropdownExpanded by remember { mutableStateOf(false) }
         val filteredLocales by remember(newLocale) { derivedStateOf { locales.filter { it.value.startsWith(newLocale.value, ignoreCase = true) } } }
@@ -110,7 +98,7 @@ fun ProjectSettings(db: PolyglotDatabase, project: Project, updateProject: (Proj
         }
 
         projectLocales.forEach { isoCode ->
-            Chip(isoCode.value, hasClose = isoCode != project.defaultLocale, close = {
+            Chip(Locale[isoCode].displayName, hasClose = isoCode != project.defaultLocale, close = {
                 projectLocales = projectLocales.minus(isoCode)
                 scope.launch { deleteLocale(db = db, project = project, locale = isoCode, updateProject = updateProject) }
             })
@@ -124,9 +112,7 @@ private fun addLocale(db: PolyglotDatabase, project: Project, locale: LocaleIsoC
         val resourceList = db.resourceQueries.selectAll().executeAsList()
         resourceList.forEach {
             when (it.type) {
-                ResourceType.STRING -> db.stringLocalizationsQueries.insert(
-                    StringLocalizations(resId = it.id, locale = locale, text = "")
-                )
+                ResourceType.STRING -> db.stringLocalizationsQueries.insert(StringLocalizations(resId = it.id, locale = locale, text = ""))
                 ResourceType.PLURAL -> db.pluralLocalizationsQueries.insert(
                     PluralLocalizations(
                         resId = it.id,
