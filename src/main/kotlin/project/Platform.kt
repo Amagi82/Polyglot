@@ -7,9 +7,9 @@ import androidx.compose.ui.graphics.Color
  * Make a resource platform-specific
  */
 @Stable
-enum class Platform(val iconId: String, val color: Color, val displayName: String) {
-    ANDROID(R.drawable.android, Color.Green, "Android"),
-    IOS(R.drawable.apple, Color.Blue, "iOS");
+enum class Platform(val iconId: String, val displayName: String) {
+    ANDROID(R.drawable.android, "Android"),
+    IOS(R.drawable.apple, "iOS");
 
     companion object {
         val ANDROID_ONLY = listOf(ANDROID)

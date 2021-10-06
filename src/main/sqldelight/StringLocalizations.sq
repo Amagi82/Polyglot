@@ -4,10 +4,7 @@ CREATE TABLE StringLocalizations (
   resId TEXT NOT NULL,
   locale TEXT AS LocaleIsoCode NOT NULL,
   text TEXT NOT NULL,
-  PRIMARY KEY(resId, locale),
-  FOREIGN KEY(resId) REFERENCES Resource(id)
-  ON UPDATE CASCADE
-  ON DELETE CASCADE
+  PRIMARY KEY(resId, locale)
 );
 
 select:

@@ -4,13 +4,20 @@ import R
 import project.Quantity
 import sqldelight.PluralLocalizations
 import java.net.URL
+import java.util.*
 
 fun loadResource(resource: String): URL? = R::class.java.classLoader.getResource(resource)
 
-//@OptIn(ExperimentalSerializationApi::class)
-//inline fun <reified T> loadResource(resource: String) = loadResource(resource)!!.openStream().use {
-//    Json.decodeFromStream<T>(it)
-//}
+inline fun <reified K, V> loadResource(resource: String, transformer: (String, String) -> Pair<K, V>): Map<K, V> =
+    loadResource(resource)!!.openStream().use {
+        val props = Properties().apply { load(it) }
+        buildMap(props.size) {
+            props.forEach { (k, v) ->
+                val (key, value) = transformer(k as String, v as String)
+                put(key, value)
+            }
+        }
+    }
 
 fun PluralLocalizations.quantity(quantity: Quantity) = when (quantity) {
     Quantity.ZERO -> zero

@@ -30,16 +30,40 @@ insert:
 INSERT INTO Resource
 VALUES ?;
 
-updateId:
+updateId {
 UPDATE Resource
 SET id = :newId
 WHERE id = :oldId;
+
+UPDATE StringLocalizations
+SET resId = :newId
+WHERE resId = :oldId;
+
+UPDATE PluralLocalizations
+SET resId = :newId
+WHERE resId = :oldId;
+
+UPDATE ArrayLocalizations
+SET resId = :newId
+WHERE resId = :oldId;
+}
 
 updatePlatforms:
 UPDATE Resource
 SET platforms = ?
 WHERE id = ?;
 
-delete:
+delete {
 DELETE FROM Resource
-WHERE id = ?;
+WHERE id = :id;
+
+DELETE FROM StringLocalizations
+WHERE resId = :id;
+
+DELETE FROM PluralLocalizations
+WHERE resId = :id;
+
+DELETE FROM ArrayLocalizations
+WHERE resId = :id;
+}
+

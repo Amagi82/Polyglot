@@ -9,10 +9,7 @@ CREATE TABLE PluralLocalizations (
   few TEXT,
   many TEXT,
   other TEXT NOT NULL,
-  PRIMARY KEY(resId, locale),
-  FOREIGN KEY(resId) REFERENCES Resource(id)
-  ON UPDATE CASCADE
-  ON DELETE CASCADE
+  PRIMARY KEY(resId, locale)
 );
 
 select:
