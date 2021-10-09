@@ -21,20 +21,11 @@ import androidx.compose.runtime.Stable
  * @param region: An optional regional dialect, or null for the default version
  * */
 @Stable
-data class Locale(val language: Language, val region: Region? = null) : Comparable<Locale> {
+data class Locale(val language: Language, val region: Region? = null) {
     val isoCode: LocaleIsoCode = LocaleIsoCode(language.isoCode.value + region?.isoCode?.value?.let { "_$it" }.orEmpty())
-    val displayName = "${language.name}${region?.name?.let { " ($it)" }.orEmpty()}${if(isoCode == default)" (Default)" else ""}"
+    fun displayName(isDefault: Boolean = false) = "${language.name}${region?.name?.let { " ($it)" }.orEmpty()}${if(isDefault)" (Default)" else ""}"
 
-    override fun compareTo(other: Locale): Int = isoCode.compareTo(other.isoCode)
-
-    /**
-     * @property default: The current locale set as default. Android and iOS handle this differently.
-     * With Android, the base values folder gets the default strings, and values-en, values-de, etc get the localized translations
-     * With iOS, there is no base folder, all localizations are placed in their respective folders, e.g. en.proj, es.proj, de.proj
-     * */
     companion object {
-        var default = LocaleIsoCode("en")
-
         operator fun get(isoCode: LocaleIsoCode) = all[isoCode] ?: throw IllegalStateException("$isoCode not found in Locale list")
 
         val all: Map<LocaleIsoCode, Locale> by lazy {
@@ -62,10 +53,4 @@ data class Locale(val language: Language, val region: Region? = null) : Comparab
  * */
 @Stable
 @JvmInline
-value class LocaleIsoCode(val value: String) : Comparable<LocaleIsoCode> {
-    override fun compareTo(other: LocaleIsoCode): Int = when {
-        this == Locale.default && other != Locale.default -> -1
-        other == Locale.default && this != Locale.default -> 1
-        else -> value.compareTo(other.value)
-    }
-}
+value class LocaleIsoCode(val value: String)

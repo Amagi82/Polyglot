@@ -127,17 +127,21 @@ fun ResourceManager(project: Project, toggleDarkTheme: () -> Unit, updateProject
             val state = rememberLazyListState()
             LazyColumn(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f), state = state) {
                 items(resourceList.filter { res -> res.id !in excludedResourceIds && res.type !in excludedResourceTypes }) { res ->
-                    DataRow(db = db, res = res, displayedLocales = project.locales.filter { locale -> locale !in excludedLocales }, deleteResource = {
-                        scope.launch {
-                            excludedResourceIds = excludedResourceIds.plus(res.id)
-                            val snackbarResult = scaffoldState.snackbarHostState.showSnackbar("Removed ${res.id}", actionLabel = "Undo")
-                            if (snackbarResult == SnackbarResult.ActionPerformed) {
-                                excludedResourceIds = excludedResourceIds.minus(res.id)
-                            } else {
-                                db.resourceQueries.delete(res.id)
+                    DataRow(db = db,
+                        res = res,
+                        displayedLocales = project.locales.filter { locale -> locale !in excludedLocales },
+                        defaultLocale = project.defaultLocale,
+                        deleteResource = {
+                            scope.launch {
+                                excludedResourceIds = excludedResourceIds.plus(res.id)
+                                val snackbarResult = scaffoldState.snackbarHostState.showSnackbar("Removed ${res.id}", actionLabel = "Undo")
+                                if (snackbarResult == SnackbarResult.ActionPerformed) {
+                                    excludedResourceIds = excludedResourceIds.minus(res.id)
+                                } else {
+                                    db.resourceQueries.delete(res.id)
+                                }
                             }
-                        }
-                    })
+                        })
                     Divider()
                 }
             }
@@ -200,7 +204,7 @@ fun ResourceManager(project: Project, toggleDarkTheme: () -> Unit, updateProject
                                 onCheckedChange = { isChecked ->
                                     excludedLocales = if (isChecked) excludedLocales.minus(localeIsoCode) else excludedLocales.plus(localeIsoCode)
                                 })
-                            Text(Locale[localeIsoCode].displayName)
+                            Text(Locale[localeIsoCode].displayName(localeIsoCode == project.defaultLocale))
                         }
                     }
                 }
@@ -211,7 +215,7 @@ fun ResourceManager(project: Project, toggleDarkTheme: () -> Unit, updateProject
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun DataRow(db: PolyglotDatabase, res: Resource, displayedLocales: List<LocaleIsoCode>, deleteResource: () -> Unit) {
+fun DataRow(db: PolyglotDatabase, res: Resource, displayedLocales: List<LocaleIsoCode>, defaultLocale: LocaleIsoCode, deleteResource: () -> Unit) {
     val scope = rememberCoroutineScope()
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -248,7 +252,7 @@ fun DataRow(db: PolyglotDatabase, res: Resource, displayedLocales: List<LocaleIs
 
         Column(Modifier.weight(1f)) {
             when (res.type) {
-                ResourceType.STRING -> StringRows(res.id, displayedLocales, db.stringLocalizationsQueries)
+                ResourceType.STRING -> StringRows(defaultLocale, res.id, displayedLocales, db.stringLocalizationsQueries)
                 ResourceType.PLURAL -> PluralRows(res.id, displayedLocales, db.pluralLocalizationsQueries)
                 ResourceType.ARRAY -> ArrayRows(res.id, displayedLocales, db.arrayLocalizationsQueries)
             }
@@ -274,7 +278,7 @@ fun DataRow(db: PolyglotDatabase, res: Resource, displayedLocales: List<LocaleIs
 }
 
 @Composable
-fun StringRows(id: String, displayedLocales: List<LocaleIsoCode>, queries: StringLocalizationsQueries) {
+fun StringRows(defaultLocale: LocaleIsoCode, id: String, displayedLocales: List<LocaleIsoCode>, queries: StringLocalizationsQueries) {
     val focusManager = LocalFocusManager.current
     ResourceRows(displayedLocales) { scope, localeIsoCode ->
         var oldText = remember { queries.select(id, localeIsoCode).executeAsOneOrNull() }
@@ -288,7 +292,7 @@ fun StringRows(id: String, displayedLocales: List<LocaleIsoCode>, queries: Strin
                     scope.launch { queries.updateText(text = newText, resId = id, locale = localeIsoCode) }
                 }
             },
-            label = { Text(Locale[localeIsoCode].displayName) },
+            label = { Text(Locale[localeIsoCode].displayName(localeIsoCode == defaultLocale)) },
             singleLine = true
         )
     }
