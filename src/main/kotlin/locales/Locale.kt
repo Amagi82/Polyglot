@@ -23,7 +23,7 @@ import androidx.compose.runtime.Stable
 @Stable
 data class Locale(val language: Language, val region: Region? = null) {
     val isoCode: LocaleIsoCode = LocaleIsoCode(language.isoCode.value + region?.isoCode?.value?.let { "_$it" }.orEmpty())
-    fun displayName(isDefault: Boolean = false) = "${language.name}${region?.name?.let { " ($it)" }.orEmpty()}${if(isDefault)" (Default)" else ""}"
+    fun displayName(isDefault: Boolean = false) = "${language.name}${region?.name?.let { " ($it)" }.orEmpty()}${if (isDefault) " (Default)" else ""}"
 
     companion object {
         operator fun get(isoCode: LocaleIsoCode) = all[isoCode] ?: throw IllegalStateException("$isoCode not found in Locale list")
@@ -50,7 +50,11 @@ data class Locale(val language: Language, val region: Region? = null) {
  * Used to place the translation in the appropriate folder, e.g.
  * Android: values.fr, values.en_US, values.es_AR, values.fr_GF, etc
  * iOS: fr.lproj, en_US.lproj, es_AR.lproj, fr_GF.lproj, etc
+ *
+ * @property isBaseLanguage: False if the isoCode is a regional dialect
  * */
 @Stable
 @JvmInline
-value class LocaleIsoCode(val value: String)
+value class LocaleIsoCode(val value: String) {
+    val isBaseLanguage: Boolean get() = !value.contains('_')
+}

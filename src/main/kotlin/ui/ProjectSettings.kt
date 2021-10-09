@@ -1,16 +1,14 @@
 package ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import data.PolyglotDatabase
 import kotlinx.coroutines.Dispatchers
@@ -20,10 +18,7 @@ import locales.Locale
 import locales.LocaleIsoCode
 import project.Platform
 import project.Project
-import project.ResourceType
-import sqldelight.ArrayLocalizations
-import sqldelight.PluralLocalizations
-import sqldelight.StringLocalizations
+import ui.core.Chip
 import ui.utils.onPressEnter
 import java.io.File
 import javax.swing.JFileChooser
@@ -48,37 +43,43 @@ fun ProjectSettings(db: PolyglotDatabase, project: Project, updateProject: (Proj
             updateProject(project.copy(iosOutputUrl = it))
         }
 
-        val locales = remember { Locale.all.keys }
-        var newLocale by remember { mutableStateOf(LocaleIsoCode("")) }
+        val locales = remember { Locale.all.values }
+        var newLocaleText by remember { mutableStateOf("") }
         var isDropdownExpanded by remember { mutableStateOf(false) }
-        val filteredLocales by remember(newLocale) { derivedStateOf { locales.filter { it.value.startsWith(newLocale.value, ignoreCase = true) } } }
+        val filteredLocales by remember(newLocaleText) {
+            derivedStateOf {
+                locales.filter { locale ->
+                    locale.isoCode.value.startsWith(newLocaleText, ignoreCase = true) ||
+                            locale.displayName().startsWith(newLocaleText, ignoreCase = true)
+                }
+            }
+        }
         var projectLocales by remember { mutableStateOf(project.locales) }
+
+        fun addLocale(isoCode: LocaleIsoCode? = locales.find { it.isoCode.value == newLocaleText || it.displayName() == newLocaleText }?.isoCode) {
+            if (isoCode != null && isoCode !in projectLocales && locales.any { it.isoCode == isoCode }) {
+                val newLocales = projectLocales.toMutableList()
+                if (!isoCode.isBaseLanguage) {
+                    newLocales.add(Locale[isoCode].copy(region = null).isoCode)
+                }
+                newLocales.add(isoCode)
+                newLocales.sortBy { Locale[it].displayName() }
+                projectLocales = newLocales.distinct()
+                updateProject(project.copy(locales = projectLocales))
+                newLocaleText = ""
+                isDropdownExpanded = false
+            }
+        }
 
         Box {
             OutlinedTextField(
-                value = newLocale.value,
+                value = newLocaleText,
                 onValueChange = {
-                    newLocale = LocaleIsoCode(it)
+                    newLocaleText = it
                     isDropdownExpanded = it.isNotBlank()
                 },
-                modifier = Modifier.padding(top = 16.dp).fillMaxWidth().onPressEnter {
-                    if (newLocale !in projectLocales && newLocale in locales) {
-                        projectLocales = projectLocales.plus(newLocale)
-                        addLocale(db, project = project, locale = newLocale, updateProject = updateProject)
-                    }
-                    true
-                },
+                modifier = Modifier.padding(top = 16.dp).fillMaxWidth().onPressEnter { addLocale(); true },
                 label = { Text("Add locale") },
-                trailingIcon = {
-                    if (newLocale !in projectLocales && newLocale in locales) {
-                        IconButton(onClick = {
-                            projectLocales = projectLocales.plus(newLocale)
-                            addLocale(db, project = project, locale = newLocale, updateProject = updateProject)
-                        }) {
-                            Icon(Icons.Default.Add, contentDescription = "Add locale")
-                        }
-                    }
-                },
                 singleLine = true
             )
             DropdownMenu(
@@ -86,52 +87,39 @@ fun ProjectSettings(db: PolyglotDatabase, project: Project, updateProject: (Proj
                 onDismissRequest = { isDropdownExpanded = false },
                 focusable = false
             ) {
-                filteredLocales.take(15).forEach { isoCode ->
-                    DropdownMenuItem(onClick = {
-                        isDropdownExpanded = false
-                        newLocale = isoCode
-                    }) {
-                        Text(isoCode.value)
+                filteredLocales.take(15).forEach { locale ->
+                    DropdownMenuItem(onClick = { addLocale(locale.isoCode) }) {
+                        Text(locale.displayName())
                     }
                 }
             }
         }
 
         projectLocales.forEach { isoCode ->
-            Chip(Locale[isoCode].displayName(project.defaultLocale == isoCode), hasClose = isoCode != project.defaultLocale, close = {
-                projectLocales = projectLocales.minus(isoCode)
-                scope.launch { deleteLocale(db = db, project = project, locale = isoCode, updateProject = updateProject) }
-            })
-        }
-    }
-}
-
-
-private fun addLocale(db: PolyglotDatabase, project: Project, locale: LocaleIsoCode, updateProject: (Project) -> Unit) {
-    db.transaction {
-        val resourceList = db.resourceQueries.selectAll().executeAsList()
-        resourceList.forEach {
-            when (it.type) {
-                ResourceType.STRING -> db.stringLocalizationsQueries.insert(StringLocalizations(resId = it.id, locale = locale, text = ""))
-                ResourceType.PLURAL -> db.pluralLocalizationsQueries.insert(
-                    PluralLocalizations(
-                        resId = it.id,
-                        locale = locale,
-                        zero = null,
-                        one = "",
-                        two = null,
-                        few = null,
-                        many = null,
-                        other = ""
+            val isDefault = isoCode == project.defaultLocale
+            Chip(
+                text = {
+                    Text(
+                        Locale[isoCode].displayName(project.defaultLocale == isoCode),
+                        color = if (isDefault) MaterialTheme.colors.onSecondary else Color.Unspecified,
+                        style = MaterialTheme.typography.body2
                     )
-                )
-                ResourceType.ARRAY -> db.arrayLocalizationsQueries.insert(
-                    ArrayLocalizations(resId = it.id, locale = locale, array = listOf())
-                )
-            }
+                },
+                modifier = Modifier.clickable(enabled = !isDefault && isoCode.isBaseLanguage) { updateProject(project.copy(defaultLocale = isoCode)) },
+                color = if (isDefault) MaterialTheme.colors.secondary else Color.Unspecified,
+                trailingIcon = {
+                    if (!isDefault) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Remove ${Locale[isoCode].displayName()}",
+                            modifier = Modifier.padding(end = 8.dp).size(18.dp).clickable {
+                                projectLocales = projectLocales.minus(isoCode)
+                                scope.launch { deleteLocale(db = db, project = project, locale = isoCode, updateProject = updateProject) }
+                            })
+                    }
+                })
         }
     }
-    updateProject(project.copy(locales = project.locales.plus(locale).distinct().sortedBy { it.value }))
 }
 
 private fun deleteLocale(db: PolyglotDatabase, project: Project, locale: LocaleIsoCode, updateProject: (Project) -> Unit) {
