@@ -15,7 +15,6 @@ fun main() = application {
     // Look at https://github.com/adrielcafe/lyricist for localization
 
     var project: Project? by remember { mutableStateOf(Settings.currentProject?.let(Project::load)) }
-    project?.defaultLocale?.let { Locale.default = it }
 
     val state = rememberWindowState()
     state.size = if (project == null) WindowSize(400.dp, 600.dp) else WindowSize(2560.dp, 1440.dp)

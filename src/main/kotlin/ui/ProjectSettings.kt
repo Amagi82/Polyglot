@@ -98,7 +98,7 @@ fun ProjectSettings(db: PolyglotDatabase, project: Project, updateProject: (Proj
         }
 
         projectLocales.forEach { isoCode ->
-            Chip(Locale[isoCode].displayName, hasClose = isoCode != project.defaultLocale, close = {
+            Chip(Locale[isoCode].displayName(project.defaultLocale == isoCode), hasClose = isoCode != project.defaultLocale, close = {
                 projectLocales = projectLocales.minus(isoCode)
                 scope.launch { deleteLocale(db = db, project = project, locale = isoCode, updateProject = updateProject) }
             })

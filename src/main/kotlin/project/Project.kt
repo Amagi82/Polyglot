@@ -7,6 +7,16 @@ import utils.extensions.prop
 import java.io.File
 import java.util.*
 
+/**
+ * @param name: Name of the project
+ * @param androidOutputUrl: Set this to your project folder and Polyglot will output the files directly to that folder
+ * @param iosOutputUrl: Set this to your project folder and Polyglot will output the files directly to that folder
+ * @param locales: List of locales
+ * @param defaultLocale: The current locale set as default, which will be used as backup if no suitable translation is found.
+ * Android and iOS handle this differently:
+ * With Android, the base values folder gets the default strings, and values-en, values-de, etc get the localized translations
+ * With iOS, there is no base folder, all localizations are placed in their respective folders, e.g. en.proj, es.proj, de.proj
+ * */
 @Stable
 data class Project(
     val name: String,
