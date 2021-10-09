@@ -171,21 +171,6 @@ private fun OutputFileSelectionButton(platformName: String, outputUrl: String, o
 }
 
 @Composable
-fun Chip(text: String, hasClose: Boolean, close: () -> Unit) {
-    Row(
-        modifier = Modifier.height(32.dp)
-            .background(color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f), shape = RoundedCornerShape(16.dp))
-            .padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text, modifier = Modifier.padding(horizontal = 8.dp), style = MaterialTheme.typography.body2)
-        if (hasClose) {
-            Icon(Icons.Default.Close, contentDescription = "Remove $text", modifier = Modifier.padding(end = 8.dp).size(18.dp).clickable { close() })
-        }
-    }
-}
-
-@Composable
 private fun FileDialog(folder: File, onCloseRequest: (result: String?) -> Unit) {
     val scope = rememberCoroutineScope()
     scope.launch(Dispatchers.Swing) {
