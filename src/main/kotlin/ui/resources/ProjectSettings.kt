@@ -25,8 +25,10 @@ import java.io.File
 import javax.swing.JFileChooser
 
 @Composable
-fun ProjectSettings(project: MutableState<Project>, localizedResources: MutableState<LocalizedResources>, onClose: () -> Unit) {
+fun ProjectSettings(vm: ResourceViewModel, onClose: () -> Unit) {
     Column(Modifier.padding(16.dp).width(400.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        val project by vm.project.collectAsState()
+        val localizedResources by vm.localizedResources.collectAsState()
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Settings", style = MaterialTheme.typography.h6)
@@ -35,11 +37,11 @@ fun ProjectSettings(project: MutableState<Project>, localizedResources: MutableS
             }
         }
 
-        OutputFileSelectionButton(Platform.ANDROID.displayName, project.value.androidOutputUrl) {
-            project.value = project.value.copy(androidOutputUrl = it)
+        OutputFileSelectionButton(Platform.ANDROID.displayName, project.androidOutputUrl) {
+            vm.project.value = project.copy(androidOutputUrl = it)
         }
-        OutputFileSelectionButton(Platform.IOS.displayName, project.value.iosOutputUrl) {
-            project.value = project.value.copy(iosOutputUrl = it)
+        OutputFileSelectionButton(Platform.IOS.displayName, project.iosOutputUrl) {
+            vm.project.value = project.copy(iosOutputUrl = it)
         }
 
         val locales = remember { Locale.all.values }
@@ -53,7 +55,7 @@ fun ProjectSettings(project: MutableState<Project>, localizedResources: MutableS
                 }
             }
         }
-        var projectLocales by remember { mutableStateOf(localizedResources.value.keys) }
+        var projectLocales by remember { mutableStateOf(localizedResources.keys) }
 
         fun addLocale(isoCode: LocaleIsoCode? = locales.find { it.isoCode.value == newLocaleText || it.displayName() == newLocaleText }?.isoCode) {
             if (isoCode != null && isoCode !in projectLocales && locales.any { it.isoCode == isoCode }) {
@@ -64,7 +66,7 @@ fun ProjectSettings(project: MutableState<Project>, localizedResources: MutableS
                 newLocales.add(isoCode)
 
                 projectLocales = newLocales.sortedBy { Locale[it].displayName() }.toSet()
-                localizedResources.value = localizedResources.value.plus(newLocales.map { it to mapOf() }).apply { save(project.value.name) }
+                vm.localizedResources.value = localizedResources.plus(newLocales.map { it to mapOf() }).apply { save(project.name) }
                 newLocaleText = ""
                 isDropdownExpanded = false
             }
@@ -95,16 +97,16 @@ fun ProjectSettings(project: MutableState<Project>, localizedResources: MutableS
         }
 
         projectLocales.forEach { isoCode ->
-            val isDefault = isoCode == project.value.defaultLocale
+            val isDefault = isoCode == project.defaultLocale
             Chip(
                 text = {
                     Text(
-                        Locale[isoCode].displayName(project.value.defaultLocale == isoCode),
+                        Locale[isoCode].displayName(project.defaultLocale == isoCode),
                         color = if (isDefault) MaterialTheme.colors.onSecondary else Color.Unspecified,
                         style = MaterialTheme.typography.body2
                     )
                 },
-                modifier = Modifier.clickable(enabled = !isDefault && isoCode.isBaseLanguage) { project.value = project.value.copy(defaultLocale = isoCode) },
+                modifier = Modifier.clickable(enabled = !isDefault && isoCode.isBaseLanguage) { vm.project.value = project.copy(defaultLocale = isoCode) },
                 color = if (isDefault) MaterialTheme.colors.secondary else Color.Unspecified,
                 trailingIcon = {
                     if (!isDefault) {
@@ -113,7 +115,7 @@ fun ProjectSettings(project: MutableState<Project>, localizedResources: MutableS
                             contentDescription = "Remove ${Locale[isoCode].displayName()}",
                             modifier = Modifier.padding(end = 8.dp).size(18.dp).clickable {
                                 projectLocales = projectLocales.minus(isoCode)
-                                localizedResources.value = localizedResources.value.minus(isoCode).apply { save(project.value.name) }
+                                vm.localizedResources.value = localizedResources.minus(isoCode)
                             })
                     }
                 })

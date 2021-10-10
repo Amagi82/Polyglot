@@ -30,23 +30,24 @@ import java.io.File
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun ResourceManager(project: MutableState<Project>, toggleDarkTheme: () -> Unit, updateProject: (Project?) -> Unit) {
+fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updateProject: (Project?) -> Unit) {
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberScaffoldState()
-    var resources = remember { mutableStateOf(Project.loadResources(project.value.name)) }
-    var localizedResources = remember { mutableStateOf(Project.loadLocalizedResources(project.value.name)) }
+    val project by vm.project.collectAsState()
+    val resources by vm.resources.collectAsState()
+    val localizedResources by vm.localizedResources.collectAsState()
+    val excludedLocales by vm.excludedLocales.collectAsState()
+    val excludedResourceIds by vm.excludedResourceIds.collectAsState()
+    val excludedResourceTypes by vm.excludedResourceTypes.collectAsState()
+
     var showProjectSettings by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
-
-    var excludedLocales by remember { mutableStateOf(setOf<LocaleIsoCode>()) }
-    var excludedResourceIds by remember { mutableStateOf(setOf<ResourceId>()) }
-    var excludedResourceTypes by remember { mutableStateOf(setOf<Resource.Type>()) }
 
     Scaffold(
         scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
-                title = { Text(project.value.name) },
+                title = { Text(project.name) },
                 navigationIcon = {
                     IconButton(onClick = { updateProject(null) }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Close Project")
@@ -61,15 +62,15 @@ fun ResourceManager(project: MutableState<Project>, toggleDarkTheme: () -> Unit,
                     }
                     IconButton(onClick = {
                         scope.launch {
-                            ResourceGenerator.generateFiles(project.value, resources.value, localizedResources.value)
+                            ResourceGenerator.generateFiles(project, resources, localizedResources)
                             val result = scaffoldState.snackbarHostState.showSnackbar(
                                 message = "Generating outputs",
                                 actionLabel = "Show",
                                 duration = SnackbarDuration.Long
                             )
                             if (result == SnackbarResult.ActionPerformed) {
-                                project.value.androidOutputUrl.let(::File).let { openFolder(it, scaffoldState) }
-                                project.value.iosOutputUrl.let(::File).let { openFolder(it, scaffoldState) }
+                                project.androidOutputUrl.let(::File).let { openFolder(it, scaffoldState) }
+                                project.iosOutputUrl.let(::File).let { openFolder(it, scaffoldState) }
                             }
                         }
                     }) {
@@ -97,36 +98,31 @@ fun ResourceManager(project: MutableState<Project>, toggleDarkTheme: () -> Unit,
                 scope.launch {
                     var newId = ResourceId("new")
                     var n = 0
-                    while (resources.value[newId] != null) {
+                    while (resources[newId] != null) {
                         newId = ResourceId("new$n")
                         n++
                     }
-                    resources.value = resources.value.plus(newId to Resource()).apply { save(project.value.name) }
+                    vm.resources.value = resources.plus(newId to Resource())
                 }
             }) { Icon(Icons.Default.Add, contentDescription = "Add new resource") }
         }) { paddingValues ->
         Row(Modifier.padding(paddingValues)) {
             val state = rememberLazyListState()
             LazyColumn(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f), state = state) {
-                items(resources.value.filter { (k, v) -> k !in excludedResourceIds && v.type !in excludedResourceTypes }.keys.toList()) { resId ->
-                    ResourceRow(project = project.value,
+                items(resources.filter { (k, v) -> k !in excludedResourceIds && v.type !in excludedResourceTypes }.keys.toList()) { resId ->
+                    ResourceRow(vm = vm,
                         resId = resId,
-                        resources = resources,
-                        localizedResources = localizedResources,
-                        excludedLocales = excludedLocales,
-                        defaultLocale = project.value.defaultLocale,
                         deleteResource = {
                             scope.launch {
-                                excludedResourceIds = excludedResourceIds.plus(resId)
+                                vm.excludedResourceIds.value = excludedResourceIds.plus(resId)
                                 val snackbarResult = scaffoldState.snackbarHostState.showSnackbar("Removed ${resId.id}", actionLabel = "Undo")
                                 if (snackbarResult == SnackbarResult.ActionPerformed) {
-                                    excludedResourceIds = excludedResourceIds.minus(resId)
+                                    vm.excludedResourceIds.value = excludedResourceIds.minus(resId)
                                 } else {
-                                    localizedResources.value = localizedResources.value.toMutableMap().apply {
+                                    vm.localizedResources.value = localizedResources.toMutableMap().apply {
                                         for ((localeIsoCode, localizations) in this) {
                                             put(localeIsoCode, localizations.minus(resId))
                                         }
-                                        save(project.value.name)
                                     }
                                 }
                             }
@@ -142,7 +138,7 @@ fun ResourceManager(project: MutableState<Project>, toggleDarkTheme: () -> Unit,
             }
 
             AnimatedVisibility(visible = showProjectSettings) {
-                ProjectSettings(project = project, localizedResources = localizedResources, onClose = { showProjectSettings = false })
+                ProjectSettings(vm = vm, onClose = { showProjectSettings = false })
             }
             AnimatedVisibility(visible = showFilters) {
                 Column(Modifier.width(300.dp).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -165,7 +161,8 @@ fun ResourceManager(project: MutableState<Project>, toggleDarkTheme: () -> Unit,
                                 .padding(horizontal = 4.dp)
                                 .clickable {
                                     isChecked = !isChecked
-                                    excludedResourceTypes = if (isChecked) excludedResourceTypes.minus(resType) else excludedResourceTypes.plus(resType)
+                                    vm.excludedResourceTypes.value =
+                                        if (isChecked) excludedResourceTypes.minus(resType) else excludedResourceTypes.plus(resType)
                                 },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -187,13 +184,13 @@ fun ResourceManager(project: MutableState<Project>, toggleDarkTheme: () -> Unit,
                     }
 
                     Text("Locales", modifier = Modifier.padding(top = 8.dp), style = MaterialTheme.typography.subtitle1)
-                    localizedResources.value.keys.forEach { localeIsoCode ->
+                    localizedResources.keys.forEach { localeIsoCode ->
                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             Switch(checked = localeIsoCode !in excludedLocales,
                                 onCheckedChange = { isChecked ->
-                                    excludedLocales = if (isChecked) excludedLocales.minus(localeIsoCode) else excludedLocales.plus(localeIsoCode)
+                                    vm.excludedLocales.value = if (isChecked) excludedLocales.minus(localeIsoCode) else excludedLocales.plus(localeIsoCode)
                                 })
-                            Text(Locale[localeIsoCode].displayName(localeIsoCode == project.value.defaultLocale))
+                            Text(Locale[localeIsoCode].displayName(localeIsoCode == project.defaultLocale))
                         }
                     }
                 }

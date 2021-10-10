@@ -24,22 +24,22 @@ import ui.core.onPressEnter
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ResourceRow(
-    project: Project,
+    vm: ResourceViewModel,
     resId: ResourceId,
-    resources: MutableState<Resources>,
-    localizedResources: MutableState<LocalizedResources>,
-    excludedLocales: Set<LocaleIsoCode>,
-    defaultLocale: LocaleIsoCode,
     deleteResource: () -> Unit
 ) {
-    val scope = rememberCoroutineScope()
+    val project by vm.project.collectAsState()
+    val resources by vm.resources.collectAsState()
+    val localizedResources by vm.localizedResources.collectAsState()
+    val resource by remember { derivedStateOf { resources[resId]!! } }
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        var id by remember { mutableStateOf(resId) }
         var error by remember { mutableStateOf("") }
+        var id by remember { mutableStateOf(resId) }
         val focusManager = LocalFocusManager.current
 
         Column(modifier = Modifier.weight(1f)) {
+
             OutlinedTextField(
                 value = id.id,
                 onValueChange = {
@@ -48,17 +48,11 @@ fun ResourceRow(
                 },
                 modifier = Modifier.padding(vertical = 4.dp).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
                     if (!it.hasFocus && resId != id) {
-
-                        if (id in resources.value) {
+                        if (id in resources) {
                             error = "id already exists"
                         } else {
-                            resources.value = resources.value.toMutableMap().apply {
-                                val resource = this[resId]!!
-                                remove(resId)
-                                put(id, resource)
-                                scope.launch {
-                                    save(project.name)
-                                }
+                            vm.resources.value = resources.toMutableMap().apply {
+                                put(id, remove(resId)!!)
                             }
                         }
                     }
@@ -73,27 +67,22 @@ fun ResourceRow(
         }
 
         Column(Modifier.weight(1f)) {
-            val resource by remember { derivedStateOf { resources.value[id]!! } }
-            localizedResources.value.keys.filter { it !in excludedLocales }.forEach { localeIsoCode ->
+            val excludedLocales by vm.excludedLocales.collectAsState()
+            localizedResources.keys.filter { it !in excludedLocales }.forEach { localeIsoCode ->
                 Row(
                     Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val localization = localizedResources.value[localeIsoCode]?.get(id)
+                    val localization = localizedResources[localeIsoCode]?.get(id)
                     when (resource.type) {
-                        Resource.Type.STRING -> StringRows(defaultLocale, localeIsoCode, localization as? Str ?: Str("")) {
-                            localizedResources.value =
-                                localizedResources.value.plus(localeIsoCode to localizedResources.value[localeIsoCode]!!.plus(id to it)).apply {
-                                    scope.launch {
-                                        save(project.name)
-                                    }
-                                }
+                        Resource.Type.STRING -> StringRows(project.defaultLocale, localeIsoCode, localization as? Str ?: Str("")) {
+                            vm.localizedResources.value = localizedResources.plus(localeIsoCode to localizedResources[localeIsoCode]!!.plus(id to it))
                         }
-                        Resource.Type.PLURAL -> PluralRows(defaultLocale, localeIsoCode, localization as? Plural ?: Plural(one = null, other = "")) {
+                        Resource.Type.PLURAL -> PluralRows(project.defaultLocale, localeIsoCode, localization as? Plural ?: Plural(one = null, other = "")) {
 
                         }
-                        Resource.Type.ARRAY -> ArrayRows(defaultLocale, localeIsoCode, localization as? StringArray ?: StringArray(listOf())) {
+                        Resource.Type.ARRAY -> ArrayRows(project.defaultLocale, localeIsoCode, localization as? StringArray ?: StringArray(listOf())) {
 
                         }
                     }
@@ -101,17 +90,11 @@ fun ResourceRow(
             }
         }
 
-        val resource = resources.value[id]!!
-
         Platform.values().forEach { platform ->
             val isIncluded = platform in resource.platforms
             IconButton(onClick = {
                 val newResource = resource.copy(platforms = if (isIncluded) resource.platforms.minus(platform) else resource.platforms.plus(platform))
-                resources.value = resources.value.plus(id to newResource).apply {
-                    scope.launch {
-                        save(project.name)
-                    }
-                }
+                vm.resources.value = resources.plus(id to newResource)
             }) {
                 if (isIncluded) {
                     Icon(painterResource(platform.iconId), contentDescription = platform.name)
