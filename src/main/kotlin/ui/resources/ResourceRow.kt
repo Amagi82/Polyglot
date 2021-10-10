@@ -90,8 +90,8 @@ fun ResourceRow(
                 }
             }
         }
-        val showProjectSettings by vm.showProjectSettings.collectAsState()
-        if (showProjectSettings) {
+        val menuState by vm.menuState.collectAsState()
+        if (menuState == MenuState.SETTINGS) {
             IconButton(onClick = deleteResource, modifier = Modifier.padding(start = 16.dp)) {
                 Icon(Icons.Default.Delete, contentDescription = "Remove")
             }

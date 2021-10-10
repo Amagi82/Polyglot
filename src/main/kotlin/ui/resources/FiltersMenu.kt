@@ -25,7 +25,7 @@ fun FiltersMenu(vm: ResourceViewModel) {
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Filters", style = MaterialTheme.typography.h6)
-            IconButton(onClick = { vm.showFilters.value = false }) {
+            IconButton(onClick = { vm.menuState.value = MenuState.CLOSED }) {
                 Icon(Icons.Default.Close, contentDescription = "Close filters menu")
             }
         }

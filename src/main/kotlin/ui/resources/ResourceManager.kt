@@ -32,9 +32,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
     val localizedResources by vm.localizedResources.collectAsState()
     val excludedResourceIds by vm.excludedResourceIds.collectAsState()
     val excludedResourceTypes by vm.excludedResourceTypes.collectAsState()
-    val showProjectSettings by vm.showProjectSettings.collectAsState()
-
-    var showFilters by remember { mutableStateOf(false) }
+    val menuState by vm.menuState.collectAsState()
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -70,17 +68,11 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                         Icon(Icons.Default.Build, contentDescription = "Build")
                     }
 
-                    IconButton(onClick = {
-                        vm.showProjectSettings.value = false
-                        showFilters = !showFilters
-                    }) {
+                    IconButton(onClick = { vm.menuState.value = if (menuState != MenuState.FILTERS) MenuState.FILTERS else MenuState.CLOSED }) {
                         Icon(painterResource(R.drawable.filterList), contentDescription = "Filter")
                     }
 
-                    IconButton(onClick = {
-                        showFilters = false
-                        vm.showProjectSettings.value = !showProjectSettings
-                    }) {
+                    IconButton(onClick = { vm.menuState.value = if (menuState != MenuState.SETTINGS) MenuState.SETTINGS else MenuState.CLOSED }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 }
@@ -118,14 +110,14 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
 
             VerticalScrollbar(adapter = ScrollbarAdapter(state))
 
-            if (showProjectSettings || showFilters) {
+            if (menuState != MenuState.CLOSED) {
                 Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
             }
 
-            AnimatedVisibility(visible = showProjectSettings) {
+            AnimatedVisibility(visible = menuState == MenuState.SETTINGS) {
                 SettingsMenu(vm)
             }
-            AnimatedVisibility(visible = showFilters) {
+            AnimatedVisibility(visible = menuState == MenuState.FILTERS) {
                 FiltersMenu(vm)
             }
         }

@@ -32,7 +32,7 @@ fun SettingsMenu(vm: ResourceViewModel) {
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Settings", style = MaterialTheme.typography.h6)
-            IconButton(onClick = { vm.showProjectSettings.value = false }) {
+            IconButton(onClick = { vm.menuState.value = MenuState.CLOSED }) {
                 Icon(Icons.Default.Close, contentDescription = "Close settings menu")
             }
         }
