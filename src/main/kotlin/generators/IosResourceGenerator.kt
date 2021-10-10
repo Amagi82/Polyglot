@@ -26,7 +26,7 @@ class IosResourceGenerator(
 ) : ResourceGenerator() {
     private val iosFolder = File(project.iosOutputUrl)
     override val platform: Platform = Platform.IOS
-    private val localizationFolder = File(iosFolder, "$locale.lproj").also(File::mkdirs)
+    private val localizationFolder = File(iosFolder, "${locale.value}.lproj").also(File::mkdirs)
 
     private val stringsWriter = BufferedWriter(FileWriter(localizationFolder.createChildFile("Localizable.strings")))
 
