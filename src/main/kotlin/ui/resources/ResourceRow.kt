@@ -48,14 +48,15 @@ fun ResourceRow(
                 },
                 modifier = Modifier.padding(vertical = 4.dp).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
                     if (!it.hasFocus && resId != id) {
-                        scope.launch {
-                            if (id in resources.value) {
-                                error = "id already exists"
-                            } else {
-                                resources.value = resources.value.toMutableMap().apply {
-                                    val resource = this[resId]!!
-                                    remove(resId)
-                                    put(id, resource)
+
+                        if (id in resources.value) {
+                            error = "id already exists"
+                        } else {
+                            resources.value = resources.value.toMutableMap().apply {
+                                val resource = this[resId]!!
+                                remove(resId)
+                                put(id, resource)
+                                scope.launch {
                                     save(project.name)
                                 }
                             }
@@ -82,12 +83,12 @@ fun ResourceRow(
                     val localization = localizedResources.value[localeIsoCode]?.get(id)
                     when (resource.type) {
                         Resource.Type.STRING -> StringRows(defaultLocale, localeIsoCode, localization as? Str ?: Str("")) {
-                            scope.launch {
-                                localizedResources.value =
-                                    localizedResources.value.plus(localeIsoCode to localizedResources.value[localeIsoCode]!!.plus(id to it))
-                                localizedResources.value.save(project.name)
-                            }
-
+                            localizedResources.value =
+                                localizedResources.value.plus(localeIsoCode to localizedResources.value[localeIsoCode]!!.plus(id to it)).apply {
+                                    scope.launch {
+                                        save(project.name)
+                                    }
+                                }
                         }
                         Resource.Type.PLURAL -> PluralRows(defaultLocale, localeIsoCode, localization as? Plural ?: Plural(one = null, other = "")) {
 
@@ -105,9 +106,11 @@ fun ResourceRow(
         Platform.values().forEach { platform ->
             val isIncluded = platform in resource.platforms
             IconButton(onClick = {
-                scope.launch {
-                    val newResource = resource.copy(platforms = if (isIncluded) resource.platforms.minus(platform) else resource.platforms.plus(platform))
-                    resources.value = resources.value.plus(id to newResource).apply { save(project.name) }
+                val newResource = resource.copy(platforms = if (isIncluded) resource.platforms.minus(platform) else resource.platforms.plus(platform))
+                resources.value = resources.value.plus(id to newResource).apply {
+                    scope.launch {
+                        save(project.name)
+                    }
                 }
             }) {
                 if (isIncluded) {
