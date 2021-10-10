@@ -3,7 +3,7 @@ package project
 import java.util.*
 
 
-typealias Resources = Map<ResourceId, Resource>
+typealias Resources = SortedMap<ResourceId, Resource>
 
 @JvmName("saveResources")
 fun Resources.save(projectName: String) {

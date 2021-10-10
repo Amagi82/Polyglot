@@ -55,6 +55,7 @@ data class Locale(val language: Language, val region: Region? = null) {
  * */
 @Stable
 @JvmInline
-value class LocaleIsoCode(val value: String) {
+value class LocaleIsoCode(val value: String) : Comparable<LocaleIsoCode> {
     val isBaseLanguage: Boolean get() = !value.contains('_')
+    override fun compareTo(other: LocaleIsoCode): Int = value.compareTo(other.value)
 }

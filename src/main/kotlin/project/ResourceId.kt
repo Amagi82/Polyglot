@@ -7,4 +7,6 @@ import androidx.compose.runtime.Stable
  */
 @Stable
 @JvmInline
-value class ResourceId(val id: String)
+value class ResourceId(val id: String) : Comparable<ResourceId> {
+    override fun compareTo(other: ResourceId): Int = id.compareTo(other.id)
+}
