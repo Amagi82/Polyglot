@@ -87,17 +87,9 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                scope.launch {
-                    var newId = ResourceId("new")
-                    var n = 0
-                    while (resources[newId] != null) {
-                        newId = ResourceId("new$n")
-                        n++
-                    }
-                    vm.resources.value = resources.plus(newId to Resource()).toSortedMap()
-                }
-            }) { Icon(Icons.Default.Add, contentDescription = "Add new resource") }
+            FloatingActionButton(onClick = vm::createResource) {
+                Icon(Icons.Default.Add, contentDescription = "Add new resource")
+            }
         }) { paddingValues ->
         Row(Modifier.padding(paddingValues)) {
             val state = rememberLazyListState()
