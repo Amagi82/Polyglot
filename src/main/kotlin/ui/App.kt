@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import project.Project
 import ui.projects.ProjectPicker
 import ui.resources.ResourceManager
+import ui.resources.ResourceViewModel
 import ui.theme.PolyglotTheme
 import utils.Settings
 
@@ -13,8 +14,9 @@ fun App(projectState: MutableState<Project?>) {
     PolyglotTheme(darkTheme = darkTheme) {
         projectState.value?.let {
             val project = remember(projectState) { mutableStateOf(it) }
+            val vm = remember { ResourceViewModel(project.value) }
             ResourceManager(
-                project,
+                vm,
                 toggleDarkTheme = {
                     Settings.isDarkTheme = !darkTheme
                     darkTheme = !darkTheme
