@@ -9,13 +9,13 @@ package project
  * More information:
  * https://developer.android.com/guide/topics/resources/string-resource#Plurals
  */
-enum class Quantity(val isRequired: Boolean = false) {
+enum class Quantity {
     ZERO,
     ONE,
     TWO,
     FEW,
     MANY,
-    OTHER(isRequired = true);
+    OTHER;
 
     val label: String = name.lowercase()
 }
