@@ -1,4 +1,4 @@
-package ui
+package ui.resources
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,7 +20,7 @@ import project.Platform
 import project.Project
 import project.save
 import ui.core.Chip
-import ui.utils.onPressEnter
+import ui.core.onPressEnter
 import java.io.File
 import javax.swing.JFileChooser
 

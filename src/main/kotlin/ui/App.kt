@@ -2,6 +2,8 @@ package ui
 
 import androidx.compose.runtime.*
 import project.Project
+import ui.projects.ProjectPicker
+import ui.resources.ResourceManager
 import ui.theme.PolyglotTheme
 import utils.Settings
 
