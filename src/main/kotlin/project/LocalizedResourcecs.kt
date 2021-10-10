@@ -29,5 +29,3 @@ fun LocalizedResources.save(projectName: String) {
         }
     }
 }
-
-
