@@ -27,4 +27,14 @@ class ResourceViewModel(project: Project) {
         GlobalScope.launch(Dispatchers.IO) { resources.collect { it.save(project.name) } }
         GlobalScope.launch(Dispatchers.IO) { localizedResources.collect { it.save(project.name) } }
     }
+
+    fun createResource() {
+        var newId = ResourceId("new")
+        var n = 0
+        while (resources.value[newId] != null) {
+            newId = ResourceId("new$n")
+            n++
+        }
+        resources.value = resources.value.plus(newId to Resource()).toSortedMap()
+    }
 }
