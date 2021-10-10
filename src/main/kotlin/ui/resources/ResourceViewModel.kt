@@ -20,8 +20,7 @@ class ResourceViewModel(project: Project) {
     val excludedResourceIds = MutableStateFlow(setOf<ResourceId>())
     val excludedResourceTypes = MutableStateFlow(setOf<Resource.Type>())
 
-    val showFilters = MutableStateFlow(false)
-    val showProjectSettings = MutableStateFlow(false)
+    val menuState = MutableStateFlow(MenuState.CLOSED)
 
     init {
         GlobalScope.launch(Dispatchers.IO) { resources.collect { it.save(project.name) } }
