@@ -1,4 +1,4 @@
-package ui
+package ui.projects
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,7 +16,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import project.Project
-import ui.utils.onPressEnter
+import ui.core.onPressEnter
 import java.io.File
 
 @Composable
