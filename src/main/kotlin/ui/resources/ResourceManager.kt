@@ -40,8 +40,8 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
     val excludedLocales by vm.excludedLocales.collectAsState()
     val excludedResourceIds by vm.excludedResourceIds.collectAsState()
     val excludedResourceTypes by vm.excludedResourceTypes.collectAsState()
+    val showProjectSettings by vm.showProjectSettings.collectAsState()
 
-    var showProjectSettings by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -79,7 +79,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                     }
 
                     IconButton(onClick = {
-                        showProjectSettings = false
+                        vm.showProjectSettings.value = false
                         showFilters = !showFilters
                     }) {
                         Icon(painterResource(R.drawable.filterList), contentDescription = "Filter")
@@ -87,7 +87,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
 
                     IconButton(onClick = {
                         showFilters = false
-                        showProjectSettings = !showProjectSettings
+                        vm.showProjectSettings.value = !showProjectSettings
                     }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
@@ -139,7 +139,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
             }
 
             AnimatedVisibility(visible = showProjectSettings) {
-                ProjectSettings(vm = vm, onClose = { showProjectSettings = false })
+                ProjectSettings(vm = vm, onClose = { vm.showProjectSettings.value = false })
             }
             AnimatedVisibility(visible = showFilters) {
                 Column(Modifier.width(300.dp).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {

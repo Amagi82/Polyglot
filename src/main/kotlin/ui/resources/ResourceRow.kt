@@ -90,8 +90,11 @@ fun ResourceRow(
                 }
             }
         }
-        IconButton(onClick = deleteResource, modifier = Modifier.padding(start = 16.dp)) {
-            Icon(Icons.Default.Delete, contentDescription = "Remove")
+        val showProjectSettings by vm.showProjectSettings.collectAsState()
+        if (showProjectSettings) {
+            IconButton(onClick = deleteResource, modifier = Modifier.padding(start = 16.dp)) {
+                Icon(Icons.Default.Delete, contentDescription = "Remove")
+            }
         }
     }
     Divider()
