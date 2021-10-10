@@ -1,6 +1,5 @@
 package ui.resources
 
-import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +20,7 @@ class ResourceViewModel(project: Project) {
     val excludedResourceIds = MutableStateFlow(setOf<ResourceId>())
     val excludedResourceTypes = MutableStateFlow(setOf<Resource.Type>())
 
+    val showFilters = MutableStateFlow(false)
     val showProjectSettings = MutableStateFlow(false)
 
     init {

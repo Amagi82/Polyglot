@@ -25,14 +25,14 @@ import java.io.File
 import javax.swing.JFileChooser
 
 @Composable
-fun ProjectSettings(vm: ResourceViewModel, onClose: () -> Unit) {
+fun SettingsMenu(vm: ResourceViewModel) {
     Column(Modifier.padding(16.dp).width(400.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         val project by vm.project.collectAsState()
         val localizedResources by vm.localizedResources.collectAsState()
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Settings", style = MaterialTheme.typography.h6)
-            IconButton(onClick = onClose) {
+            IconButton(onClick = { vm.showProjectSettings.value = false }) {
                 Icon(Icons.Default.Close, contentDescription = "Close settings menu")
             }
         }
