@@ -1,15 +1,9 @@
 package generators
 
 import locales.LocaleIsoCode
-import project.Platform
-import project.Quantity
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import project.Project
-import sqldelight.ArrayLocalizations
-import sqldelight.PluralLocalizations
-import sqldelight.StringLocalizations
-import utils.extensions.quantity
+import project.*
 import java.io.*
 import java.lang.StringBuilder
 import javax.xml.transform.OutputKeys
@@ -27,9 +21,8 @@ class IosResourceGenerator(
     project: Project,
     locale: LocaleIsoCode,
     override val formatters: List<StringFormatter>,
-    strings: List<StringLocalizations>,
-    plurals: List<PluralLocalizations>,
-    arrays: List<ArrayLocalizations>
+    resources: Resources,
+    localizations: Localizations
 ) : ResourceGenerator() {
     private val iosFolder = File(project.iosOutputUrl)
     override val platform: Platform = Platform.IOS
@@ -43,8 +36,8 @@ class IosResourceGenerator(
     private val arraysDocument: Document = createDocument()
     private val arraysResourceElement: Element = arraysDocument.createAndAppendPlistElement()
 
-    private val shouldCreatePlurals = plurals.isNotEmpty()
-    private val shouldCreateArrays = arrays.isNotEmpty()
+    private val shouldCreatePlurals = localizations.values.any { it is Plural }
+    private val shouldCreateArrays = localizations.values.any { it is StringArray }
 
     private val shouldCreateReferences = locale == project.defaultLocale
     private val stringReferences = if (shouldCreateReferences) StringBuilder() else null
@@ -63,9 +56,7 @@ class IosResourceGenerator(
         if (shouldCreateReferences) {
             iosFolder.listFiles { file -> file.name == "R.swift" }?.forEach(File::delete)
         }
-        strings.forEach(::addString)
-        plurals.forEach(::addPlurals)
-        arrays.forEach(::addStringArray)
+        addAll(localizations)
     }
 
     override fun generateFiles() {
@@ -80,15 +71,15 @@ class IosResourceGenerator(
         generateStringLocalizationExtensions()
     }
 
-    override fun addString(res: StringLocalizations) {
+    override fun addString(id: ResourceId, res: Str) {
         // "identifier" = "Localized text";
         val txt = res.text.sanitized(isXml = false)
-        stringsWriter.appendLine("\"${res.resId}\" = \"$txt\";")
+        stringsWriter.appendLine("\"${id.id}\" = \"$txt\";")
         stringReferences?.apply {
             appendLine()
             appendReferenceComment(txt)
-            if (txt.contains('%')) appendReferenceFormattingArgs(res.resId, txt, false)
-            else appendLine("\t\tstatic let ${res.resId} = \"${res.resId}\".localized()")
+            if (txt.contains('%')) appendReferenceFormattingArgs(id, txt, false)
+            else appendLine("\t\tstatic let ${id.id} = \"${id.id}\".localized()")
         }
     }
 
@@ -110,9 +101,9 @@ class IosResourceGenerator(
      *   </dict>
      * </dict>
      */
-    override fun addPlurals(res: PluralLocalizations) {
-        var exampleText: String? = null
-        pluralsResourceElement.appendChild(pluralsDocument, KEY, res.resId)
+    override fun addPlurals(id: ResourceId, res: Plural) {
+        var exampleText: String? = res[Quantity.OTHER]?.sanitized(isXml = true)
+        pluralsResourceElement.appendChild(pluralsDocument, KEY, id.id)
         pluralsResourceElement.appendChild(pluralsDocument.createElement("dict").apply {
             appendChild(pluralsDocument, KEY, "NSStringLocalizedFormatKey")
             appendChild(pluralsDocument, STRING, "%#@value@")
@@ -122,18 +113,18 @@ class IosResourceGenerator(
                 appendChild(pluralsDocument, STRING, "NSStringPluralRuleType")
                 appendChild(pluralsDocument, KEY, "NSStringFormatValueTypeKey")
                 appendChild(pluralsDocument, STRING, "d")
-                Quantity.values().forEach { quantity ->
-                    val text = res.quantity(quantity)?.sanitized(isXml = true) ?: return@forEach
-                    if (exampleText == null) exampleText = text
+                res.items.forEach { (quantity, text) ->
+                    val sanitizedText = text.sanitized(isXml = true)
+                    if (exampleText == null) exampleText = sanitizedText
                     appendChild(pluralsDocument, KEY, quantity.label)
-                    appendChild(pluralsDocument, STRING, text)
+                    appendChild(pluralsDocument, STRING, sanitizedText)
                 }
             })
         })
         pluralReferences?.apply {
             appendLine()
             appendReferenceComment(exampleText.orEmpty())
-            appendReferenceFormattingArgs(res.resId, exampleText.orEmpty(), true)
+            appendReferenceFormattingArgs(id, exampleText.orEmpty(), true)
         }
     }
 
@@ -144,16 +135,16 @@ class IosResourceGenerator(
      *   <string>Wage</string>
      * </array>
      */
-    override fun addStringArray(res: ArrayLocalizations) {
-        arraysResourceElement.appendChild(arraysDocument, KEY, res.resId)
+    override fun addStringArray(id: ResourceId, res: StringArray) {
+        arraysResourceElement.appendChild(arraysDocument, KEY, id.id)
         arraysResourceElement.appendChild(arraysDocument.createElement("array").apply {
-            for (text in res.array) {
+            for (text in res.items) {
                 appendChild(arraysDocument, STRING, text.sanitized(isXml = true))
             }
         })
         stringArrayReferences?.apply {
             appendLine()
-            appendLine("\t\tstatic let ${res.resId} = \"${res.resId}\".localizedArray()")
+            appendLine("\t\tstatic let ${id.id} = \"${id.id}\".localizedArray()")
         }
     }
 
@@ -162,7 +153,7 @@ class IosResourceGenerator(
         if (exampleText.isNotEmpty()) appendLine("\t\t// en: $exampleText")
     }
 
-    private fun StringBuilder.appendReferenceFormattingArgs(id: String, exampleText: String, isPlural: Boolean) {
+    private fun StringBuilder.appendReferenceFormattingArgs(id: ResourceId, exampleText: String, isPlural: Boolean) {
         var i = exampleText.indexOf('%')
 
         append("\t\tstatic func $id(")

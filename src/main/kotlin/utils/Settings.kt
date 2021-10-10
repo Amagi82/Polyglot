@@ -3,17 +3,13 @@ package utils
 import utils.extensions.prop
 import java.io.File
 import java.util.*
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
 
 object Settings {
-    private val file = File("polyglot", "settings.properties").apply(File::createNewFile)
-    private val props = Properties().apply {
-        load(file.inputStream())
-    }
+    private val file = File("projects", "settings.properties").apply(File::createNewFile)
+    private val props = Properties().apply { load(file.inputStream()) }
 
     private fun save() {
-        runCatching { props.store(Settings.file.outputStream(), "Polyglot settings") }.onFailure {
+        runCatching { props.store(file.outputStream(), "Polyglot settings") }.onFailure {
             println("Failed to save settings with $it")
         }
     }

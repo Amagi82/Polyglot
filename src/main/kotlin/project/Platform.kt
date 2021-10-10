@@ -1,7 +1,6 @@
 package project
 
 import androidx.compose.runtime.Stable
-import androidx.compose.ui.graphics.Color
 
 /**
  * Make a resource platform-specific
