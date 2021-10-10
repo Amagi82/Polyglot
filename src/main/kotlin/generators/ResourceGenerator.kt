@@ -1,14 +1,8 @@
 package generators
 
-import data.PolyglotDatabase
-import project.Platform
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import project.Project
-import sqldelight.ArrayLocalizations
-import sqldelight.PluralLocalizations
-import sqldelight.StringLocalizations
-import java.awt.Desktop
+import project.*
 import java.io.File
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
@@ -20,11 +14,21 @@ import javax.xml.transform.stream.StreamResult
 
 abstract class ResourceGenerator {
     protected abstract val platform: Platform
-    protected abstract fun addString(res: StringLocalizations)
-    protected abstract fun addStringArray(res: ArrayLocalizations)
-    protected abstract fun addPlurals(res: PluralLocalizations)
+    protected abstract fun addString(id: ResourceId, res: Str)
+    protected abstract fun addStringArray(id: ResourceId, res: StringArray)
+    protected abstract fun addPlurals(id: ResourceId, res: Plural)
     protected abstract val formatters: List<StringFormatter>
     abstract fun generateFiles()
+
+    protected fun addAll(localizations: Localizations){
+        localizations.forEach { (id, resourceType) ->
+            when(resourceType){
+                is Str -> addString(id, resourceType)
+                is Plural -> addPlurals(id, resourceType)
+                is StringArray -> addStringArray(id, resourceType)
+            }
+        }
+    }
 
     protected fun Element.appendChild(document: Document, tagName: String, textNode: String) {
         appendChild(document.createElement(tagName).apply { appendChild(document.createTextNode(textNode)) })
@@ -78,20 +82,18 @@ abstract class ResourceGenerator {
 
         fun generateFiles(
             project: Project,
-            db: PolyglotDatabase,
+            resources: Resources,
+            localizedResources: LocalizedResources,
             platforms: List<Platform> = Platform.ALL,
             formatters: List<StringFormatter> = StringFormatter.defaultFormatters,
         ) {
             val androidFormatters = formatters.filter { Platform.ANDROID in it.platforms }
             val iosFormatters = formatters.filter { Platform.IOS in it.platforms }
-            for (localeIsoCode in project.locales) {
-                val strings = db.stringLocalizationsQueries.selectAllWithLocale(localeIsoCode).executeAsList()
-                val plurals = db.pluralLocalizationsQueries.selectAllWithLocale(localeIsoCode).executeAsList()
-                val arrays = db.arrayLocalizationsQueries.selectAllWithLocale(localeIsoCode).executeAsList()
+            localizedResources.forEach { (localeIsoCode, resourceTypes) ->
                 for (platform in platforms) {
                     when (platform) {
-                        Platform.ANDROID -> AndroidResourceGenerator(project, localeIsoCode, androidFormatters, strings, plurals, arrays)
-                        Platform.IOS -> IosResourceGenerator(project, localeIsoCode, iosFormatters, strings, plurals, arrays)
+                        Platform.ANDROID -> AndroidResourceGenerator(project, localeIsoCode, androidFormatters, resources, resourceTypes)
+                        Platform.IOS -> IosResourceGenerator(project, localeIsoCode, iosFormatters, resources, resourceTypes)
                     }.generateFiles()
                 }
             }

@@ -3,9 +3,8 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.5.30"
-    id("com.squareup.sqldelight") version "1.5.1"
-    id("org.jetbrains.compose") version "1.0.0-alpha4-build348"
+    kotlin("jvm") version "1.5.31"
+    id("org.jetbrains.compose") version "1.0.0-alpha4-build396"
 }
 
 repositories {
@@ -16,10 +15,6 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
-//    implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.5.30")
-//    implementation("org.jetbrains.kotlin:kotlin-script-runtime")
-    implementation("com.squareup.sqldelight:sqlite-driver:1.5.1")
-    implementation("com.squareup.sqldelight:coroutines-extensions-jvm:1.5.1")
 }
 
 tasks.withType<KotlinCompile> {
@@ -46,15 +41,6 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
-}
-
-sqldelight{
-    database("PolyglotDatabase"){
-        packageName = "data"
-        sourceFolders = listOf("")
-        schemaOutputDirectory = file("build/sqldelight/schemas")
-    }
-    linkSqlite = true
 }
 
 tasks {

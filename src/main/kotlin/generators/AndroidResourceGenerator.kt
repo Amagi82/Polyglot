@@ -1,15 +1,9 @@
 package generators
 
 import locales.LocaleIsoCode
-import project.Platform
-import project.Quantity
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import project.Project
-import sqldelight.ArrayLocalizations
-import sqldelight.PluralLocalizations
-import sqldelight.StringLocalizations
-import utils.extensions.quantity
+import project.*
 import javax.xml.transform.Transformer
 import java.io.File
 
@@ -20,9 +14,8 @@ class AndroidResourceGenerator(
     private val project: Project,
     locale: LocaleIsoCode,
     override val formatters: List<StringFormatter>,
-    strings: List<StringLocalizations>,
-    plurals: List<PluralLocalizations>,
-    arrays: List<ArrayLocalizations>
+    resources: Resources,
+    localizations: Localizations
 ) : ResourceGenerator() {
     override val platform: Platform = Platform.ANDROID
     private val valuesFolder = File(project.iosOutputUrl, "values${if (locale == project.defaultLocale) "" else "-$locale"}").also(File::mkdirs)
@@ -33,9 +26,7 @@ class AndroidResourceGenerator(
     }
 
     init {
-        strings.forEach(::addString)
-        plurals.forEach(::addPlurals)
-        arrays.forEach(::addStringArray)
+        addAll(localizations)
     }
 
     override fun generateFiles() {
@@ -49,11 +40,10 @@ class AndroidResourceGenerator(
      *     <item quantity="other">Znaleziono %d piosenek.</item>
      * </plurals>
      */
-    override fun addPlurals(res: PluralLocalizations) {
+    override fun addPlurals(id: ResourceId, res: Plural) {
         resourceElement.appendChild(document.createElement("plurals").apply {
-            setAttribute("name", res.resId)
-            Quantity.values().forEach { quantity ->
-                val text = res.quantity(quantity) ?: return@forEach
+            setAttribute("name", id.id)
+            res.items.forEach { (quantity, text) ->
                 appendChild(document.createElement("item").apply {
                     setAttribute("quantity", quantity.label)
                     appendChild(document.createTextNode(text.sanitized()))
@@ -62,12 +52,12 @@ class AndroidResourceGenerator(
         })
     }
 
-    override fun addString(res: StringLocalizations) {
+    override fun addString(id: ResourceId, res: Str) {
         val txt = res.text.sanitized()
         if (txt.isBlank()) return
         /** <string name="dragon">Trogdor the Burninator</string> */
         resourceElement.appendChild(document.createElement("string").apply {
-            setAttribute("name", res.resId)
+            setAttribute("name", id.id)
             appendChild(document.createTextNode(txt))
         })
     }
@@ -78,10 +68,10 @@ class AndroidResourceGenerator(
      *      <item>Germany</item>
      * </string-array>
      */
-    override fun addStringArray(res: ArrayLocalizations) {
+    override fun addStringArray(id: ResourceId, res: StringArray) {
         resourceElement.appendChild(document.createElement("string-array").apply {
-            setAttribute("name", res.resId)
-            for (text in res.array) {
+            setAttribute("name", id.id)
+            for (text in res.items) {
                 appendChild(document, "item", text.sanitized())
             }
         })

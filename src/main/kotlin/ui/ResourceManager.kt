@@ -23,42 +23,35 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.squareup.sqldelight.runtime.coroutines.asFlow
-import com.squareup.sqldelight.runtime.coroutines.mapToList
-import data.PolyglotDatabase
-import data.polyglotDatabase
 import generators.ResourceGenerator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import locales.Locale
 import locales.LocaleIsoCode
-import project.Platform
-import project.Project
-import project.ResourceType
-import sqldelight.*
+import project.*
 import ui.utils.onPressEnter
 import java.awt.Desktop
 import java.io.File
 
 @OptIn(ExperimentalAnimationApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun ResourceManager(project: Project, toggleDarkTheme: () -> Unit, updateProject: (Project?) -> Unit) {
-    val db = remember { polyglotDatabase(project.name) }
+fun ResourceManager(project: MutableState<Project>, toggleDarkTheme: () -> Unit, updateProject: (Project?) -> Unit) {
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberScaffoldState()
-    val resourceList: List<Resource> by db.resourceQueries.selectAll().asFlow().mapToList().collectAsState(listOf())
+    var resources = remember { mutableStateOf(Project.loadResources(project.value.name)) }
+    var localizedResources = remember { mutableStateOf(Project.loadLocalizedResources(project.value.name)) }
     var showProjectSettings by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
 
     var excludedLocales by remember { mutableStateOf(setOf<LocaleIsoCode>()) }
-    var excludedResourceIds by remember { mutableStateOf(setOf<String>()) }
-    var excludedResourceTypes by remember { mutableStateOf(setOf<ResourceType>()) }
+    var excludedResourceIds by remember { mutableStateOf(setOf<ResourceId>()) }
+    var excludedResourceTypes by remember { mutableStateOf(setOf<Resource.Type>()) }
 
     Scaffold(
         scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
-                title = { Text(project.name) },
+                title = { Text(project.value.name) },
                 navigationIcon = {
                     IconButton(onClick = { updateProject(null) }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Close Project")
@@ -73,15 +66,15 @@ fun ResourceManager(project: Project, toggleDarkTheme: () -> Unit, updateProject
                     }
                     IconButton(onClick = {
                         scope.launch {
-                            ResourceGenerator.generateFiles(project, db)
+                            ResourceGenerator.generateFiles(project.value, resources.value, localizedResources.value)
                             val result = scaffoldState.snackbarHostState.showSnackbar(
                                 message = "Generating outputs",
                                 actionLabel = "Show",
                                 duration = SnackbarDuration.Long
                             )
                             if (result == SnackbarResult.ActionPerformed) {
-                                project.androidOutputUrl.let(::File).let { openFolder(it, scaffoldState) }
-                                project.iosOutputUrl.let(::File).let { openFolder(it, scaffoldState) }
+                                project.value.androidOutputUrl.let(::File).let { openFolder(it, scaffoldState) }
+                                project.value.iosOutputUrl.let(::File).let { openFolder(it, scaffoldState) }
                             }
                         }
                     }) {
@@ -107,38 +100,39 @@ fun ResourceManager(project: Project, toggleDarkTheme: () -> Unit, updateProject
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 scope.launch {
-                    db.transaction {
-                        var newId = "new"
-                        var n = 0
-                        while (resourceList.any { it.id == newId }) {
-                            newId = "new$n"
-                            n++
-                        }
-                        val newResource = Resource(id = newId, type = ResourceType.STRING, platforms = Platform.ALL)
-                        db.resourceQueries.insert(newResource)
-                        project.locales.forEach { locale ->
-                            db.stringLocalizationsQueries.insert(StringLocalizations(resId = newResource.id, locale = locale, text = ""))
-                        }
+                    var newId = ResourceId("new")
+                    var n = 0
+                    while (resources.value[newId] != null) {
+                        newId = ResourceId("new$n")
+                        n++
                     }
+                    resources.value = resources.value.plus(newId to Resource()).apply { save(project.value.name) }
                 }
             }) { Icon(Icons.Default.Add, contentDescription = "Add new resource") }
         }) { paddingValues ->
         Row(Modifier.padding(paddingValues)) {
             val state = rememberLazyListState()
             LazyColumn(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f), state = state) {
-                items(resourceList.filter { res -> res.id !in excludedResourceIds && res.type !in excludedResourceTypes }) { res ->
-                    DataRow(db = db,
-                        res = res,
-                        displayedLocales = project.locales.filter { locale -> locale !in excludedLocales },
-                        defaultLocale = project.defaultLocale,
+                items(resources.value.filter { (k, v) -> k !in excludedResourceIds && v.type !in excludedResourceTypes }.keys.toList()) { resId ->
+                    DataRow(project = project.value,
+                        resId = resId,
+                        resources = resources,
+                        localizedResources = localizedResources,
+                        excludedLocales = excludedLocales,
+                        defaultLocale = project.value.defaultLocale,
                         deleteResource = {
                             scope.launch {
-                                excludedResourceIds = excludedResourceIds.plus(res.id)
-                                val snackbarResult = scaffoldState.snackbarHostState.showSnackbar("Removed ${res.id}", actionLabel = "Undo")
+                                excludedResourceIds = excludedResourceIds.plus(resId)
+                                val snackbarResult = scaffoldState.snackbarHostState.showSnackbar("Removed ${resId.id}", actionLabel = "Undo")
                                 if (snackbarResult == SnackbarResult.ActionPerformed) {
-                                    excludedResourceIds = excludedResourceIds.minus(res.id)
+                                    excludedResourceIds = excludedResourceIds.minus(resId)
                                 } else {
-                                    db.resourceQueries.delete(res.id)
+                                    localizedResources.value = localizedResources.value.toMutableMap().apply {
+                                        for ((localeIsoCode, localizations) in this) {
+                                            put(localeIsoCode, localizations.minus(resId))
+                                        }
+                                        save(project.value.name)
+                                    }
                                 }
                             }
                         })
@@ -153,7 +147,7 @@ fun ResourceManager(project: Project, toggleDarkTheme: () -> Unit, updateProject
             }
 
             AnimatedVisibility(visible = showProjectSettings) {
-                ProjectSettings(db = db, project = project, updateProject = updateProject, onClose = { showProjectSettings = false })
+                ProjectSettings(project = project, localizedResources = localizedResources, onClose = { showProjectSettings = false })
             }
             AnimatedVisibility(visible = showFilters) {
                 Column(Modifier.width(300.dp).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -165,7 +159,7 @@ fun ResourceManager(project: Project, toggleDarkTheme: () -> Unit, updateProject
                     }
 
                     Text("Resource types", modifier = Modifier.padding(top = 8.dp), style = MaterialTheme.typography.subtitle1)
-                    ResourceType.values().forEach { resType ->
+                    Resource.Type.values().forEach { resType ->
                         var isChecked by remember { mutableStateOf(true) }
                         Row(
                             modifier = Modifier.height(32.dp)
@@ -198,13 +192,13 @@ fun ResourceManager(project: Project, toggleDarkTheme: () -> Unit, updateProject
                     }
 
                     Text("Locales", modifier = Modifier.padding(top = 8.dp), style = MaterialTheme.typography.subtitle1)
-                    project.locales.forEach { localeIsoCode ->
+                    localizedResources.value.keys.forEach { localeIsoCode ->
                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             Switch(checked = localeIsoCode !in excludedLocales,
                                 onCheckedChange = { isChecked ->
                                     excludedLocales = if (isChecked) excludedLocales.minus(localeIsoCode) else excludedLocales.plus(localeIsoCode)
                                 })
-                            Text(Locale[localeIsoCode].displayName(localeIsoCode == project.defaultLocale))
+                            Text(Locale[localeIsoCode].displayName(localeIsoCode == project.value.defaultLocale))
                         }
                     }
                 }
@@ -215,28 +209,41 @@ fun ResourceManager(project: Project, toggleDarkTheme: () -> Unit, updateProject
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun DataRow(db: PolyglotDatabase, res: Resource, displayedLocales: List<LocaleIsoCode>, defaultLocale: LocaleIsoCode, deleteResource: () -> Unit) {
+fun DataRow(
+    project: Project,
+    resId: ResourceId,
+    resources: MutableState<Resources>,
+    localizedResources: MutableState<LocalizedResources>,
+    excludedLocales: Set<LocaleIsoCode>,
+    defaultLocale: LocaleIsoCode,
+    deleteResource: () -> Unit
+) {
     val scope = rememberCoroutineScope()
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        var id by remember { mutableStateOf(res.id) }
+        var id by remember { mutableStateOf(resId) }
         var error by remember { mutableStateOf("") }
         val focusManager = LocalFocusManager.current
 
         Column(modifier = Modifier.weight(1f)) {
             OutlinedTextField(
-                value = id,
+                value = id.id,
                 onValueChange = {
                     error = ""
-                    id = it
+                    id = ResourceId(it)
                 },
                 modifier = Modifier.padding(vertical = 4.dp).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
-                    if (!it.hasFocus && res.id != id) {
+                    if (!it.hasFocus && resId != id) {
                         scope.launch {
-                            if (db.resourceQueries.exists(id).executeAsOne()) {
+                            if (id in resources.value) {
                                 error = "id already exists"
                             } else {
-                                db.resourceQueries.updateId(newId = id, oldId = res.id)
+                                resources.value = resources.value.toMutableMap().apply {
+                                    val resource = this[resId]!!
+                                    remove(resId)
+                                    put(id, resource)
+                                    save(project.name)
+                                }
                             }
                         }
                     }
@@ -251,18 +258,42 @@ fun DataRow(db: PolyglotDatabase, res: Resource, displayedLocales: List<LocaleIs
         }
 
         Column(Modifier.weight(1f)) {
-            when (res.type) {
-                ResourceType.STRING -> StringRows(defaultLocale, res.id, displayedLocales, db.stringLocalizationsQueries)
-                ResourceType.PLURAL -> PluralRows(res.id, displayedLocales, db.pluralLocalizationsQueries)
-                ResourceType.ARRAY -> ArrayRows(res.id, displayedLocales, db.arrayLocalizationsQueries)
+            val resource by remember { derivedStateOf { resources.value[id]!! } }
+            localizedResources.value.keys.filter { it !in excludedLocales }.forEach { localeIsoCode ->
+                Row(
+                    Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val localization = localizedResources.value[localeIsoCode]?.get(id)
+                    when (resource.type) {
+                        Resource.Type.STRING -> StringRows(defaultLocale, localeIsoCode, localization as? Str ?: Str("")) {
+                            scope.launch {
+                                localizedResources.value =
+                                    localizedResources.value.plus(localeIsoCode to localizedResources.value[localeIsoCode]!!.plus(id to it))
+                                localizedResources.value.save(project.name)
+                            }
+
+                        }
+                        Resource.Type.PLURAL -> PluralRows(defaultLocale, localeIsoCode, localization as? Plural ?: Plural(one = null, other = "")) {
+
+                        }
+                        Resource.Type.ARRAY -> ArrayRows(defaultLocale, localeIsoCode, localization as? StringArray ?: StringArray(listOf())) {
+
+                        }
+                    }
+                }
             }
         }
 
+        val resource = resources.value[id]!!
+
         Platform.values().forEach { platform ->
-            val isIncluded = platform in res.platforms
+            val isIncluded = platform in resource.platforms
             IconButton(onClick = {
                 scope.launch {
-                    db.resourceQueries.updatePlatforms((if (isIncluded) res.platforms.minus(platform) else res.platforms.plus(platform)), id = id)
+                    val newResource = resource.copy(platforms = if (isIncluded) resource.platforms.minus(platform) else resource.platforms.plus(platform))
+                    resources.value = resources.value.plus(id to newResource).apply { save(project.name) }
                 }
             }) {
                 if (isIncluded) {
@@ -278,51 +309,33 @@ fun DataRow(db: PolyglotDatabase, res: Resource, displayedLocales: List<LocaleIs
 }
 
 @Composable
-fun StringRows(defaultLocale: LocaleIsoCode, id: String, displayedLocales: List<LocaleIsoCode>, queries: StringLocalizationsQueries) {
+fun StringRows(defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, string: Str, update: (Str) -> Unit) {
     val focusManager = LocalFocusManager.current
-    ResourceRows(displayedLocales) { scope, localeIsoCode ->
-        var oldText = remember { queries.select(id, localeIsoCode).executeAsOneOrNull() }
-        var newText by remember { mutableStateOf(oldText ?: "") }
-        OutlinedTextField(
-            value = newText,
-            onValueChange = { newText = it },
-            modifier = Modifier.onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
-                if (!it.hasFocus && oldText != newText) {
-                    oldText = newText
-                    scope.launch { queries.updateText(text = newText, resId = id, locale = localeIsoCode) }
-                }
-            },
-            label = { Text(Locale[localeIsoCode].displayName(localeIsoCode == defaultLocale)) },
-            singleLine = true
-        )
-    }
+    var oldText = remember { string.text }
+    var newText by remember { mutableStateOf(oldText) }
+    OutlinedTextField(
+        value = newText,
+        onValueChange = { newText = it },
+        modifier = Modifier.onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
+            if (!it.hasFocus && oldText != newText) {
+                oldText = newText
+                update(Str(newText))
+            }
+        },
+        label = { Text(Locale[localeIsoCode].displayName(localeIsoCode == defaultLocale)) },
+        singleLine = true
+    )
 }
 
 @Composable
-fun PluralRows(id: String, displayedLocales: List<LocaleIsoCode>, queries: PluralLocalizationsQueries) {
-//    ResourceRows(queries.selectAll(resId = id).asFlow().mapToList()) { scope, loc ->
-//    }
+fun PluralRows(defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, plural: Plural, update: (Plural) -> Unit) {
+
 }
 
 
 @Composable
-fun ArrayRows(id: String, displayedLocales: List<LocaleIsoCode>, queries: ArrayLocalizationsQueries) {
-//    ResourceRows(queries.selectAll(resId = id).asFlow().mapToList()) { scope, loc ->
-//    }
-}
+fun ArrayRows(defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, array: StringArray, update: (StringArray) -> Unit) {
 
-@Composable
-fun ResourceRows(locales: List<LocaleIsoCode>, rowContent: @Composable (CoroutineScope, LocaleIsoCode) -> Unit) {
-    val scope = rememberCoroutineScope()
-    locales.forEach {
-        Row(
-            Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            rowContent(scope, it)
-        }
-    }
 }
 
 @Suppress("BlockingMethodInNonBlockingContext")
