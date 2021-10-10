@@ -18,7 +18,7 @@ class AndroidResourceGenerator(
     localizations: Localizations
 ) : ResourceGenerator() {
     override val platform: Platform = Platform.ANDROID
-    private val valuesFolder = File(project.iosOutputUrl, "values${if (locale == project.defaultLocale) "" else "-$locale"}").also(File::mkdirs)
+    private val valuesFolder = File(project.androidOutputUrl, "values${if (locale == project.defaultLocale) "" else "-${locale.value}"}").also(File::mkdirs)
     private val document: Document = createDocument()
     private val resourceElement: Element = document.createElement("resources").also {
         if (locale == project.defaultLocale) it.setAttribute("xmlns:tools", "http://schemas.android.com/tools")
