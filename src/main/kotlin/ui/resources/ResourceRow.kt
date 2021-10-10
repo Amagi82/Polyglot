@@ -44,7 +44,7 @@ fun ResourceRow(
                 value = id.id,
                 onValueChange = {
                     error = ""
-                    id = ResourceId(it)
+                    id = ResourceId(it.dropWhile(Char::isDigit).filter(Char::isLetterOrDigit))
                 },
                 modifier = Modifier.padding(vertical = 4.dp).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
                     if (!it.hasFocus && resId != id) {
