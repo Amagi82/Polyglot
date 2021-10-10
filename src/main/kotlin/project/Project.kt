@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 import locales.LocaleIsoCode
 import java.io.File
 import java.util.*
+import kotlin.Comparator
 
 /**
  * @param name: Name of the project
@@ -66,7 +67,7 @@ data class Project(
         }
 
         @Suppress("UNCHECKED_CAST")
-        fun loadResources(projectName: String): Resources = buildMap {
+        fun loadResources(projectName: String): Resources = buildMap<ResourceId, Resource> {
             val props = Properties().apply { load(resourcesFile(projectName).inputStream()) }
             props.stringPropertyNames().forEach { k ->
                 val v = props.getProperty(k)
@@ -76,13 +77,13 @@ data class Project(
                     Resource(group = splits[2], platforms = splits[1].split(',').map { Platform.valueOf(it) }, type = Resource.Type.valueOf(splits[0]))
                 )
             }
-        }
+        }.toSortedMap()
 
         @Suppress("UNCHECKED_CAST")
-        fun loadLocalizedResources(projectName: String): LocalizedResources = localizedResourceFiles(projectName).orEmpty().associate { file ->
+        fun loadLocalizedResources(projectName: String): LocalizedResources = localizedResourceFiles(projectName).associate { file ->
             val locale = LocaleIsoCode(file.nameWithoutExtension)
             val props = Properties().apply { load(localizedResourcesFile(projectName, locale).inputStream()) }
-            locale to buildMap {
+            locale to buildMap<ResourceId, Localization> {
                 val (others, strings) = props.stringPropertyNames().partition { it.contains('.') }
                 strings.forEach { k -> put(ResourceId(k), Str(props.getProperty(k))) }
                 val (arrays, plurals) = others.partition { it.last().isDigit() }
@@ -93,6 +94,6 @@ data class Project(
                     put(ResourceId(id), Plural(keys.associate { Quantity.valueOf(it.substringAfter('.').uppercase()) to props.getProperty(it) }))
                 }
             }
-        }
+        }.toSortedMap()
     }
 }

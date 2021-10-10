@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import generators.ResourceGenerator
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import locales.Locale
 import locales.LocaleIsoCode
@@ -102,7 +103,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                         newId = ResourceId("new$n")
                         n++
                     }
-                    vm.resources.value = resources.plus(newId to Resource())
+                    vm.resources.value = resources.plus(newId to Resource()).toSortedMap()
                 }
             }) { Icon(Icons.Default.Add, contentDescription = "Add new resource") }
         }) { paddingValues ->
@@ -123,7 +124,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                                         for ((localeIsoCode, localizations) in this) {
                                             put(localeIsoCode, localizations.minus(resId))
                                         }
-                                    }
+                                    }.toSortedMap()
                                 }
                             }
                         })

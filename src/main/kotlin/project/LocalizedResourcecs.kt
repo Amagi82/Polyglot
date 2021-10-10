@@ -5,7 +5,7 @@ import java.util.*
 
 
 typealias Localizations = Map<ResourceId, Localization>
-typealias LocalizedResources = Map<LocaleIsoCode, Localizations>
+typealias LocalizedResources = SortedMap<LocaleIsoCode, Localizations>
 
 @JvmName("saveLocalizedResources")
 fun LocalizedResources.save(projectName: String) {

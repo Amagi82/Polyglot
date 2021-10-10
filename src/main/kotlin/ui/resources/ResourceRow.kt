@@ -50,7 +50,7 @@ fun ResourceRow(
                         } else {
                             vm.resources.value = resources.toMutableMap().apply {
                                 put(id, remove(resId)!!)
-                            }
+                            }.toSortedMap()
                         }
                     }
                 },
@@ -63,13 +63,12 @@ fun ResourceRow(
             }
         }
 
-
         val excludedLocales by vm.excludedLocales.collectAsState()
         localizedResources.keys.filter { it !in excludedLocales }.forEach { localeIsoCode ->
             val localization = localizedResources[localeIsoCode]?.get(id)
             when (resource.type) {
                 Resource.Type.STRING -> StringRows(project.defaultLocale, localeIsoCode, localization as? Str ?: Str("")) {
-                    vm.localizedResources.value = localizedResources.plus(localeIsoCode to localizedResources[localeIsoCode]!!.plus(id to it))
+                    vm.localizedResources.value = localizedResources.plus(localeIsoCode to localizedResources[localeIsoCode]!!.plus(id to it)).toSortedMap()
                 }
                 Resource.Type.PLURAL -> PluralRows(project.defaultLocale, localeIsoCode, localization as? Plural ?: Plural(one = null, other = "")) {
 
@@ -84,7 +83,7 @@ fun ResourceRow(
             val isIncluded = platform in resource.platforms
             IconButton(onClick = {
                 val newResource = resource.copy(platforms = if (isIncluded) resource.platforms.minus(platform) else resource.platforms.plus(platform))
-                vm.resources.value = resources.plus(id to newResource)
+                vm.resources.value = resources.plus(id to newResource).toSortedMap()
             }) {
                 if (isIncluded) {
                     Icon(painterResource(platform.iconId), contentDescription = platform.name)

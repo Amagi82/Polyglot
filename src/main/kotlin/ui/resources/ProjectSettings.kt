@@ -55,7 +55,7 @@ fun ProjectSettings(vm: ResourceViewModel, onClose: () -> Unit) {
                 }
             }
         }
-        var projectLocales by remember { mutableStateOf(localizedResources.keys) }
+        var projectLocales by remember { mutableStateOf(localizedResources.keys.toSet()) }
 
         fun addLocale(isoCode: LocaleIsoCode? = locales.find { it.isoCode.value == newLocaleText || it.displayName() == newLocaleText }?.isoCode) {
             if (isoCode != null && isoCode !in projectLocales && locales.any { it.isoCode == isoCode }) {
@@ -66,7 +66,7 @@ fun ProjectSettings(vm: ResourceViewModel, onClose: () -> Unit) {
                 newLocales.add(isoCode)
 
                 projectLocales = newLocales.sortedBy { Locale[it].displayName() }.toSet()
-                vm.localizedResources.value = localizedResources.plus(newLocales.map { it to mapOf() }).apply { save(project.name) }
+                vm.localizedResources.value = localizedResources.plus(newLocales.map { it to mapOf() }).toSortedMap()
                 newLocaleText = ""
                 isDropdownExpanded = false
             }
@@ -115,7 +115,7 @@ fun ProjectSettings(vm: ResourceViewModel, onClose: () -> Unit) {
                             contentDescription = "Remove ${Locale[isoCode].displayName()}",
                             modifier = Modifier.padding(end = 8.dp).size(18.dp).clickable {
                                 projectLocales = projectLocales.minus(isoCode)
-                                vm.localizedResources.value = localizedResources.minus(isoCode)
+                                vm.localizedResources.value = localizedResources.minus(isoCode).toSortedMap()
                             })
                     }
                 })
