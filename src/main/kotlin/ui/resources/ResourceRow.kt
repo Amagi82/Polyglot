@@ -1,9 +1,6 @@
 package ui.resources
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -66,26 +63,19 @@ fun ResourceRow(
             }
         }
 
-        Column(Modifier.weight(1f)) {
-            val excludedLocales by vm.excludedLocales.collectAsState()
-            localizedResources.keys.filter { it !in excludedLocales }.forEach { localeIsoCode ->
-                Row(
-                    Modifier.padding(vertical = 4.dp, horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val localization = localizedResources[localeIsoCode]?.get(id)
-                    when (resource.type) {
-                        Resource.Type.STRING -> StringRows(project.defaultLocale, localeIsoCode, localization as? Str ?: Str("")) {
-                            vm.localizedResources.value = localizedResources.plus(localeIsoCode to localizedResources[localeIsoCode]!!.plus(id to it))
-                        }
-                        Resource.Type.PLURAL -> PluralRows(project.defaultLocale, localeIsoCode, localization as? Plural ?: Plural(one = null, other = "")) {
 
-                        }
-                        Resource.Type.ARRAY -> ArrayRows(project.defaultLocale, localeIsoCode, localization as? StringArray ?: StringArray(listOf())) {
+        val excludedLocales by vm.excludedLocales.collectAsState()
+        localizedResources.keys.filter { it !in excludedLocales }.forEach { localeIsoCode ->
+            val localization = localizedResources[localeIsoCode]?.get(id)
+            when (resource.type) {
+                Resource.Type.STRING -> StringRows(project.defaultLocale, localeIsoCode, localization as? Str ?: Str("")) {
+                    vm.localizedResources.value = localizedResources.plus(localeIsoCode to localizedResources[localeIsoCode]!!.plus(id to it))
+                }
+                Resource.Type.PLURAL -> PluralRows(project.defaultLocale, localeIsoCode, localization as? Plural ?: Plural(one = null, other = "")) {
 
-                        }
-                    }
+                }
+                Resource.Type.ARRAY -> ArrayRows(project.defaultLocale, localeIsoCode, localization as? StringArray ?: StringArray(listOf())) {
+
                 }
             }
         }
@@ -109,14 +99,14 @@ fun ResourceRow(
 }
 
 @Composable
-fun StringRows(defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, string: Str, update: (Str) -> Unit) {
+fun RowScope.StringRows(defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, string: Str, update: (Str) -> Unit) {
     val focusManager = LocalFocusManager.current
     var oldText = remember { string.text }
     var newText by remember { mutableStateOf(oldText) }
     OutlinedTextField(
         value = newText,
         onValueChange = { newText = it },
-        modifier = Modifier.onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
+        modifier = Modifier.weight(1f).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
             if (!it.hasFocus && oldText != newText) {
                 oldText = newText
                 update(Str(newText))
