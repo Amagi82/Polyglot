@@ -64,20 +64,28 @@ fun ResourceRow(
         }
 
         val excludedLocales by vm.excludedLocales.collectAsState()
-        localizedResources.keys.filter { it !in excludedLocales }.forEach { localeIsoCode ->
-            val localization = localizedResources[localeIsoCode]?.get(id)
-            when (resource.type) {
-                Resource.Type.STRING -> StringRows(project.defaultLocale, localeIsoCode, localization as? Str ?: Str("")) {
-                    vm.localizedResources.value = localizedResources.plus(localeIsoCode to localizedResources[localeIsoCode]!!.plus(id to it)).toSortedMap()
-                }
-                Resource.Type.PLURAL -> PluralRows(project.defaultLocale, localeIsoCode, localization as? Plural ?: Plural(one = null, other = "")) {
-
-                }
-                Resource.Type.ARRAY -> ArrayRows(project.defaultLocale, localeIsoCode, localization as? StringArray ?: StringArray(listOf())) {
-
+        localizedResources.keys.filter { it !in excludedLocales }
+            .sortedWith { o1, o2 ->
+                when {
+                    o1 == project.defaultLocale -> -1
+                    o2 == project.defaultLocale -> 1
+                    else -> Locale[o1].displayName().compareTo(Locale[o2].displayName())
                 }
             }
-        }
+            .forEach { localeIsoCode ->
+                val localization = localizedResources[localeIsoCode]?.get(id)
+                when (resource.type) {
+                    Resource.Type.STRING -> StringRows(project.defaultLocale, localeIsoCode, localization as? Str ?: Str("")) {
+                        vm.localizedResources.value = localizedResources.plus(localeIsoCode to localizedResources[localeIsoCode]!!.plus(id to it)).toSortedMap()
+                    }
+                    Resource.Type.PLURAL -> PluralRows(project.defaultLocale, localeIsoCode, localization as? Plural ?: Plural(one = null, other = "")) {
+
+                    }
+                    Resource.Type.ARRAY -> ArrayRows(project.defaultLocale, localeIsoCode, localization as? StringArray ?: StringArray(listOf())) {
+
+                    }
+                }
+            }
 
         Platform.values().forEach { platform ->
             val isIncluded = platform in resource.platforms
