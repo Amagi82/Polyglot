@@ -1,4 +1,4 @@
-package ui.theme
+package ui.core.theme
 
 import androidx.compose.desktop.DesktopMaterialTheme
 import androidx.compose.material.darkColors

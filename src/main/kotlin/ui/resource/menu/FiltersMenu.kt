@@ -1,4 +1,4 @@
-package ui.resources
+package ui.resource.menu
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import locales.Locale
 import project.Resource
+import ui.resource.ResourceViewModel
 
 @Composable
 fun FiltersMenu(vm: ResourceViewModel) {

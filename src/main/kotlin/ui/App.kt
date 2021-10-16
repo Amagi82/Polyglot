@@ -2,10 +2,10 @@ package ui
 
 import androidx.compose.runtime.*
 import project.Project
-import ui.projects.ProjectPicker
-import ui.resources.ResourceManager
-import ui.resources.ResourceViewModel
-import ui.theme.PolyglotTheme
+import ui.project.ProjectPicker
+import ui.resource.ResourceManager
+import ui.resource.ResourceViewModel
+import ui.core.theme.PolyglotTheme
 import utils.Settings
 
 @Composable

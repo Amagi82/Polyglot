@@ -1,4 +1,4 @@
-package ui.resources
+package ui.resource.menu
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,12 +15,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import locales.Locale
 import locales.LocaleIsoCode
-import project.LocalizedResources
 import project.Platform
-import project.Project
-import project.save
 import ui.core.Chip
 import ui.core.onPressEnter
+import ui.resource.ResourceViewModel
 import java.io.File
 import javax.swing.JFileChooser
 

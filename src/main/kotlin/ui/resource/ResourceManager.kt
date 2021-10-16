@@ -1,4 +1,4 @@
-package ui.resources
+package ui.resource
 
 import R
 import androidx.compose.animation.AnimatedVisibility
@@ -19,6 +19,9 @@ import androidx.compose.ui.unit.dp
 import generators.ResourceGenerator
 import kotlinx.coroutines.launch
 import project.*
+import ui.resource.menu.FiltersMenu
+import ui.resource.menu.MenuState
+import ui.resource.menu.SettingsMenu
 import java.awt.Desktop
 import java.io.File
 
