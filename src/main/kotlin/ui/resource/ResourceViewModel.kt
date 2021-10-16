@@ -1,4 +1,4 @@
-package ui.resources
+package ui.resource
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -10,6 +10,7 @@ import project.Project
 import project.Resource
 import project.ResourceId
 import project.save
+import ui.resource.menu.MenuState
 
 class ResourceViewModel(project: Project) {
     val project = MutableStateFlow(project)

@@ -1,4 +1,4 @@
-package ui.resources
+package ui.resource
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -12,11 +12,11 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import locales.Locale
 import locales.LocaleIsoCode
 import project.*
 import ui.core.onPressEnter
+import ui.resource.menu.MenuState
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
