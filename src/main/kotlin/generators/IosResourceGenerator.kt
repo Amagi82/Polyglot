@@ -20,13 +20,11 @@ import javax.xml.transform.Transformer
 class IosResourceGenerator(
     project: Project,
     locale: LocaleIsoCode,
-    override val formatters: List<StringFormatter>,
-    resources: Resources,
-    localizations: Localizations
-) : ResourceGenerator() {
-    private val iosFolder = File(project.iosOutputUrl)
-    override val platform: Platform = Platform.IOS
-    private val localizationFolder = File(iosFolder, "${locale.value}.lproj").also(File::mkdirs)
+    formatters: List<StringFormatter>,
+    resourceMetadata: ResourceMetadata,
+    resources: Resources
+) : ResourceGenerator(Platform.IOS, project, formatters) {
+    private val localizationFolder = File(outputFolder, "${locale.value}.lproj").also(File::mkdirs)
 
     private val stringsWriter = BufferedWriter(FileWriter(localizationFolder.createChildFile("Localizable.strings")))
 
@@ -36,8 +34,8 @@ class IosResourceGenerator(
     private val arraysDocument: Document = createDocument()
     private val arraysResourceElement: Element = arraysDocument.createAndAppendPlistElement()
 
-    private val shouldCreatePlurals = localizations.values.any { it is Plural }
-    private val shouldCreateArrays = localizations.values.any { it is StringArray }
+    private val shouldCreatePlurals = resources.values.any { it is Plural }
+    private val shouldCreateArrays = resources.values.any { it is StringArray }
 
     private val shouldCreateReferences = locale == project.defaultLocale
     private val stringReferences = if (shouldCreateReferences) StringBuilder() else null
@@ -53,10 +51,7 @@ class IosResourceGenerator(
     """.trimIndent()
 
     init {
-        if (shouldCreateReferences) {
-            iosFolder.listFiles { file -> file.name == "R.swift" }?.forEach(File::delete)
-        }
-        addAll(localizations)
+        addAll(resourceMetadata, resources)
     }
 
     override fun generateFiles() {
@@ -195,7 +190,7 @@ class IosResourceGenerator(
 
     private fun generateReferences() {
         if (!shouldCreateReferences) return
-        iosFolder.createChildFile("R.swift").bufferedWriter().use {
+        outputFolder.createChildFile("R.swift").bufferedWriter().use {
             it.appendLine(generatedFileWarning)
             it.appendLine("struct R {")
             it.appendReferences("string", stringReferences)
@@ -213,8 +208,8 @@ class IosResourceGenerator(
     }
 
     private fun generateStringLocalizationExtensions() {
-        if (iosFolder.listFiles().orEmpty().any { it.name == "String+Localization.swift" }) return
-        iosFolder.createChildFile("String+Localization.swift").bufferedWriter().use {
+        if (outputFolder.listFiles().orEmpty().any { it.name == "String+Localization.swift" }) return
+        outputFolder.createChildFile("String+Localization.swift").bufferedWriter().use {
             it.appendLine(generatedFileWarning)
             it.appendLine(
                 """

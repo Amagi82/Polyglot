@@ -13,7 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import locales.Locale
-import project.Resource
+import project.ResourceInfo
+import ui.core.IconButton
 import ui.resource.ResourceViewModel
 
 @Composable
@@ -22,17 +23,15 @@ fun FiltersMenu(vm: ResourceViewModel) {
         val project by vm.project.collectAsState()
         val localizedResources by vm.localizedResources.collectAsState()
         val excludedLocales by vm.excludedLocales.collectAsState()
-        val excludedResourceTypes by vm.excludedResourceTypes.collectAsState()
+        val excludedResourceTypes by vm.excludedResourceInfoTypes.collectAsState()
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Filters", style = MaterialTheme.typography.h6)
-            IconButton(onClick = { vm.menuState.value = MenuState.CLOSED }) {
-                Icon(Icons.Default.Close, contentDescription = "Close filters menu")
-            }
+            IconButton(Icons.Default.Close, contentDescription = "Close filters menu") { vm.menuState.value = MenuState.CLOSED }
         }
 
         Text("Resource types", modifier = Modifier.padding(top = 8.dp), style = MaterialTheme.typography.subtitle1)
-        Resource.Type.values().forEach { resType ->
+        ResourceInfo.Type.values().forEach { resType ->
             var isChecked by remember { mutableStateOf(true) }
             Row(
                 modifier = Modifier.height(32.dp)
@@ -43,7 +42,7 @@ fun FiltersMenu(vm: ResourceViewModel) {
                     .padding(horizontal = 4.dp)
                     .clickable {
                         isChecked = !isChecked
-                        vm.excludedResourceTypes.value =
+                        vm.excludedResourceInfoTypes.value =
                             if (isChecked) excludedResourceTypes.minus(resType) else excludedResourceTypes.plus(resType)
                     },
                 verticalAlignment = Alignment.CenterVertically

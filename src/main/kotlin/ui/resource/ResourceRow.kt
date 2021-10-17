@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import locales.Locale
 import locales.LocaleIsoCode
 import project.*
+import ui.core.IconButton
 import ui.core.onPressEnter
 import ui.resource.menu.MenuState
 
@@ -26,9 +27,10 @@ fun ResourceRow(
     deleteResource: () -> Unit
 ) {
     val project by vm.project.collectAsState()
-    val resources by vm.resources.collectAsState()
-    val localizedResources by vm.localizedResources.collectAsState()
-    val resource by remember { derivedStateOf { resources[resId]!! } }
+    val resourceMetadata by vm.resourceMetadata.collectAsState()
+    val localizedResources by vm.includedResources.collectAsState(sortedMapOf())
+    val info by remember { derivedStateOf { resourceMetadata[resId] } }
+    val resourceInfo = info ?: return
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         var error by remember { mutableStateOf("") }
@@ -45,12 +47,10 @@ fun ResourceRow(
                 },
                 modifier = Modifier.padding(vertical = 4.dp).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
                     if (!it.hasFocus && resId != id) {
-                        if (id in resources) {
+                        if (id in resourceMetadata) {
                             error = "id already exists"
                         } else {
-                            vm.resources.value = resources.toMutableMap().apply {
-                                put(id, remove(resId)!!)
-                            }.toSortedMap()
+                            vm.resourceMetadata.value = resourceMetadata.minus(resId).plus(id to resourceInfo)
                         }
                     }
                 },
@@ -63,46 +63,43 @@ fun ResourceRow(
             }
         }
 
-        val excludedLocales by vm.excludedLocales.collectAsState()
-        localizedResources.keys.filter { it !in excludedLocales }
-            .sortedWith { o1, o2 ->
-                when {
-                    o1 == project.defaultLocale -> -1
-                    o2 == project.defaultLocale -> 1
-                    else -> Locale[o1].displayName().compareTo(Locale[o2].displayName())
+        localizedResources.forEach { (localeIsoCode, localizations) ->
+            val localization = localizations[id] ?: when (resourceInfo.type) {
+                ResourceInfo.Type.STRING -> Str("")
+                ResourceInfo.Type.PLURAL -> Plural(one = null, other = "")
+                ResourceInfo.Type.ARRAY -> StringArray(listOf())
+            }
+            when (localization) {
+                is Str -> StringRows(project.defaultLocale, localeIsoCode, localization) {
+                    vm.localizedResources.value = localizedResources.plus(localeIsoCode to localizedResources[localeIsoCode].orEmpty().plus(id to it))
+                }
+                is Plural -> PluralRows(project.defaultLocale, localeIsoCode, localization) {
+
+                }
+                is StringArray -> ArrayRows(project.defaultLocale, localeIsoCode, localization) {
+
                 }
             }
-            .forEach { localeIsoCode ->
-                val localization = localizedResources[localeIsoCode]?.get(id)
-                when (resource.type) {
-                    Resource.Type.STRING -> StringRows(project.defaultLocale, localeIsoCode, localization as? Str ?: Str("")) {
-                        vm.localizedResources.value = localizedResources.plus(localeIsoCode to localizedResources[localeIsoCode]!!.plus(id to it)).toSortedMap()
-                    }
-                    Resource.Type.PLURAL -> PluralRows(project.defaultLocale, localeIsoCode, localization as? Plural ?: Plural(one = null, other = "")) {
-
-                    }
-                    Resource.Type.ARRAY -> ArrayRows(project.defaultLocale, localeIsoCode, localization as? StringArray ?: StringArray(listOf())) {
-
-                    }
-                }
-            }
+        }
 
         Platform.values().forEach { platform ->
-            val isIncluded = platform in resource.platforms
+            val isIncluded = platform in resourceInfo.platforms
             IconButton(onClick = {
-                val newResource = resource.copy(platforms = if (isIncluded) resource.platforms.minus(platform) else resource.platforms.plus(platform))
-                vm.resources.value = resources.plus(id to newResource).toSortedMap()
+                val newResource =
+                    resourceInfo.copy(platforms = if (isIncluded) resourceInfo.platforms.minus(platform) else resourceInfo.platforms.plus(platform))
+                vm.resourceMetadata.value = resourceMetadata.plus(id to newResource)
+                println("newResource: $newResource")
             }) {
-                if (isIncluded) {
-                    Icon(painterResource(platform.iconId), contentDescription = platform.name)
-                }
+                Icon(
+                    painterResource(platform.iconId),
+                    contentDescription = platform.name,
+                    tint = if (isIncluded) MaterialTheme.colors.onSurface else MaterialTheme.colors.onSurface.copy(alpha = 0.1f)
+                )
             }
         }
         val menuState by vm.menuState.collectAsState()
         if (menuState == MenuState.SETTINGS) {
-            IconButton(onClick = deleteResource, modifier = Modifier.padding(start = 16.dp)) {
-                Icon(Icons.Default.Delete, contentDescription = "Remove")
-            }
+            IconButton(Icons.Default.Delete, contentDescription = "Remove", modifier = Modifier.padding(start = 16.dp), onClick = deleteResource)
         }
     }
     Divider()

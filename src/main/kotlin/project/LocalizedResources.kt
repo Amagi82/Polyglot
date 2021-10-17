@@ -4,18 +4,13 @@ import locales.LocaleIsoCode
 import java.util.*
 
 
-typealias Localizations = Map<ResourceId, Localization>
-typealias LocalizedResources = SortedMap<LocaleIsoCode, Localizations>
+typealias Resources = Map<ResourceId, Resource>
+typealias LocalizedResources = Map<LocaleIsoCode, Resources>
 
 @JvmName("saveLocalizedResources")
 fun LocalizedResources.save(projectName: String) {
-    Project.localizedResourceFiles(projectName).filter { LocaleIsoCode(it.nameWithoutExtension) !in keys }.forEach { it.delete() }
     forEach { (locale, resources) ->
         val file = Project.localizedResourcesFile(projectName, locale)
-        if (resources.isEmpty()) {
-            file.delete()
-            return@forEach
-        }
         val props = Properties()
         resources.forEach { (k, v) ->
             when (v) {

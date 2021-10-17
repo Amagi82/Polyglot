@@ -2,39 +2,55 @@ package ui.resource
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import locales.Locale
 import locales.LocaleIsoCode
-import project.Project
-import project.Resource
-import project.ResourceId
-import project.save
+import project.*
 import ui.resource.menu.MenuState
+import java.util.*
 
 class ResourceViewModel(project: Project) {
     val project = MutableStateFlow(project)
-    val resources = MutableStateFlow(Project.loadResources(project.name))
+    val resourceMetadata = MutableStateFlow(Project.loadResourceMetadata(project.name))
     val localizedResources = MutableStateFlow(Project.loadLocalizedResources(project.name))
 
     val excludedLocales = MutableStateFlow(setOf<LocaleIsoCode>())
-    val excludedResourceIds = MutableStateFlow(setOf<ResourceId>())
-    val excludedResourceTypes = MutableStateFlow(setOf<Resource.Type>())
+    val excludedResourceInfoTypes = MutableStateFlow(setOf<ResourceInfo.Type>())
+
+    private val comparator = this.project.map { project ->
+        Comparator<LocaleIsoCode> { o1, o2 ->
+            when {
+                o1 == project.defaultLocale -> -1
+                o2 == project.defaultLocale -> 1
+                else -> Locale[o1].displayName().compareTo(Locale[o2].displayName())
+            }
+        }
+    }
+
+    val includedResources = combine(comparator, localizedResources, excludedLocales) { comparator, localizedResources, excludedLocales ->
+        localizedResources.filter { it.key !in excludedLocales }.toSortedMap(comparator)
+    }
 
     val menuState = MutableStateFlow(MenuState.CLOSED)
 
     init {
-        GlobalScope.launch(Dispatchers.IO) { resources.collect { it.save(project.name) } }
+        GlobalScope.launch(Dispatchers.IO) { resourceMetadata.collect { it.save(project.name) } }
         GlobalScope.launch(Dispatchers.IO) { localizedResources.collect { it.save(project.name) } }
     }
 
     fun createResource() {
         var newId = ResourceId("new")
         var n = 0
-        while (resources.value[newId] != null) {
+        while (resourceMetadata.value[newId] != null) {
             newId = ResourceId("new$n")
             n++
         }
-        resources.value = resources.value.plus(newId to Resource()).toSortedMap()
+        resourceMetadata.value = resourceMetadata.value.plus(newId to ResourceInfo())
+    }
+
+    fun deleteLocale(isoCode: LocaleIsoCode) {
+        Project.localizedResourcesFile(project.value.name, isoCode).delete()
+        localizedResources.value = localizedResources.value.minus(isoCode)
     }
 }

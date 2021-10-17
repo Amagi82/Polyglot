@@ -3,15 +3,11 @@ package project
 import java.util.*
 
 
-typealias Resources = SortedMap<ResourceId, Resource>
+typealias ResourceMetadata = Map<ResourceId, ResourceInfo>
 
 @JvmName("saveResources")
-fun Resources.save(projectName: String) {
-    val file = Project.resourcesFile(projectName)
-    if (isEmpty()) {
-        file.delete()
-        return
-    }
+fun ResourceMetadata.save(projectName: String) {
+    val file = Project.resourceMetadataFile(projectName)
     val props = Properties()
     forEach { (id, resource) ->
         props.setProperty(id.id, "${resource.type.name}|${resource.platforms.joinToString(separator = ",") { it.name }}|${resource.group}")

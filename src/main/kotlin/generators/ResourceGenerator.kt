@@ -1,5 +1,7 @@
 package generators
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import project.*
@@ -12,17 +14,18 @@ import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
-abstract class ResourceGenerator {
-    protected abstract val platform: Platform
+abstract class ResourceGenerator(private val platform: Platform, project: Project, private val formatters: List<StringFormatter>) {
+    protected val defaultLocale = project.defaultLocale
+    protected val outputFolder = platform.outputFolder(project)
     protected abstract fun addString(id: ResourceId, res: Str)
     protected abstract fun addStringArray(id: ResourceId, res: StringArray)
     protected abstract fun addPlurals(id: ResourceId, res: Plural)
-    protected abstract val formatters: List<StringFormatter>
     abstract fun generateFiles()
 
-    protected fun addAll(localizations: Localizations){
-        localizations.forEach { (id, resourceType) ->
-            when(resourceType){
+    protected fun addAll(resourceMetadata: ResourceMetadata, resources: Resources) {
+        for ((id, resourceType) in resources) {
+            if (resourceMetadata[id]?.platforms?.contains(platform) != true) continue
+            when (resourceType) {
                 is Str -> addString(id, resourceType)
                 is Plural -> addPlurals(id, resourceType)
                 is StringArray -> addStringArray(id, resourceType)
@@ -80,20 +83,25 @@ abstract class ResourceGenerator {
             setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, "") //This prevents a Java bug that puts the first element on the same line as the xml declaration
         }
 
-        fun generateFiles(
+        suspend fun generateFiles(
             project: Project,
-            resources: Resources,
+            resourceMetadata: ResourceMetadata,
             localizedResources: LocalizedResources,
             platforms: List<Platform> = Platform.ALL,
-            formatters: List<StringFormatter> = StringFormatter.defaultFormatters,
-        ) {
+            formatters: List<StringFormatter> = StringFormatter.defaultFormatters
+        ) = withContext(Dispatchers.IO) {
             val androidFormatters = formatters.filter { Platform.ANDROID in it.platforms }
             val iosFormatters = formatters.filter { Platform.IOS in it.platforms }
-            localizedResources.forEach { (localeIsoCode, resourceTypes) ->
+            platforms.forEach {
+                val folder = it.outputFolder(project)
+                if (folder.exists()) folder.deleteRecursively()
+                folder.mkdirs()
+            }
+            localizedResources.forEach { (localeIsoCode, localizations) ->
                 for (platform in platforms) {
                     when (platform) {
-                        Platform.ANDROID -> AndroidResourceGenerator(project, localeIsoCode, androidFormatters, resources, resourceTypes)
-                        Platform.IOS -> IosResourceGenerator(project, localeIsoCode, iosFormatters, resources, resourceTypes)
+                        Platform.ANDROID -> AndroidResourceGenerator(project, localeIsoCode, androidFormatters, resourceMetadata, localizations)
+                        Platform.IOS -> IosResourceGenerator(project, localeIsoCode, iosFormatters, resourceMetadata, localizations)
                     }.generateFiles()
                 }
             }

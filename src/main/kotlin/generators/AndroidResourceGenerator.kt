@@ -11,22 +11,21 @@ import java.io.File
  * Generates Android resources for a given language in the specified folder
  */
 class AndroidResourceGenerator(
-    private val project: Project,
+    project: Project,
     locale: LocaleIsoCode,
-    override val formatters: List<StringFormatter>,
-    resources: Resources,
-    localizations: Localizations
-) : ResourceGenerator() {
-    override val platform: Platform = Platform.ANDROID
-    private val valuesFolder = File(project.androidOutputUrl, "values${if (locale == project.defaultLocale) "" else "-${locale.value}"}").also(File::mkdirs)
+    formatters: List<StringFormatter>,
+    resourceMetadata: ResourceMetadata,
+    resources: Resources
+) : ResourceGenerator(Platform.ANDROID, project, formatters) {
+    private val valuesFolder = File(outputFolder, "values${if (locale == defaultLocale) "" else "-${locale.value}"}").also(File::mkdirs)
     private val document: Document = createDocument()
     private val resourceElement: Element = document.createElement("resources").also {
-        if (locale == project.defaultLocale) it.setAttribute("xmlns:tools", "http://schemas.android.com/tools")
+        if (locale == defaultLocale) it.setAttribute("xmlns:tools", "http://schemas.android.com/tools")
         document.appendChild(it)
     }
 
     init {
-        addAll(localizations)
+        addAll(resourceMetadata, resources)
     }
 
     override fun generateFiles() {
