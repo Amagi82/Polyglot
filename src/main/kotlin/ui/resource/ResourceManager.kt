@@ -14,13 +14,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import generators.ResourceGenerator
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import project.*
 import ui.resource.menu.FiltersMenu
-import ui.resource.menu.MenuState
+import ui.core.IconButton
+import ui.resource.menu.MenuState.*
 import ui.resource.menu.SettingsMenu
 import java.awt.Desktop
 import java.io.File
@@ -31,10 +32,6 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberScaffoldState()
     val project by vm.project.collectAsState()
-    val resources by vm.resources.collectAsState()
-    val localizedResources by vm.localizedResources.collectAsState()
-    val excludedResourceIds by vm.excludedResourceIds.collectAsState()
-    val excludedResourceTypes by vm.excludedResourceTypes.collectAsState()
     val menuState by vm.menuState.collectAsState()
 
     Scaffold(
@@ -42,42 +39,17 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
         topBar = {
             TopAppBar(
                 title = { Text(project.name) },
-                navigationIcon = {
-                    IconButton(onClick = { updateProject(null) }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Close Project")
-                    }
-                },
+                navigationIcon = { IconButton(Icons.Default.ArrowBack, contentDescription = "Close Project") { updateProject(null) } },
                 actions = {
-                    IconButton(onClick = toggleDarkTheme) {
-                        Icon(painterResource(R.drawable.darkMode), contentDescription = "Toggle dark theme")
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(painterResource(R.drawable.importExport), contentDescription = "Import or Export")
-                    }
-                    IconButton(onClick = {
+                    IconButton(R.drawable.darkMode, contentDescription = "Toggle dark theme", onClick = toggleDarkTheme)
+                    IconButton(R.drawable.importExport, contentDescription = "Import or Export") {}
+                    IconButton(Icons.Default.Build) {
                         scope.launch {
-                            ResourceGenerator.generateFiles(project, resources, localizedResources)
-                            val result = scaffoldState.snackbarHostState.showSnackbar(
-                                message = "Generating outputs",
-                                actionLabel = "Show",
-                                duration = SnackbarDuration.Long
-                            )
-                            if (result == SnackbarResult.ActionPerformed) {
-                                project.androidOutputUrl.let(::File).let { openFolder(it, scaffoldState) }
-                                project.iosOutputUrl.let(::File).let { openFolder(it, scaffoldState) }
-                            }
+                            generateFiles(project, vm.resourceMetadata.value, vm.localizedResources.value, scaffoldState)
                         }
-                    }) {
-                        Icon(Icons.Default.Build, contentDescription = "Build")
                     }
-
-                    IconButton(onClick = { vm.menuState.value = if (menuState != MenuState.FILTERS) MenuState.FILTERS else MenuState.CLOSED }) {
-                        Icon(painterResource(R.drawable.filterList), contentDescription = "Filter")
-                    }
-
-                    IconButton(onClick = { vm.menuState.value = if (menuState != MenuState.SETTINGS) MenuState.SETTINGS else MenuState.CLOSED }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
-                    }
+                    IconButton(R.drawable.filterList, contentDescription = "Filter") { vm.menuState.value = if (menuState != FILTERS) FILTERS else CLOSED }
+                    IconButton(Icons.Default.Settings) { vm.menuState.value = if (menuState != SETTINGS) SETTINGS else CLOSED }
                 }
             )
         },
@@ -88,23 +60,26 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
         }) { paddingValues ->
         Row(Modifier.padding(paddingValues)) {
             val state = rememberLazyListState()
+            val resources by vm.resourceMetadata.collectAsState()
+            val excludedTypes by vm.excludedResourceInfoTypes.collectAsState()
+            var excludedResourceIds by remember { mutableStateOf(setOf<ResourceId>()) }
+            val includedResources by remember(resources, excludedResourceIds, excludedTypes) {
+                derivedStateOf { resources.filter { (k, v) -> k !in excludedResourceIds && v.type !in excludedTypes }.keys.sorted() }
+            }
+
             LazyColumn(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f), state = state) {
-                items(resources.filter { (k, v) -> k !in excludedResourceIds && v.type !in excludedResourceTypes }.keys.toList()) { resId ->
+                items(includedResources) { resId ->
                     ResourceRow(vm = vm,
                         resId = resId,
                         deleteResource = {
+                            excludedResourceIds = excludedResourceIds.plus(resId)
                             scope.launch {
-                                vm.excludedResourceIds.value = excludedResourceIds.plus(resId)
                                 val snackbarResult = scaffoldState.snackbarHostState.showSnackbar("Removed ${resId.id}", actionLabel = "Undo")
-                                if (snackbarResult == SnackbarResult.ActionPerformed) {
-                                    vm.excludedResourceIds.value = excludedResourceIds.minus(resId)
-                                } else {
-                                    vm.localizedResources.value = localizedResources.toMutableMap().apply {
-                                        for ((localeIsoCode, localizations) in this) {
-                                            put(localeIsoCode, localizations.minus(resId))
-                                        }
-                                    }.toSortedMap()
+                                if (snackbarResult != SnackbarResult.ActionPerformed) {
+                                    vm.resourceMetadata.value = vm.resourceMetadata.value.minus(resId)
+                                    vm.localizedResources.value = vm.localizedResources.value.map { it.key to it.value.minus(resId) }.toMap()
                                 }
+                                excludedResourceIds = excludedResourceIds.minus(resId)
                             }
                         })
                     Divider()
@@ -113,23 +88,37 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
 
             VerticalScrollbar(adapter = ScrollbarAdapter(state))
 
-            if (menuState != MenuState.CLOSED) {
+            if (menuState != CLOSED) {
                 Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
             }
 
-            AnimatedVisibility(visible = menuState == MenuState.SETTINGS) {
+            AnimatedVisibility(visible = menuState == SETTINGS) {
                 SettingsMenu(vm)
             }
-            AnimatedVisibility(visible = menuState == MenuState.FILTERS) {
+            AnimatedVisibility(visible = menuState == FILTERS) {
                 FiltersMenu(vm)
             }
         }
     }
 }
 
+private suspend fun generateFiles(project: Project, resourceMetadata: ResourceMetadata, localizedResources: LocalizedResources, scaffoldState: ScaffoldState) {
+    val result = scaffoldState.snackbarHostState.showSnackbar(
+        message = "Generating outputs",
+        actionLabel = "Show",
+        duration = SnackbarDuration.Long
+    )
+    ResourceGenerator.generateFiles(project, resourceMetadata, localizedResources)
+    if (result == SnackbarResult.ActionPerformed) {
+        openUrl(project.androidOutputUrl, scaffoldState)
+        openUrl(project.iosOutputUrl, scaffoldState)
+    }
+}
+
 @Suppress("BlockingMethodInNonBlockingContext")
-private suspend fun openFolder(folder: File, scaffoldState: ScaffoldState) {
+private suspend fun openUrl(url: String, scaffoldState: ScaffoldState) {
     try {
+        val folder = File(url)
         Desktop.getDesktop().open(folder)
     } catch (e: Exception) {
         scaffoldState.snackbarHostState.showSnackbar("unable to open folder: $e")

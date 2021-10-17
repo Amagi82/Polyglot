@@ -4,7 +4,6 @@ import androidx.compose.runtime.Stable
 import locales.LocaleIsoCode
 import java.io.File
 import java.util.*
-import kotlin.Comparator
 
 /**
  * @param name: Name of the project
@@ -47,13 +46,12 @@ data class Project(
 
         private fun projectFile(projectName: String) = File(projectFolder(projectName), "project.properties").apply(File::createNewFile)
 
-        fun resourcesFile(projectName: String) = File(projectFolder(projectName), "resources.properties").apply(File::createNewFile)
+        fun resourceMetadataFile(projectName: String) = File(projectFolder(projectName), "resourceMetadata.properties").apply(File::createNewFile)
 
-        fun localizedResourceFiles(projectName: String) =
-            projectFolder(projectName).listFiles()?.filter { it != projectFile(projectName) && it != resourcesFile(projectName) }.orEmpty()
+        private fun localizedResourcesFolder(projectName: String) = File(projectFolder(projectName), "locales").apply(File::mkdirs)
 
         fun localizedResourcesFile(projectName: String, locale: LocaleIsoCode) =
-            File(projectFolder(projectName), "${locale.value}.properties").apply(File::createNewFile)
+            File(localizedResourcesFolder(projectName), "${locale.value}.properties").apply(File::createNewFile)
 
         fun load(projectName: String): Project {
             val file = projectFile(projectName)
@@ -67,33 +65,38 @@ data class Project(
         }
 
         @Suppress("UNCHECKED_CAST")
-        fun loadResources(projectName: String): Resources = buildMap<ResourceId, Resource> {
-            val props = Properties().apply { load(resourcesFile(projectName).inputStream()) }
+        fun loadResourceMetadata(projectName: String): ResourceMetadata = buildMap<ResourceId, ResourceInfo> {
+            val props = Properties().apply { load(resourceMetadataFile(projectName).inputStream()) }
             props.stringPropertyNames().forEach { k ->
                 val v = props.getProperty(k)
                 val splits = v.split('|')
                 put(
                     ResourceId(k),
-                    Resource(group = splits[2], platforms = splits[1].split(',').map { Platform.valueOf(it) }, type = Resource.Type.valueOf(splits[0]))
+                    ResourceInfo(
+                        group = splits[2],
+                        platforms = splits[1].split(',').filter(String::isNotEmpty).map(Platform::valueOf),
+                        type = ResourceInfo.Type.valueOf(splits[0])
+                    )
                 )
             }
-        }.toSortedMap()
+        }
 
         @Suppress("UNCHECKED_CAST")
-        fun loadLocalizedResources(projectName: String): LocalizedResources = localizedResourceFiles(projectName).associate { file ->
-            val locale = LocaleIsoCode(file.nameWithoutExtension)
-            val props = Properties().apply { load(localizedResourcesFile(projectName, locale).inputStream()) }
-            locale to buildMap<ResourceId, Localization> {
-                val (others, strings) = props.stringPropertyNames().partition { it.contains('.') }
-                strings.forEach { k -> put(ResourceId(k), Str(props.getProperty(k))) }
-                val (arrays, plurals) = others.partition { it.last().isDigit() }
-                arrays.groupBy { it.substringBefore('.') }.forEach { (id, keys) ->
-                    put(ResourceId(id), StringArray(keys.sorted().map(props::getProperty)))
+        fun loadLocalizedResources(projectName: String): LocalizedResources =
+            localizedResourcesFolder(projectName).listFiles()?.filter { it.extension == "properties" }?.associate { file ->
+                val locale = LocaleIsoCode(file.nameWithoutExtension)
+                val props = Properties().apply { load(localizedResourcesFile(projectName, locale).inputStream()) }
+                locale to buildMap<ResourceId, Resource> {
+                    val (others, strings) = props.stringPropertyNames().partition { it.contains('.') }
+                    strings.forEach { k -> put(ResourceId(k), Str(props.getProperty(k))) }
+                    val (arrays, plurals) = others.partition { it.last().isDigit() }
+                    arrays.groupBy { it.substringBefore('.') }.forEach { (id, keys) ->
+                        put(ResourceId(id), StringArray(keys.sorted().map(props::getProperty)))
+                    }
+                    plurals.groupBy { it.substringBefore('.') }.forEach { (id, keys) ->
+                        put(ResourceId(id), Plural(keys.associate { Quantity.valueOf(it.substringAfter('.').uppercase()) to props.getProperty(it) }))
+                    }
                 }
-                plurals.groupBy { it.substringBefore('.') }.forEach { (id, keys) ->
-                    put(ResourceId(id), Plural(keys.associate { Quantity.valueOf(it.substringAfter('.').uppercase()) to props.getProperty(it) }))
-                }
-            }
-        }.toSortedMap()
+            }.orEmpty()
     }
 }

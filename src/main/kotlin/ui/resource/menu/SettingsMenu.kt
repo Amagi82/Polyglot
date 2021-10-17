@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import locales.Locale
 import locales.LocaleIsoCode
 import project.Platform
 import ui.core.Chip
+import ui.core.IconButton
 import ui.core.onPressEnter
 import ui.resource.ResourceViewModel
 import java.io.File
@@ -30,9 +32,7 @@ fun SettingsMenu(vm: ResourceViewModel) {
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Settings", style = MaterialTheme.typography.h6)
-            IconButton(onClick = { vm.menuState.value = MenuState.CLOSED }) {
-                Icon(Icons.Default.Close, contentDescription = "Close settings menu")
-            }
+            IconButton(Icons.Default.Close, contentDescription = "Close settings menu") { vm.menuState.value = MenuState.CLOSED }
         }
 
         OutputFileSelectionButton(Platform.ANDROID.displayName, project.androidOutputUrl) {
@@ -53,7 +53,7 @@ fun SettingsMenu(vm: ResourceViewModel) {
                 }
             }
         }
-        var projectLocales by remember { mutableStateOf(localizedResources.keys.toSet()) }
+        var projectLocales by remember(localizedResources) { mutableStateOf(localizedResources.keys.toSet()) }
 
         fun addLocale(isoCode: LocaleIsoCode? = locales.find { it.isoCode.value == newLocaleText || it.displayName() == newLocaleText }?.isoCode) {
             if (isoCode != null && isoCode !in projectLocales && locales.any { it.isoCode == isoCode }) {
@@ -64,7 +64,7 @@ fun SettingsMenu(vm: ResourceViewModel) {
                 newLocales.add(isoCode)
 
                 projectLocales = newLocales.sortedBy { Locale[it].displayName() }.toSet()
-                vm.localizedResources.value = localizedResources.plus(newLocales.map { it to mapOf() }).toSortedMap()
+                vm.localizedResources.value = localizedResources.plus(newLocales.map { it to mapOf() })
                 newLocaleText = ""
                 isDropdownExpanded = false
             }
@@ -109,12 +109,9 @@ fun SettingsMenu(vm: ResourceViewModel) {
                 trailingIcon = {
                     if (!isDefault) {
                         Icon(
-                            Icons.Default.Close,
+                            Icons.Default.Delete,
                             contentDescription = "Remove ${Locale[isoCode].displayName()}",
-                            modifier = Modifier.padding(end = 8.dp).size(18.dp).clickable {
-                                projectLocales = projectLocales.minus(isoCode)
-                                vm.localizedResources.value = localizedResources.minus(isoCode).toSortedMap()
-                            })
+                            modifier = Modifier.padding(end = 8.dp).size(18.dp).clickable { vm.deleteLocale(isoCode) })
                     }
                 })
         }
