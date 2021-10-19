@@ -15,6 +15,8 @@ class ResourceViewModel(project: Project) {
     val resourceMetadata = MutableStateFlow(Project.loadResourceMetadata(project.name))
     val localizedResources = MutableStateFlow(Project.loadLocalizedResources(project.name))
 
+    val menuState = MutableStateFlow(MenuState.CLOSED)
+
     val excludedLocales = MutableStateFlow(setOf<LocaleIsoCode>())
     val excludedResourceInfoTypes = MutableStateFlow(setOf<ResourceInfo.Type>())
 
@@ -31,8 +33,6 @@ class ResourceViewModel(project: Project) {
     val includedResources = combine(comparator, localizedResources, excludedLocales) { comparator, localizedResources, excludedLocales ->
         localizedResources.filter { it.key !in excludedLocales }.toSortedMap(comparator)
     }
-
-    val menuState = MutableStateFlow(MenuState.CLOSED)
 
     init {
         GlobalScope.launch(Dispatchers.IO) { resourceMetadata.collect { it.save(project.name) } }
