@@ -23,8 +23,7 @@ import ui.resource.menu.MenuState
 @Composable
 fun ResourceRow(
     vm: ResourceViewModel,
-    resId: ResourceId,
-    deleteResource: () -> Unit
+    resId: ResourceId
 ) {
     val project by vm.project.collectAsState()
     val resourceMetadata by vm.resourceMetadata.collectAsState()
@@ -97,10 +96,10 @@ fun ResourceRow(
                 )
             }
         }
-        val menuState by vm.menuState.collectAsState()
-        if (menuState == MenuState.SETTINGS) {
-            IconButton(Icons.Default.Delete, contentDescription = "Remove", modifier = Modifier.padding(start = 16.dp), onClick = deleteResource)
-        }
+//        val menuState by vm.menuState.collectAsState()
+//        if (menuState == MenuState.SETTINGS) {
+//            IconButton(Icons.Default.Delete, contentDescription = "Remove", modifier = Modifier.padding(start = 16.dp), onClick = deleteResource)
+//        }
     }
     Divider()
 }
