@@ -43,11 +43,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                 actions = {
                     IconButton(R.drawable.darkMode, contentDescription = "Toggle dark theme", onClick = toggleDarkTheme)
                     IconButton(R.drawable.importExport, contentDescription = "Import or Export") {}
-                    IconButton(Icons.Default.Build) {
-                        scope.launch {
-                            generateFiles(project, vm.resourceMetadata.value, vm.localizedResources.value, scaffoldState)
-                        }
-                    }
+                    IconButton(Icons.Default.Build) { scope.launch { generateFiles(vm, scaffoldState) } }
                     IconButton(R.drawable.filterList, contentDescription = "Filter") { vm.menuState.value = if (menuState != FILTERS) FILTERS else CLOSED }
                     IconButton(Icons.Default.Settings) { vm.menuState.value = if (menuState != SETTINGS) SETTINGS else CLOSED }
                 }
@@ -102,13 +98,14 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
     }
 }
 
-private suspend fun generateFiles(project: Project, resourceMetadata: ResourceMetadata, localizedResources: LocalizedResources, scaffoldState: ScaffoldState) {
+private suspend fun generateFiles(vm: ResourceViewModel, scaffoldState: ScaffoldState) {
     val result = scaffoldState.snackbarHostState.showSnackbar(
         message = "Generating outputs",
         actionLabel = "Show",
         duration = SnackbarDuration.Long
     )
-    ResourceGenerator.generateFiles(project, resourceMetadata, localizedResources)
+    val project = vm.project.value
+    ResourceGenerator.generateFiles(project, vm.resourceMetadata.value, vm.localizedResources.value)
     if (result == SnackbarResult.ActionPerformed) {
         openUrl(project.androidOutputUrl, scaffoldState)
         openUrl(project.iosOutputUrl, scaffoldState)
