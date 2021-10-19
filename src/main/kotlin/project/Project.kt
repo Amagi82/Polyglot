@@ -65,7 +65,7 @@ data class Project(
         }
 
         @Suppress("UNCHECKED_CAST")
-        fun loadResourceMetadata(projectName: String): ResourceMetadata = buildMap<ResourceId, ResourceInfo> {
+        fun loadResourceMetadata(projectName: String): ResourceMetadata = buildMap {
             val props = Properties().apply { load(resourceMetadataFile(projectName).inputStream()) }
             props.stringPropertyNames().forEach { k ->
                 val v = props.getProperty(k)

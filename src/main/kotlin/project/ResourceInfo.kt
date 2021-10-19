@@ -17,6 +17,8 @@ data class ResourceInfo(
 ) {
     @Stable
     enum class Type {
-        STRING, PLURAL, ARRAY
+        STRING, PLURAL, ARRAY;
+
+        val index: Int get() = values().indexOf(this)
     }
 }

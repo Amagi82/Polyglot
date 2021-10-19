@@ -18,7 +18,7 @@ class ResourceViewModel(project: Project) {
     val menuState = MutableStateFlow(MenuState.CLOSED)
 
     val excludedLocales = MutableStateFlow(setOf<LocaleIsoCode>())
-    val excludedResourceInfoTypes = MutableStateFlow(setOf<ResourceInfo.Type>())
+    val selectedTab = MutableStateFlow(ResourceInfo.Type.STRING)
 
     private val comparator = this.project.map { project ->
         Comparator<LocaleIsoCode> { o1, o2 ->
@@ -46,7 +46,12 @@ class ResourceViewModel(project: Project) {
             newId = ResourceId("new$n")
             n++
         }
-        resourceMetadata.value = resourceMetadata.value.plus(newId to ResourceInfo())
+        resourceMetadata.value = resourceMetadata.value.plus(newId to ResourceInfo(type = selectedTab.value))
+    }
+
+    fun removeResource(resId: ResourceId) {
+        resourceMetadata.value = resourceMetadata.value.minus(resId)
+        localizedResources.value = localizedResources.value.map { it.key to it.value.minus(resId) }.toMap()
     }
 
     fun deleteLocale(isoCode: LocaleIsoCode) {
