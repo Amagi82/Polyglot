@@ -72,6 +72,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                 elevation = 0.dp
             )
         },
+        gesturesEnabled = false,
         backLayerContent = {
             Row(
                 Modifier.fillMaxWidth().padding(16.dp),
