@@ -1,8 +1,7 @@
 package ui.core.theme
 
 import androidx.compose.desktop.DesktopMaterialTheme
-import androidx.compose.material.darkColors
-import androidx.compose.material.lightColors
+import androidx.compose.material.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.*
 
@@ -40,3 +39,5 @@ fun PolyglotTheme(darkTheme: Boolean, content: @Composable () -> Unit) = Desktop
     colors = if (darkTheme) DarkColorPalette else LightColorPalette,
     content = content
 )
+
+val Colors.onPrimarySurface: Color get() = contentColorFor(primarySurface)

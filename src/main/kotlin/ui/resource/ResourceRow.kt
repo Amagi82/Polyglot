@@ -2,8 +2,6 @@ package ui.resource
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,9 +13,7 @@ import androidx.compose.ui.unit.dp
 import locales.Locale
 import locales.LocaleIsoCode
 import project.*
-import ui.core.IconButton
 import ui.core.onPressEnter
-import ui.resource.menu.MenuState
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -87,7 +83,6 @@ fun ResourceRow(
                 val newResource =
                     resourceInfo.copy(platforms = if (isIncluded) resourceInfo.platforms.minus(platform) else resourceInfo.platforms.plus(platform))
                 vm.resourceMetadata.value = resourceMetadata.plus(id to newResource)
-                println("newResource: $newResource")
             }) {
                 Icon(
                     painterResource(platform.iconId),
