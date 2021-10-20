@@ -15,6 +15,7 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation(compose.animation)
 }
 
 tasks.withType<KotlinCompile> {

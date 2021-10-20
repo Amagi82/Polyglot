@@ -7,18 +7,20 @@ import kotlinx.coroutines.launch
 import locales.Locale
 import locales.LocaleIsoCode
 import project.*
-import ui.resource.menu.MenuState
 import java.util.*
 
 class ResourceViewModel(project: Project) {
     val project = MutableStateFlow(project)
     val resourceMetadata = MutableStateFlow(Project.loadResourceMetadata(project.name))
     val localizedResources = MutableStateFlow(Project.loadLocalizedResources(project.name))
-
-    val menuState = MutableStateFlow(MenuState.CLOSED)
+    val projectLocales = localizedResources.map { res -> res.keys.sortedBy { Locale[it].displayName() } }
 
     val excludedLocales = MutableStateFlow(setOf<LocaleIsoCode>())
     val selectedTab = MutableStateFlow(ResourceInfo.Type.STRING)
+
+    val displayedResources = combine(resourceMetadata, selectedTab) { resourceMetadata, selectedTab ->
+        resourceMetadata.filter { it.value.type == selectedTab }.keys.sorted()
+    }
 
     private val comparator = this.project.map { project ->
         Comparator<LocaleIsoCode> { o1, o2 ->
@@ -35,8 +37,9 @@ class ResourceViewModel(project: Project) {
     }
 
     init {
-        GlobalScope.launch(Dispatchers.IO) { resourceMetadata.collect { it.save(project.name) } }
-        GlobalScope.launch(Dispatchers.IO) { localizedResources.collect { it.save(project.name) } }
+        GlobalScope.launch(Dispatchers.IO) { this@ResourceViewModel.project.collectLatest { it.save() } }
+        GlobalScope.launch(Dispatchers.IO) { resourceMetadata.collectLatest { it.save(project.name) } }
+        GlobalScope.launch(Dispatchers.IO) { localizedResources.collectLatest { it.save(project.name) } }
     }
 
     fun createResource() {
@@ -55,7 +58,18 @@ class ResourceViewModel(project: Project) {
     }
 
     fun deleteLocale(isoCode: LocaleIsoCode) {
-        Project.localizedResourcesFile(project.value.name, isoCode).delete()
-        localizedResources.value = localizedResources.value.minus(isoCode)
+        val removeList = mutableSetOf(isoCode)
+        // base language is required, so if that's removed, remove the dialects that depend on it
+        if (isoCode.isBaseLanguage) {
+            localizedResources.value.keys.forEach {
+                if (it.value.startsWith(isoCode.value)) {
+                    removeList += it
+                }
+            }
+        }
+        localizedResources.value = localizedResources.value.minus(removeList)
+        removeList.forEach {
+            Project.localizedResourcesFile(project.value.name, it).delete()
+        }
     }
 }
