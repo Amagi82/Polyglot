@@ -54,6 +54,14 @@ class ResourceViewModel(project: Project) {
         resourceMetadata.value = current.plus(newId to ResourceInfo(type = selectedTab.value))
     }
 
+    fun updateResourceId(oldId: ResourceId, newId: ResourceId): Boolean {
+        val current = resourceMetadata.value.toMutableMap()
+        if (newId in current) return false
+        current[newId] = current.remove(oldId)!!
+        resourceMetadata.value = current
+        return true
+    }
+
     fun updateResource(locale: LocaleIsoCode, resId: ResourceId, resource: Resource) {
         val current = resourcesByLocale.value
         resourcesByLocale.value = current.plus(locale to current[locale].orEmpty().plus(resId to resource))
