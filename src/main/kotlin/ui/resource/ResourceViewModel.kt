@@ -13,8 +13,8 @@ import java.util.*
 class ResourceViewModel(project: Project) {
     val project = MutableStateFlow(project)
     val resourceMetadata = MutableStateFlow(Project.loadResourceMetadata(project.name))
-    val localizedResources = MutableStateFlow(Project.loadLocalizedResources(project.name))
-    val projectLocales = localizedResources.map { res -> res.keys.sortedBy { Locale[it].displayName() } }
+    private val resourcesByLocale = MutableStateFlow(Project.loadLocalizedResources(project.name))
+    val projectLocales = resourcesByLocale.map { res -> res.keys.sortedBy { Locale[it].displayName() } }
 
     val excludedLocales = MutableStateFlow(setOf<LocaleIsoCode>())
     val selectedTab = MutableStateFlow(ResourceInfo.Type.STRING)
@@ -33,14 +33,14 @@ class ResourceViewModel(project: Project) {
         }
     }
 
-    val includedResources = combine(comparator, localizedResources, excludedLocales) { comparator, localizedResources, excludedLocales ->
+    val includedResourcesByLocale = combine(comparator, resourcesByLocale, excludedLocales) { comparator, localizedResources, excludedLocales ->
         localizedResources.filter { it.key !in excludedLocales }.toSortedMap(comparator)
     }
 
     init {
         GlobalScope.launch(Dispatchers.IO) { this@ResourceViewModel.project.collectLatest { it.save() } }
         GlobalScope.launch(Dispatchers.IO) { resourceMetadata.collectLatest { it.save(project.name) } }
-        GlobalScope.launch(Dispatchers.IO) { localizedResources.collectLatest { it.save(project.name) } }
+        GlobalScope.launch(Dispatchers.IO) { resourcesByLocale.collectLatest { it.save(project.name) } }
     }
 
     fun createResource() {
@@ -55,7 +55,7 @@ class ResourceViewModel(project: Project) {
 
     fun removeResource(resId: ResourceId) {
         resourceMetadata.value = resourceMetadata.value.minus(resId)
-        localizedResources.value = localizedResources.value.map { it.key to it.value.minus(resId) }.toMap()
+        resourcesByLocale.value = resourcesByLocale.value.map { it.key to it.value.minus(resId) }.toMap()
     }
 
     fun addLocale(isoCode: LocaleIsoCode) {
@@ -68,17 +68,18 @@ class ResourceViewModel(project: Project) {
     }
 
     fun deleteLocale(isoCode: LocaleIsoCode) {
-        val removeList = mutableSetOf(isoCode)
+        val localesToRemove = mutableSetOf(isoCode)
         // base language is required, so if that's removed, remove the dialects that depend on it
+        val current = resourcesByLocale.value
         if (isoCode.isBaseLanguage) {
-            localizedResources.value.keys.forEach {
+            current.keys.forEach {
                 if (it.value.startsWith(isoCode.value)) {
-                    removeList += it
+                    localesToRemove += it
                 }
             }
         }
-        localizedResources.value = localizedResources.value.minus(removeList)
-        removeList.forEach {
+        resourcesByLocale.value = current.minus(localesToRemove)
+        localesToRemove.forEach {
             Project.localizedResourcesFile(project.value.name, it).delete()
         }
     }
