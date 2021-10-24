@@ -100,6 +100,11 @@ class ResourceViewModel(project: Project) {
         }
     }
 
+    fun togglePlatform(resId: ResourceId, info: ResourceInfo, platform: Platform) {
+        val newInfo = info.copy(platforms = if (platform in info.platforms) info.platforms.minus(platform) else info.platforms.plus(platform))
+        resourceMetadata.value = resourceMetadata.value.plus(resId to newInfo)
+    }
+
     suspend fun generateFiles() {
         ResourceGenerator.generateFiles(project.value, resourceMetadata.value, resourcesByLocale.value)
     }
