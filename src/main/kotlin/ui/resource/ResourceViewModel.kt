@@ -1,5 +1,6 @@
 package ui.resource
 
+import generators.ResourceGenerator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.*
@@ -71,5 +72,9 @@ class ResourceViewModel(project: Project) {
         removeList.forEach {
             Project.localizedResourcesFile(project.value.name, it).delete()
         }
+    }
+
+    suspend fun generateFiles() {
+        ResourceGenerator.generateFiles(project.value, resourceMetadata.value, resourcesByLocale.value)
     }
 }

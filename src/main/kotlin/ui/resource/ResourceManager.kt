@@ -16,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import generators.ResourceGenerator
 import kotlinx.coroutines.launch
 import project.Project
 import project.ResourceInfo
@@ -122,11 +121,10 @@ private suspend fun generateFiles(vm: ResourceViewModel, snackbarHostState: Snac
         actionLabel = "Show",
         duration = SnackbarDuration.Long
     )
-    val project = vm.project.value
-    ResourceGenerator.generateFiles(project, vm.resourceMetadata.value, vm.localizedResources.value)
+    vm.generateFiles()
     if (result == SnackbarResult.ActionPerformed) {
-        openUrl(project.androidOutputUrl, snackbarHostState)
-        openUrl(project.iosOutputUrl, snackbarHostState)
+        openUrl(vm.project.value.androidOutputUrl, snackbarHostState)
+        openUrl(vm.project.value.iosOutputUrl, snackbarHostState)
     }
 }
 
