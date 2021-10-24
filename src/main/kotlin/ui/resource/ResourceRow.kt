@@ -27,7 +27,7 @@ fun ResourceRow(
     val info by remember { derivedStateOf { resourceMetadata[resId] } }
     val resourceInfo = info ?: return
 
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         var error by remember { mutableStateOf("") }
         var id by remember { mutableStateOf(resId) }
         val focusManager = LocalFocusManager.current
@@ -59,6 +59,7 @@ fun ResourceRow(
         }
 
         localizedResources.forEach { (localeIsoCode, resources) ->
+            Spacer(Modifier.width(8.dp))
             val resource = resources[id] ?: when (resourceInfo.type) {
                 ResourceInfo.Type.STRING -> Str("")
                 ResourceInfo.Type.PLURAL -> Plural(one = null, other = "")
