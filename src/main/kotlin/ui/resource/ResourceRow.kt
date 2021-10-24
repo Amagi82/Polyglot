@@ -56,9 +56,9 @@ fun ResourceRow(vm: ResourceViewModel, resId: ResourceId) {
         displayedLocales.forEach { locale ->
             Spacer(Modifier.width(8.dp))
             when (resourceInfo.type) {
-                STRING -> StringRows(vm, resId, locale)
-                PLURAL -> PluralRows(vm, resId, locale)
-                ARRAY -> ArrayRows(vm, resId, locale)
+                STRING -> StringField(vm, resId, locale)
+                PLURAL -> PluralFields(vm, resId, locale)
+                ARRAY -> ArrayFields(vm, resId, locale)
             }
         }
         Spacer(Modifier.width(8.dp))
@@ -86,7 +86,7 @@ fun ResourceRow(vm: ResourceViewModel, resId: ResourceId) {
 }
 
 @Composable
-fun RowScope.StringRows(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
+fun RowScope.StringField(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
     val isDefaultLocale by vm.project.map { it.defaultLocale == localeIsoCode }.collectAsState(false)
     val resource by vm.resource(resId, localeIsoCode).map { it as? Str ?: Str() }.collectAsState(Str())
     val focusManager = LocalFocusManager.current
@@ -107,12 +107,12 @@ fun RowScope.StringRows(vm: ResourceViewModel, resId: ResourceId, localeIsoCode:
 }
 
 @Composable
-fun PluralRows(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
+fun PluralFields(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
 
 }
 
 
 @Composable
-fun ArrayRows(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
+fun ArrayFields(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
 
 }
