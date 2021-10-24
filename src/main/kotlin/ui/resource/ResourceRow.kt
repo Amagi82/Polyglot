@@ -42,10 +42,8 @@ fun ResourceRow(
                 },
                 modifier = Modifier.padding(vertical = 4.dp).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
                     if (!it.hasFocus && resId != id) {
-                        if (id in resourceMetadata) {
+                        if (!vm.updateResourceId(resId, id)) {
                             error = "id already exists"
-                        } else {
-                            vm.resourceMetadata.value = resourceMetadata.minus(resId).plus(id to resourceInfo)
                         }
                     }
                 },
