@@ -10,20 +10,17 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.map
 import locales.Locale
 import locales.LocaleIsoCode
 import project.*
+import project.ResourceInfo.Type.*
 import ui.core.onPressEnter
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ResourceRow(
-    vm: ResourceViewModel,
-    resId: ResourceId
-) {
-    val project by vm.project.collectAsState()
+fun ResourceRow(vm: ResourceViewModel, resId: ResourceId) {
     val resourceMetadata by vm.resourceMetadata.collectAsState()
-    val localizedResources by vm.includedResourcesByLocale.collectAsState(sortedMapOf())
     val info by remember { derivedStateOf { resourceMetadata[resId] } }
     val resourceInfo = info ?: return
 
@@ -55,12 +52,13 @@ fun ResourceRow(
             }
         }
 
-        localizedResources.forEach { (localeIsoCode, resources) ->
+        val displayedLocales by vm.displayedLocales.collectAsState(listOf())
+        displayedLocales.forEach { locale ->
             Spacer(Modifier.width(8.dp))
-            val resource = resources[id] ?: when (resourceInfo.type) {
-                ResourceInfo.Type.STRING -> Str("")
-                ResourceInfo.Type.PLURAL -> Plural(one = null, other = "")
-                ResourceInfo.Type.ARRAY -> StringArray(listOf())
+            when (resourceInfo.type) {
+                STRING -> StringRows(vm, resId, locale)
+                PLURAL -> PluralRows(vm, resId, locale)
+                ARRAY -> ArrayRows(vm, resId, locale)
             }
         }
         Spacer(Modifier.width(8.dp))
@@ -88,9 +86,11 @@ fun ResourceRow(
 }
 
 @Composable
-fun RowScope.StringRows(resId: ResourceId, defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, string: Str, update: (LocaleIsoCode, ResourceId, Str) -> Unit) {
+fun RowScope.StringRows(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
+    val isDefaultLocale by vm.project.map { it.defaultLocale == localeIsoCode }.collectAsState(false)
+    val resource by vm.resource(resId, localeIsoCode).map { it as? Str ?: Str() }.collectAsState(Str())
     val focusManager = LocalFocusManager.current
-    var oldText = remember { string.text }
+    var oldText = remember { resource.text }
     var newText by remember { mutableStateOf(oldText) }
     OutlinedTextField(
         value = newText,
@@ -98,21 +98,21 @@ fun RowScope.StringRows(resId: ResourceId, defaultLocale: LocaleIsoCode, localeI
         modifier = Modifier.weight(1f).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
             if (!it.hasFocus && oldText != newText) {
                 oldText = newText
-                update(localeIsoCode, resId, Str(newText))
+                vm.updateResource(localeIsoCode, resId, Str(newText))
             }
         },
-        label = { Text(Locale[localeIsoCode].displayName(localeIsoCode == defaultLocale)) },
+        label = { Text(Locale[localeIsoCode].displayName(isDefaultLocale)) },
         singleLine = true
     )
 }
 
 @Composable
-fun PluralRows(resId: ResourceId, defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, plural: Plural, update: (LocaleIsoCode, ResourceId, Plural) -> Unit) {
+fun PluralRows(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
 
 }
 
 
 @Composable
-fun ArrayRows(resId: ResourceId, defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, array: StringArray, update: (LocaleIsoCode, ResourceId, StringArray) -> Unit) {
+fun ArrayRows(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
 
 }

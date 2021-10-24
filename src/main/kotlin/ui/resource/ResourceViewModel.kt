@@ -33,8 +33,8 @@ class ResourceViewModel(project: Project) {
         }
     }
 
-    val includedResourcesByLocale = combine(comparator, resourcesByLocale, excludedLocales) { comparator, localizedResources, excludedLocales ->
-        localizedResources.filter { it.key !in excludedLocales }.toSortedMap(comparator)
+    val displayedLocales: Flow<List<LocaleIsoCode>> = combine(comparator, projectLocales, excludedLocales) { comparator, projectLocales, excludedLocales ->
+        projectLocales.minus(excludedLocales).sortedWith(comparator)
     }
 
     init {
@@ -42,6 +42,8 @@ class ResourceViewModel(project: Project) {
         GlobalScope.launch(Dispatchers.IO) { resourceMetadata.collectLatest { it.save(project.name) } }
         GlobalScope.launch(Dispatchers.IO) { resourcesByLocale.collectLatest { it.save(project.name) } }
     }
+
+    fun resource(resId: ResourceId, localeIsoCode: LocaleIsoCode) = resourcesByLocale.map { it[localeIsoCode]?.get(resId) }
 
     fun createResource() {
         var newId = ResourceId("new")
