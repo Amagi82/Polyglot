@@ -5,16 +5,17 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.map
 import locales.Locale
 import locales.LocaleIsoCode
 import project.*
 import project.ResourceInfo.Type.*
+import ui.core.IconButton
 import ui.core.onPressEnter
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -64,17 +65,8 @@ fun ResourceRow(vm: ResourceViewModel, resId: ResourceId) {
         Spacer(Modifier.width(8.dp))
 
         Platform.values().forEach { platform ->
-            val isIncluded = platform in resourceInfo.platforms
-            IconButton(onClick = {
-                val newResource =
-                    resourceInfo.copy(platforms = if (isIncluded) resourceInfo.platforms.minus(platform) else resourceInfo.platforms.plus(platform))
-                vm.resourceMetadata.value = resourceMetadata.plus(resId to newResource)
-            }) {
-                Icon(
-                    painterResource(platform.iconId),
-                    contentDescription = platform.name,
-                    tint = if (isIncluded) MaterialTheme.colors.onSurface else MaterialTheme.colors.onSurface.copy(alpha = 0.1f)
-                )
+            IconButton(platform.iconId, Modifier.alpha(if (platform in resourceInfo.platforms) 1f else 0.1f), contentDescription = platform.name) {
+                vm.togglePlatform(resId, resourceInfo, platform)
             }
         }
 //        val menuState by vm.menuState.collectAsState()
