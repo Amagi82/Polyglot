@@ -28,11 +28,10 @@ fun ResourceRow(
     val resourceInfo = info ?: return
 
     Row(verticalAlignment = Alignment.CenterVertically) {
-        var error by remember { mutableStateOf("") }
-        var id by remember { mutableStateOf(resId) }
-        val focusManager = LocalFocusManager.current
-
         Column(modifier = Modifier.weight(1f)) {
+            val focusManager = LocalFocusManager.current
+            var id by remember { mutableStateOf(resId) }
+            var error by remember { mutableStateOf("") }
 
             OutlinedTextField(
                 value = id.id,
@@ -75,7 +74,7 @@ fun ResourceRow(
             IconButton(onClick = {
                 val newResource =
                     resourceInfo.copy(platforms = if (isIncluded) resourceInfo.platforms.minus(platform) else resourceInfo.platforms.plus(platform))
-                vm.resourceMetadata.value = resourceMetadata.plus(id to newResource)
+                vm.resourceMetadata.value = resourceMetadata.plus(resId to newResource)
             }) {
                 Icon(
                     painterResource(platform.iconId),
