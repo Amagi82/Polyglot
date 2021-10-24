@@ -62,12 +62,8 @@ fun ResourceRow(
                 ResourceInfo.Type.PLURAL -> Plural(one = null, other = "")
                 ResourceInfo.Type.ARRAY -> StringArray(listOf())
             }
-            when (resource) {
-                is Str -> StringRows(resId, project.defaultLocale, localeIsoCode, resource, vm::updateResource)
-                is Plural -> PluralRows(resId, project.defaultLocale, localeIsoCode, resource, vm::updateResource)
-                is StringArray -> ArrayRows(resId, project.defaultLocale, localeIsoCode, resource, vm::updateResource)
-            }
         }
+        Spacer(Modifier.width(8.dp))
 
         Platform.values().forEach { platform ->
             val isIncluded = platform in resourceInfo.platforms
