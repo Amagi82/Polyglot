@@ -23,7 +23,7 @@ fun ResourceRow(
 ) {
     val project by vm.project.collectAsState()
     val resourceMetadata by vm.resourceMetadata.collectAsState()
-    val localizedResources by vm.includedResources.collectAsState(sortedMapOf())
+    val localizedResources by vm.includedResourcesByLocale.collectAsState(sortedMapOf())
     val info by remember { derivedStateOf { resourceMetadata[resId] } }
     val resourceInfo = info ?: return
 
@@ -58,8 +58,8 @@ fun ResourceRow(
             }
         }
 
-        localizedResources.forEach { (localeIsoCode, localizations) ->
-            val localization = localizations[id] ?: when (resourceInfo.type) {
+        localizedResources.forEach { (localeIsoCode, resources) ->
+            val resource = resources[id] ?: when (resourceInfo.type) {
                 ResourceInfo.Type.STRING -> Str("")
                 ResourceInfo.Type.PLURAL -> Plural(one = null, other = "")
                 ResourceInfo.Type.ARRAY -> StringArray(listOf())
