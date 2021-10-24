@@ -46,11 +46,12 @@ class ResourceViewModel(project: Project) {
     fun createResource() {
         var newId = ResourceId("new")
         var n = 0
-        while (resourceMetadata.value[newId] != null) {
+        val current = resourceMetadata.value
+        while (current[newId] != null) {
             newId = ResourceId("new$n")
             n++
         }
-        resourceMetadata.value = resourceMetadata.value.plus(newId to ResourceInfo(type = selectedTab.value))
+        resourceMetadata.value = current.plus(newId to ResourceInfo(type = selectedTab.value))
     }
 
     fun updateResource(locale: LocaleIsoCode, resId: ResourceId, resource: Resource) {
