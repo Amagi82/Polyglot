@@ -11,11 +11,11 @@ sealed interface Resource
 
 @Stable
 @JvmInline
-value class Str(val text: String) : Resource
+value class Str(val text: String = "") : Resource
 
 @Stable
 @JvmInline
-value class Plural(val items: Map<Quantity, String>) : Resource {
+value class Plural(val items: Map<Quantity, String> = mapOf(Quantity.ONE to "", Quantity.OTHER to "")) : Resource {
     constructor(
         zero: String? = null,
         one: String?,
@@ -37,4 +37,4 @@ value class Plural(val items: Map<Quantity, String>) : Resource {
 
 @Stable
 @JvmInline
-value class StringArray(val items: List<String>) : Resource
+value class StringArray(val items: List<String> = listOf()) : Resource
