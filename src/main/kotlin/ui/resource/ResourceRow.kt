@@ -65,16 +65,10 @@ fun ResourceRow(
                 ResourceInfo.Type.PLURAL -> Plural(one = null, other = "")
                 ResourceInfo.Type.ARRAY -> StringArray(listOf())
             }
-            when (localization) {
-                is Str -> StringRows(project.defaultLocale, localeIsoCode, localization) {
-                    vm.localizedResources.value = localizedResources.plus(localeIsoCode to localizedResources[localeIsoCode].orEmpty().plus(id to it))
-                }
-                is Plural -> PluralRows(project.defaultLocale, localeIsoCode, localization) {
-
-                }
-                is StringArray -> ArrayRows(project.defaultLocale, localeIsoCode, localization) {
-
-                }
+            when (resource) {
+                is Str -> StringRows(resId, project.defaultLocale, localeIsoCode, resource, vm::updateResource)
+                is Plural -> PluralRows(resId, project.defaultLocale, localeIsoCode, resource, vm::updateResource)
+                is StringArray -> ArrayRows(resId, project.defaultLocale, localeIsoCode, resource, vm::updateResource)
             }
         }
 
@@ -101,7 +95,7 @@ fun ResourceRow(
 }
 
 @Composable
-fun RowScope.StringRows(defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, string: Str, update: (Str) -> Unit) {
+fun RowScope.StringRows(resId: ResourceId, defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, string: Str, update: (LocaleIsoCode, ResourceId, Str) -> Unit) {
     val focusManager = LocalFocusManager.current
     var oldText = remember { string.text }
     var newText by remember { mutableStateOf(oldText) }
@@ -111,7 +105,7 @@ fun RowScope.StringRows(defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCo
         modifier = Modifier.weight(1f).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
             if (!it.hasFocus && oldText != newText) {
                 oldText = newText
-                update(Str(newText))
+                update(localeIsoCode, resId, Str(newText))
             }
         },
         label = { Text(Locale[localeIsoCode].displayName(localeIsoCode == defaultLocale)) },
@@ -120,12 +114,12 @@ fun RowScope.StringRows(defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCo
 }
 
 @Composable
-fun PluralRows(defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, plural: Plural, update: (Plural) -> Unit) {
+fun PluralRows(resId: ResourceId, defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, plural: Plural, update: (LocaleIsoCode, ResourceId, Plural) -> Unit) {
 
 }
 
 
 @Composable
-fun ArrayRows(defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, array: StringArray, update: (StringArray) -> Unit) {
+fun ArrayRows(resId: ResourceId, defaultLocale: LocaleIsoCode, localeIsoCode: LocaleIsoCode, array: StringArray, update: (LocaleIsoCode, ResourceId, StringArray) -> Unit) {
 
 }
