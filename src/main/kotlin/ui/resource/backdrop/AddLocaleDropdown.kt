@@ -29,11 +29,7 @@ fun AddLocaleDropdown(vm: ResourceViewModel) {
 
     fun addLocale(isoCode: LocaleIsoCode? = locales.find { it.isoCode.value == newLocaleText || it.displayName() == newLocaleText }?.isoCode) {
         if (isoCode != null && isoCode !in projectLocales && locales.any { it.isoCode == isoCode }) {
-            val newLocales = mutableListOf(isoCode)
-            if (!isoCode.isBaseLanguage) {
-                newLocales.add(Locale[isoCode].copy(region = null).isoCode)
-            }
-            vm.localizedResources.value = vm.localizedResources.value.plus(newLocales.map { it to mapOf() })
+            vm.addLocale(isoCode)
             newLocaleText = ""
             isDropdownExpanded = false
         }

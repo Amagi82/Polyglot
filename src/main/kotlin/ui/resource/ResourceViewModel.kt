@@ -58,6 +58,15 @@ class ResourceViewModel(project: Project) {
         localizedResources.value = localizedResources.value.map { it.key to it.value.minus(resId) }.toMap()
     }
 
+    fun addLocale(isoCode: LocaleIsoCode) {
+        val localesToAdd = mutableListOf(isoCode)
+        if (!isoCode.isBaseLanguage) {
+            localesToAdd.add(Locale[isoCode].copy(region = null).isoCode)
+        }
+        val current = resourcesByLocale.value
+        resourcesByLocale.value = current.plus(localesToAdd.map { it to current[it].orEmpty() })
+    }
+
     fun deleteLocale(isoCode: LocaleIsoCode) {
         val removeList = mutableSetOf(isoCode)
         // base language is required, so if that's removed, remove the dialects that depend on it
