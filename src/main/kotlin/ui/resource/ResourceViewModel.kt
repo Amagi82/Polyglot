@@ -12,7 +12,6 @@ import java.util.*
 
 class ResourceViewModel(project: Project) {
     val project = MutableStateFlow(project)
-    val projectLocales = this.project.map { proj -> proj.locales.sortedBy { Locale[it].displayName() } }
 
     val excludedLocales = MutableStateFlow(setOf<LocaleIsoCode>())
     val selectedTab = MutableStateFlow(ResourceType.STRINGS)
@@ -31,8 +30,8 @@ class ResourceViewModel(project: Project) {
         }
     }
 
-    val displayedLocales = combine(comparator, projectLocales, excludedLocales) { comparator, projectLocales, excludedLocales ->
-        projectLocales.minus(excludedLocales).sortedWith(comparator)
+    val displayedLocales = combine(comparator, this@ResourceViewModel.project, excludedLocales) { comparator, project, excludedLocales ->
+        project.locales.minus(excludedLocales).sortedWith(comparator)
     }
 
     init {
@@ -45,7 +44,7 @@ class ResourceViewModel(project: Project) {
             localesToAdd.add(Locale[isoCode].copy(region = null).isoCode)
         }
         val current = project.value
-        project.value = current.copy(locales = current.locales.plus(localesToAdd))
+        project.value = current.copy(locales = current.locales.plus(localesToAdd).sortedBy { Locale[it].displayName() })
     }
 
     fun deleteLocale(isoCode: LocaleIsoCode) {
