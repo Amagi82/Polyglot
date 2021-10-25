@@ -35,7 +35,7 @@ private val DarkColorPalette = darkColors(
 )
 
 @Composable
-fun PolyglotTheme(darkTheme: Boolean, content: @Composable () -> Unit) = DesktopMaterialTheme(
+fun PolyglotTheme(darkTheme: Boolean, content: @Composable () -> Unit) = MaterialTheme(
     colors = if (darkTheme) DarkColorPalette else LightColorPalette,
     content = content
 )
