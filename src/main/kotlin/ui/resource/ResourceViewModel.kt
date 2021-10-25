@@ -65,8 +65,4 @@ class ResourceViewModel(project: Project) {
             }
         }
     }
-
-    suspend fun generateFiles() {
-        ResourceGenerator.generateFiles(project.value, strings, plurals, arrays)
-    }
 }
