@@ -1,6 +1,6 @@
 package project
 
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 import locales.Locale
 import locales.LocaleIsoCode
 import java.io.File
@@ -15,7 +15,7 @@ import java.util.*
  * With Android, the base values folder gets the default strings, and values-en, values-de, etc get the localized translations
  * With iOS, there is no base folder, all localizations are placed in their respective folders, e.g. en.proj, es.proj, de.proj
  * */
-@Stable
+@Immutable
 data class Project(
     val name: String,
     val androidOutputUrl: String = "output/android",

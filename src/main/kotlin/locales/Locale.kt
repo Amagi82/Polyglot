@@ -1,6 +1,6 @@
 package locales
 
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 
 /**
  * Language and optional Region for a translation
@@ -20,7 +20,7 @@ import androidx.compose.runtime.Stable
  * @param language: The base language
  * @param region: An optional regional dialect, or null for the default version
  * */
-@Stable
+@Immutable
 data class Locale(val language: Language, val region: Region? = null) {
     val isoCode: LocaleIsoCode = LocaleIsoCode(language.isoCode.value + region?.isoCode?.value?.let { "_$it" }.orEmpty())
     fun displayName(isDefault: Boolean = false) = "${language.name}${region?.name?.let { " ($it)" }.orEmpty()}${if (isDefault) " (Default)" else ""}"
@@ -53,7 +53,7 @@ data class Locale(val language: Language, val region: Region? = null) {
  *
  * @property isBaseLanguage: False if the isoCode is a regional dialect
  * */
-@Stable
+@Immutable
 @JvmInline
 value class LocaleIsoCode(val value: String) : Comparable<LocaleIsoCode> {
     val isBaseLanguage: Boolean get() = !value.contains('_')

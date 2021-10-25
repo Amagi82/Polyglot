@@ -1,13 +1,13 @@
 package locales
 
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 import utils.extensions.loadResource
 
 /**
  * @param isoCode ISO 639 language codes, e.g. fr, ru, sv
  * @param name Anglicized name of the language, .e.g. French, Russian, Swedish
  */
-@Stable
+@Immutable
 data class Language(val isoCode: LanguageIsoCode, val name: String) {
     init {
         when {
@@ -39,6 +39,6 @@ data class Language(val isoCode: LanguageIsoCode, val name: String) {
 /**
  * ISO 639 Two or Three digit code (e.g. en, es, fr, de, tzm)
  */
-@Stable
+@Immutable
 @JvmInline
 value class LanguageIsoCode(val value: String)

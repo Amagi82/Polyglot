@@ -1,12 +1,12 @@
 package project
 
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 import java.io.File
 
 /**
  * Make a resource platform-specific
  */
-@Stable
+@Immutable
 enum class Platform(val iconId: String, val displayName: String) {
     ANDROID(R.drawable.android, "Android"),
     IOS(R.drawable.apple, "iOS");

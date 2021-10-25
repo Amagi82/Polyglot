@@ -1,34 +1,36 @@
 package project
 
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 import java.util.*
 
 /**
  * A Resource is a type of localized content: A string, a plural, or a string array.
  * Strings, Plurals, and Arrays each require different formatting on Android and iOS.
  */
-@Stable
+@Immutable
 sealed interface Resource<M : Metadata> {
     val type: ResourceType
 }
 
+@Immutable
 sealed class Metadata(val type: ResourceType) {
     abstract val group: String
     abstract val platforms: List<Platform>
 }
 
-@Stable
+@Immutable
 @JvmInline
 value class Str(val text: String = "") : Resource<Str.Metadata> {
     override val type: ResourceType get() = ResourceType.STRINGS
 
+    @Immutable
     data class Metadata(
         override val group: String = "",
         override val platforms: List<Platform> = Platform.ALL
     ) : project.Metadata(ResourceType.STRINGS)
 }
 
-@Stable
+@Immutable
 @JvmInline
 value class Plural(val items: Map<Quantity, String> = mapOf(Quantity.ONE to "", Quantity.OTHER to "")) : Resource<Plural.Metadata> {
     constructor(
@@ -51,6 +53,7 @@ value class Plural(val items: Map<Quantity, String> = mapOf(Quantity.ONE to "", 
 
     override val type: ResourceType get() = ResourceType.PLURALS
 
+    @Immutable
     data class Metadata(
         override val group: String = "",
         override val platforms: List<Platform> = Platform.ALL,
@@ -58,11 +61,12 @@ value class Plural(val items: Map<Quantity, String> = mapOf(Quantity.ONE to "", 
     ) : project.Metadata(ResourceType.PLURALS)
 }
 
-@Stable
+@Immutable
 @JvmInline
 value class StringArray(val items: List<String> = listOf()) : Resource<StringArray.Metadata> {
     override val type: ResourceType get() = ResourceType.ARRAYS
 
+    @Immutable
     data class Metadata(
         override val group: String = "",
         override val platforms: List<Platform> = Platform.ALL,
