@@ -42,7 +42,7 @@ data class Project(
         private const val PROP_DEFAULT_LOCALE = "defaultLocale"
         private const val PROP_LOCALES = "locales"
 
-        private val projects = File("projects").apply(File::mkdirs)
+        val projects = File("projects").apply(File::mkdirs)
 
         val projectFolders = projects.listFiles()?.filter { it.isDirectory }.orEmpty()
 

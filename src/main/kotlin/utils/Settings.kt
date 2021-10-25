@@ -1,11 +1,12 @@
 package utils
 
+import project.Project
 import utils.extensions.prop
 import java.io.File
 import java.util.*
 
 object Settings {
-    private val file = File("projects", "settings.properties").apply(File::createNewFile)
+    private val file = File(Project.projects, "settings.properties").apply(File::createNewFile)
     private val props = Properties().apply { load(file.inputStream()) }
 
     private fun save() {
