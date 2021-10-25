@@ -19,12 +19,11 @@ import ui.resource.ResourceViewModel
 fun LocaleSettings(vm: ResourceViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         val project by vm.project.collectAsState()
-        val projectLocales by vm.projectLocales.collectAsState(listOf())
         val excludedLocales by vm.excludedLocales.collectAsState()
 
         Text("Locales", style = MaterialTheme.typography.h6)
 
-        projectLocales.forEach { isoCode ->
+        project.locales.forEach { isoCode ->
             val isDefault = isoCode == project.defaultLocale
             var isMenuExpanded by remember { mutableStateOf(false) }
             val isExcluded = isoCode in excludedLocales

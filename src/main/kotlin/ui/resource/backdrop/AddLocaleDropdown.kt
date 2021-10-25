@@ -14,7 +14,7 @@ import ui.resource.ResourceViewModel
 
 @Composable
 fun AddLocaleDropdown(vm: ResourceViewModel) {
-    val projectLocales by vm.projectLocales.collectAsState(listOf())
+    val project by vm.project.collectAsState()
     val locales = remember { Locale.all.values }
     var newLocaleText by remember { mutableStateOf("") }
     var isDropdownExpanded by remember { mutableStateOf(false) }
@@ -28,7 +28,7 @@ fun AddLocaleDropdown(vm: ResourceViewModel) {
     }
 
     fun addLocale(isoCode: LocaleIsoCode? = locales.find { it.isoCode.value == newLocaleText || it.displayName() == newLocaleText }?.isoCode) {
-        if (isoCode != null && isoCode !in projectLocales && locales.any { it.isoCode == isoCode }) {
+        if (isoCode != null && isoCode !in project.locales && locales.any { it.isoCode == isoCode }) {
             vm.addLocale(isoCode)
             newLocaleText = ""
             isDropdownExpanded = false

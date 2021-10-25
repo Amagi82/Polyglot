@@ -1,6 +1,7 @@
 package project
 
 import androidx.compose.runtime.Stable
+import locales.Locale
 import locales.LocaleIsoCode
 import java.io.File
 import java.util.*
@@ -69,7 +70,7 @@ data class Project(
                 androidOutputUrl = props.getProperty(PROP_ANDROID_OUTPUT, "output/android"),
                 iosOutputUrl = props.getProperty(PROP_IOS_OUTPUT, "output/ios"),
                 defaultLocale = LocaleIsoCode(props.getProperty(PROP_DEFAULT_LOCALE, "en")),
-                locales = props.getProperty(PROP_LOCALES).split(",").filter(String::isNotEmpty).map { LocaleIsoCode(it) }
+                locales = props.getProperty(PROP_LOCALES).split(",").filter(String::isNotEmpty).map { LocaleIsoCode(it) }.sortedBy { Locale[it].displayName() }
             )
         }
 
