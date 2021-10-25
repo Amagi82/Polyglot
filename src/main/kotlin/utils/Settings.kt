@@ -1,16 +1,14 @@
 package utils
 
 import project.Project
-import utils.extensions.Properties
-import utils.extensions.prop
 import java.io.File
 
 object Settings {
     private val file = File(Project.projectsFolder, "settings.properties").apply(File::createNewFile)
-    private val props = Properties(file)
+    private val props = PropertyStore(file)
 
     private fun save() {
-        runCatching { props.store(file.outputStream(), "Polyglot settings") }.onFailure {
+        runCatching { props.store(file, "Polyglot settings") }.onFailure {
             println("Failed to save settings with $it")
         }
     }
