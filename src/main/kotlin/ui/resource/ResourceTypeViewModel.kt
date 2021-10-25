@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import locales.LocaleIsoCode
 import project.*
+import utils.extensions.save
 
 sealed class ResourceTypeViewModel<M : Metadata, R : Resource<M>>(val project: MutableStateFlow<Project>, private val type: ResourceType) {
     val resourceMetadata = MutableStateFlow(Project.loadResourceMetadata<M>(project.value.name, type))
