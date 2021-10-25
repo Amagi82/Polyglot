@@ -4,9 +4,7 @@ import locales.LocaleIsoCode
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import project.*
-import ui.resource.ArrayResourceViewModel
-import ui.resource.PluralResourceViewModel
-import ui.resource.StringResourceViewModel
+import ui.resource.ResourceViewModel
 import javax.xml.transform.Transformer
 import java.io.File
 
@@ -14,13 +12,10 @@ import java.io.File
  * Generates Android resources for a given language in the specified folder
  */
 class AndroidResourceGenerator(
-    project: Project,
+    vm: ResourceViewModel,
     locale: LocaleIsoCode,
-    formatters: List<StringFormatter>,
-    strings: StringResourceViewModel,
-    plurals: PluralResourceViewModel,
-    arrays: ArrayResourceViewModel
-) : ResourceGenerator(Platform.ANDROID, project, locale, formatters) {
+    formatters: List<StringFormatter>
+) : ResourceGenerator(Platform.ANDROID, vm.project.value, locale, formatters) {
     private val valuesFolder = File(outputFolder, "values${if (locale == defaultLocale) "" else "-${locale.value}"}").also(File::mkdirs)
     private val document: Document = createDocument()
     private val resourceElement: Element = document.createElement("resources").also {
@@ -29,7 +24,7 @@ class AndroidResourceGenerator(
     }
 
     init {
-        addAll(strings, plurals, arrays)
+        addAll(vm)
     }
 
     override fun generateFiles() {
