@@ -29,6 +29,6 @@ fun main() = application {
         icon = painterResource(R.drawable.language),
         undecorated = false
     ) {
-        App(project)
+        App(project.value) { project.value = it }
     }
 }
