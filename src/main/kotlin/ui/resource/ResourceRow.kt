@@ -79,8 +79,8 @@ fun RowScope.StringField(vm: StringResourceViewModel, resId: ResourceId, localeI
     val isDefaultLocale by vm.project.map { it.defaultLocale == localeIsoCode }.collectAsState(false)
     val resource by vm.resource(resId, localeIsoCode).map { it ?: Str() }.collectAsState(Str())
     val focusManager = LocalFocusManager.current
-    var oldText = remember { resource.text }
-    var newText by remember { mutableStateOf(oldText) }
+    var oldText = remember(resource) { resource.text }
+    var newText by remember(resource) { mutableStateOf(oldText) }
     OutlinedTextField(
         value = newText,
         onValueChange = { newText = it },
