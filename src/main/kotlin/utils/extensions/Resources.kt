@@ -1,13 +1,10 @@
 package utils.extensions
 
 import R
-import java.net.URL
 import java.util.*
 
-fun loadResource(resource: String): URL? = R::class.java.classLoader.getResource(resource)
-
 inline fun <reified K, V> loadResource(resource: String, transformer: (String, String) -> Pair<K, V>): Map<K, V> =
-    loadResource(resource)!!.openStream().use {
+    R::class.java.classLoader.getResource(resource)!!.openStream().use {
         val props = Properties().apply { load(it) }
         buildMap(props.size) {
             props.forEach { (k, v) ->
