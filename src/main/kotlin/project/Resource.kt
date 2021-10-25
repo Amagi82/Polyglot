@@ -75,7 +75,7 @@ value class StringArray(val items: List<String> = listOf()) : Resource<StringArr
 }
 
 fun <T : Metadata> Map<ResourceId, T>.save(projectName: String, type: ResourceType) {
-    val file = Project.resourceMetadataFile(projectName, type)
+    val file = Project.metadataFile(projectName, type)
     val props = Properties()
     forEach { (resId, metadata) ->
         val extraData = when (metadata) {
@@ -87,6 +87,6 @@ fun <T : Metadata> Map<ResourceId, T>.save(projectName: String, type: ResourceTy
         props.setProperty(resId.value, "${metadata.group}|${metadata.platforms.sorted().joinToString(separator = ",") { it.name }}$extraData")
     }
     runCatching { props.store(file.outputStream(), "") }.onFailure {
-        println("Failed to save ${type.name.lowercase()} resources with $it")
+        println("Failed to save ${type.title} resources with $it")
     }
 }
