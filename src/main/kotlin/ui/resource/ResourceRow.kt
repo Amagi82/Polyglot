@@ -21,8 +21,8 @@ import ui.core.onPressEnter
 @Composable
 fun <M : Metadata, R : Resource<M>> ResourceRow(vm: ResourceViewModel, resourceVM: ResourceTypeViewModel<M, R>, resId: ResourceId, metadata: M) {
     Row(verticalAlignment = Alignment.CenterVertically) {
+        val focusManager = LocalFocusManager.current
         Column(modifier = Modifier.weight(1f)) {
-            val focusManager = LocalFocusManager.current
             var id by remember { mutableStateOf(resId) }
             var error by remember { mutableStateOf("") }
 
@@ -50,13 +50,28 @@ fun <M : Metadata, R : Resource<M>> ResourceRow(vm: ResourceViewModel, resourceV
             }
         }
 
+        if (metadata is StringArray.Metadata && resourceVM is ArrayResourceViewModel) {
+            var size by remember(metadata) { mutableStateOf(metadata.size) }
+            OutlinedTextField(
+                value = size.toString(),
+                onValueChange = { size = it.filter(Char::isDigit).toIntOrNull()?.coerceAtLeast(1) ?: 1 },
+                modifier = Modifier.padding(start = 8.dp).width(72.dp).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
+                    if (!it.hasFocus && metadata.size != size) {
+                        resourceVM.updateArraySize(resId, metadata.copy(size = size))
+                    }
+                },
+                label = { Text("Size") },
+                singleLine = true
+            )
+        }
+
         val displayedLocales by vm.displayedLocales.collectAsState(listOf())
         displayedLocales.forEach { locale ->
             Spacer(Modifier.width(8.dp))
             when (resourceVM) {
                 is StringResourceViewModel -> StringField(resourceVM, resId, locale)
-                is PluralResourceViewModel -> PluralFields(resourceVM, resId, locale)
-                is ArrayResourceViewModel -> ArrayFields(resourceVM, resId, locale)
+                is PluralResourceViewModel -> PluralFields(resourceVM, resId, locale, metadata as Plural.Metadata)
+                is ArrayResourceViewModel -> ArrayFields(resourceVM, resId, locale, metadata as StringArray.Metadata)
             }
         }
         Spacer(Modifier.width(8.dp))
@@ -92,12 +107,56 @@ fun RowScope.StringField(vm: StringResourceViewModel, resId: ResourceId, localeI
 }
 
 @Composable
-fun PluralFields(vm: PluralResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
+fun RowScope.PluralFields(vm: PluralResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode, metadata: Plural.Metadata) {
+    Column(modifier = Modifier.weight(1f)) {
+        val isDefaultLocale by vm.project.map { it.defaultLocale == localeIsoCode }.collectAsState(false)
+        val resource by vm.resource(resId, localeIsoCode).map { it ?: Plural() }.collectAsState(Plural())
+        val focusManager = LocalFocusManager.current
 
+        Text(Locale[localeIsoCode].displayName(isDefaultLocale))
+        metadata.quantities.forEach { quantity ->
+            var oldText = remember(resource) { resource[quantity] ?: "" }
+            var newText by remember(oldText) { mutableStateOf(oldText) }
+            OutlinedTextField(
+                value = newText,
+                onValueChange = { newText = it },
+                modifier = Modifier.fillMaxWidth().onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
+                    if (!it.hasFocus && oldText != newText) {
+                        oldText = newText
+                        vm.updateResource(localeIsoCode, resId, Plural(resource.items.plus(quantity to newText)))
+                    }
+                },
+                label = { Text(quantity.label) },
+                singleLine = true
+            )
+        }
+    }
 }
 
 
 @Composable
-fun ArrayFields(vm: ArrayResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
+fun RowScope.ArrayFields(vm: ArrayResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode, metadata: StringArray.Metadata) {
+    val isDefaultLocale by vm.project.map { it.defaultLocale == localeIsoCode }.collectAsState(false)
+    val focusManager = LocalFocusManager.current
+    val resource by vm.resource(resId, localeIsoCode).map { it ?: StringArray(List(metadata.size) { "" }) }
+        .collectAsState(StringArray(List(metadata.size) { "" }))
 
+    Column(modifier = Modifier.weight(1f)) {
+        for (index in 0 until metadata.size) {
+            var oldText = remember(resource) { resource.items.getOrElse(index) { "" } }
+            var newText by remember(oldText) { mutableStateOf(oldText) }
+            OutlinedTextField(
+                value = newText,
+                onValueChange = { newText = it },
+                modifier = Modifier.fillMaxWidth().onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
+                    if (!it.hasFocus && oldText != newText) {
+                        oldText = newText
+                        vm.updateResource(localeIsoCode, resId, StringArray(resource.items.toMutableList().apply { set(index, newText) }.toList()))
+                    }
+                },
+                label = { Text(Locale[localeIsoCode].displayName(isDefaultLocale)) },
+                singleLine = true
+            )
+        }
+    }
 }

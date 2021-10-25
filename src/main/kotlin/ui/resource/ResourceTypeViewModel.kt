@@ -76,4 +76,11 @@ class PluralResourceViewModel(project: MutableStateFlow<Project>) : ResourceType
 class ArrayResourceViewModel(project: MutableStateFlow<Project>) : ResourceTypeViewModel<StringArray.Metadata, StringArray>(project, ResourceType.ARRAYS) {
     override fun createMetadata() = StringArray.Metadata()
     override fun StringArray.Metadata.copyPlatforms(platforms: List<Platform>) = copy(platforms = platforms)
+
+    fun updateArraySize(resId: ResourceId, metadata: StringArray.Metadata) {
+        resourceMetadata.value = resourceMetadata.value.plus(resId to metadata)
+        resourcesByLocale.value = resourcesByLocale.value.map { (locale, resourceMap) ->
+            locale to resourceMap.map { (resId, array) -> resId to StringArray(List(metadata.size) { i -> array.items.getOrElse(i) { "" } }) }.toMap()
+        }.toMap()
+    }
 }

@@ -84,26 +84,22 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
             }
         },
         frontLayerContent = {
-            Row {
-                val resourceVM by remember {
-                    derivedStateOf {
-                        when (selectedTab) {
-                            ResourceType.STRINGS -> vm.strings
-                            ResourceType.PLURALS -> vm.plurals
-                            ResourceType.ARRAYS -> vm.arrays
-                        }
+            val resourceVM by remember {
+                derivedStateOf {
+                    when (selectedTab) {
+                        ResourceType.STRINGS -> vm.strings
+                        ResourceType.PLURALS -> vm.plurals
+                        ResourceType.ARRAYS -> vm.arrays
                     }
                 }
-                resourceList(vm, resourceVM)
+            }
+            Row {
+                ResourceList(vm, resourceVM)
             }
 
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
                 ExtendedFloatingActionButton(text = { Text("Add") },
-                    onClick = when (selectedTab) {
-                        ResourceType.STRINGS -> vm.strings::createResource
-                        ResourceType.PLURALS -> vm.plurals::createResource
-                        ResourceType.ARRAYS -> vm.arrays::createResource
-                    },
+                    onClick = resourceVM::createResource,
                     modifier = Modifier.padding(16.dp),
                     icon = { Icon(Icons.Default.Add, contentDescription = "Add new resource") })
             }
@@ -113,9 +109,10 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
 }
 
 @Composable
-private fun <M : Metadata, R : Resource<M>> RowScope.resourceList(vm: ResourceViewModel, resourceVM: ResourceTypeViewModel<M, R>) {
+private fun <M : Metadata, R : Resource<M>> RowScope.ResourceList(vm: ResourceViewModel, resourceVM: ResourceTypeViewModel<M, R>) {
     val state = rememberLazyListState()
     val resources by resourceVM.displayedResources.collectAsState(listOf())
+    if (vm.selectedTab.value != resources.firstOrNull()?.second?.type) return
     LazyColumn(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f), state = state) {
         items(resources, key = { it.first.value }) { (resId, metadata) ->
             ResourceRow(vm = vm, resourceVM = resourceVM, resId = resId, metadata = metadata)
