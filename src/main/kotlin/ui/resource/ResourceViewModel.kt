@@ -60,7 +60,7 @@ class ResourceViewModel(project: Project) {
         project.value = current.copy(locales = current.locales.minus(localesToRemove))
         localesToRemove.forEach {
             ResourceType.values().forEach { type ->
-                Project.resourcesFile(project.value.name, type, it).delete()
+                project.value.resourcesFile(type, it).delete()
             }
         }
     }

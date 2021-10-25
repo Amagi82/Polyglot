@@ -21,7 +21,7 @@ import java.io.File
 
 @Composable
 fun ProjectPicker(onProjectSelected: (Project) -> Unit) {
-    val projects by remember { derivedStateOf { Project.projectFolders } }
+    val projects by remember { derivedStateOf { Project.projectsFolder.listFiles()?.filter(File::isDirectory).orEmpty() } }
     var showDialog by remember { mutableStateOf(projects.isEmpty()) }
 
     Scaffold(

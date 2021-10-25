@@ -26,7 +26,7 @@ data class Region(val isoCode: RegionIsoCode, val name: String) {
         /**
          * United States, Argentina, French Guiana, etc from region isoCode
          */
-        private val names: Map<RegionIsoCode, String> = loadResource("regions.properties") { k, v -> RegionIsoCode(k) to v }
+        private val names: Map<RegionIsoCode, String> = loadResource("regions.properties") { (k, v) -> RegionIsoCode(k) to v }
     }
 }
 

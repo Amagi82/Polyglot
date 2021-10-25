@@ -25,12 +25,12 @@ data class Language(val isoCode: LanguageIsoCode, val name: String) {
         /**
          * Name of language from language isoCode, e.g. ["en"] = English, ["fr"] = French
          */
-        val names: Map<LanguageIsoCode, String> = loadResource("languages.properties") { k, v -> LanguageIsoCode(k) to v }
+        val names: Map<LanguageIsoCode, String> = loadResource("languages.properties") { (k, v) -> LanguageIsoCode(k) to v }
 
         /**
          * List of regions where a language is spoken
          */
-        val regions: Map<LanguageIsoCode, List<RegionIsoCode>> = loadResource("language_regions.properties") { k, v ->
+        val regions: Map<LanguageIsoCode, List<RegionIsoCode>> = loadResource("language_regions.properties") { (k, v) ->
             LanguageIsoCode(k) to v.split(',').filter(String::isNotEmpty).map(::RegionIsoCode)
         }
     }
