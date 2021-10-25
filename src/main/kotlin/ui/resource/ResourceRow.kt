@@ -66,10 +66,6 @@ fun <M : Metadata, R : Resource<M>> ResourceRow(vm: ResourceViewModel, resourceV
                 resourceVM.togglePlatform(resId, metadata, platform)
             }
         }
-//        val menuState by vm.menuState.collectAsState()
-//        if (menuState == MenuState.SETTINGS) {
-//            IconButton(Icons.Default.Delete, contentDescription = "Remove", modifier = Modifier.padding(start = 16.dp), onClick = deleteResource)
-//        }
     }
     Divider()
 }
