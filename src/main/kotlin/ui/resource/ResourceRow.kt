@@ -34,7 +34,9 @@ fun <M : Metadata, R : Resource<M>> ResourceRow(vm: ResourceViewModel, resourceV
                 },
                 modifier = Modifier.padding(vertical = 4.dp).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
                     if (!it.hasFocus && resId != id) {
-                        if (!resourceVM.updateResourceId(resId, id)) {
+                        if (id.value.isEmpty()) {
+                            resourceVM.removeResource(resId)
+                        } else if (!resourceVM.updateResourceId(resId, id)) {
                             error = "id already exists"
                         }
                     }
