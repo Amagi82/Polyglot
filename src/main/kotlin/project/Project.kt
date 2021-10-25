@@ -30,7 +30,7 @@ data class Project(
             PROP_IOS_OUTPUT to iosOutputUrl,
             PROP_DEFAULT_LOCALE to defaultLocale.value,
             PROP_LOCALES to locales.sorted().joinToString(",") { it.value })
-        runCatching { props.store(projectFile(name), "") }.onFailure {
+        runCatching { props.store(projectFile(name), "Project settings for $name") }.onFailure {
             println("Failed to save settings with $it")
         }
     }
@@ -70,7 +70,7 @@ data class Project(
                 }
             }"
         }
-        runCatching { props.store(metadataFile(type), "") }.onFailure {
+        runCatching { props.store(metadataFile(type), "Resource metadata for ${type.title}") }.onFailure {
             println("Failed to save ${type.title} resources with $it")
         }
     }
@@ -106,7 +106,7 @@ data class Project(
                     is StringArray -> v.items.forEachIndexed { i, text -> props["${k.value}.$i"] = text }
                 }
             }
-            runCatching { props.store(resourcesFile(type, locale), "") }.onFailure {
+            runCatching { props.store(resourcesFile(type, locale), "Localized ${type.title} in ${Locale[locale].displayName()}") }.onFailure {
                 println("Failed to save localized ${type.title} resources with $it")
             }
         }
