@@ -36,6 +36,81 @@ data class Project(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
+    fun <M : Metadata> loadMetadata(type: ResourceType): Map<ResourceId, M> = buildMap {
+        val props = Properties().apply { load(metadataFile(name, type).inputStream()) }
+        props.stringPropertyNames().forEach { k ->
+            val v = props.getProperty(k)
+            val splits = v.split('|')
+            val resId = ResourceId(k)
+            val group = splits[0]
+            val platforms = splits[1].split(',').filter(String::isNotEmpty).map(Platform::valueOf)
+            put(
+                resId,
+                when (type) {
+                    ResourceType.STRINGS -> Str.Metadata(group, platforms)
+                    ResourceType.PLURALS -> {
+                        val quantities = splits.getOrElse(2) { "" }.split(',').filter(String::isNotEmpty).map(Quantity::valueOf)
+                        Plural.Metadata(group, platforms, quantities)
+                    }
+                    ResourceType.ARRAYS -> StringArray.Metadata(group, platforms, splits.getOrNull(2)?.toInt() ?: 1)
+                } as M
+            )
+        }
+    }
+
+    fun <M : Metadata> saveMetadata(metadata: Map<ResourceId, M>, type: ResourceType) {
+        val file = metadataFile(name, type)
+        val props = Properties()
+        metadata.forEach { (resId, metadata) ->
+            val extraData = when (metadata) {
+                is Str.Metadata -> ""
+                is Plural.Metadata -> "|${metadata.quantities.joinToString(separator = ",") { it.name }}"
+                is StringArray.Metadata -> "|${metadata.size}"
+                else -> ""
+            }
+            props.setProperty(resId.value, "${metadata.group}|${metadata.platforms.sorted().joinToString(separator = ",") { it.name }}$extraData")
+        }
+        runCatching { props.store(file.outputStream(), "") }.onFailure {
+            println("Failed to save ${type.title} resources with $it")
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <M : Metadata, R : Resource<M>> loadResources(type: ResourceType): Map<LocaleIsoCode, Map<ResourceId, R>> =
+        projectFolder(name).listFiles()?.filter { it.name.startsWith(type.title) && it.extension == "properties" }?.associate { file ->
+            val locale = LocaleIsoCode(file.nameWithoutExtension.substringAfter('.'))
+            val props = Properties().apply { load(resourcesFile(name, type, locale).inputStream()) }
+            locale to buildMap<ResourceId, R> {
+                when (type) {
+                    ResourceType.STRINGS -> props.stringPropertyNames().forEach { id -> put(ResourceId(id), Str(props.getProperty(id)) as R) }
+                    ResourceType.PLURALS -> props.stringPropertyNames().groupBy { it.substringBefore('.') }.forEach { (id, keys) ->
+                        put(ResourceId(id), Plural(keys.associate { Quantity.valueOf(it.substringAfter('.').uppercase()) to props.getProperty(it) }) as R)
+                    }
+                    ResourceType.ARRAYS -> props.stringPropertyNames().groupBy { it.substringBefore('.') }.forEach { (id, keys) ->
+                        put(ResourceId(id), StringArray(keys.sorted().map(props::getProperty)) as R)
+                    }
+                }
+            }
+        }.orEmpty()
+
+    fun <M : Metadata, R : Resource<M>> saveResources(localizedResources: Map<LocaleIsoCode, Map<ResourceId, R>>, type: ResourceType) {
+        localizedResources.forEach { (locale, resources) ->
+            val file = resourcesFile(name, type, locale)
+            val props = Properties()
+            resources.forEach { (k, v) ->
+                when (v) {
+                    is Str -> props.setProperty(k.value, v.text)
+                    is Plural -> v.items.forEach { (quantity, text) -> props.setProperty("${k.value}.${quantity.label}", text) }
+                    is StringArray -> v.items.forEachIndexed { i, text -> props.setProperty("${k.value}.$i", text) }
+                }
+            }
+            runCatching { props.store(file.outputStream(), "") }.onFailure {
+                println("Failed to save localized ${type.title} resources with $it")
+            }
+        }
+    }
+
     companion object {
         private const val PROP_ANDROID_OUTPUT = "androidOutputUrl"
         private const val PROP_IOS_OUTPUT = "iosOutputUrl"
@@ -67,46 +142,5 @@ data class Project(
                 locales = props.getProperty(PROP_LOCALES, "en").split(",").filter(String::isNotEmpty).map(::LocaleIsoCode).sortedBy { Locale[it].displayName() }
             )
         }
-
-        @Suppress("UNCHECKED_CAST")
-        fun <M : Metadata> loadResourceMetadata(projectName: String, type: ResourceType) = buildMap<ResourceId, M> {
-            val props = Properties().apply { load(metadataFile(projectName, type).inputStream()) }
-            props.stringPropertyNames().forEach { k ->
-                val v = props.getProperty(k)
-                val splits = v.split('|')
-                val resId = ResourceId(k)
-                val group = splits[0]
-                val platforms = splits[1].split(',').filter(String::isNotEmpty).map(Platform::valueOf)
-                put(
-                    resId,
-                    when (type) {
-                        ResourceType.STRINGS -> Str.Metadata(group, platforms)
-                        ResourceType.PLURALS -> {
-                            val quantities = splits.getOrElse(2) { "" }.split(',').filter(String::isNotEmpty).map(Quantity::valueOf)
-                            Plural.Metadata(group, platforms, quantities)
-                        }
-                        ResourceType.ARRAYS -> StringArray.Metadata(group, platforms, splits.getOrNull(2)?.toInt() ?: 1)
-                    } as M
-                )
-            }
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        fun <M : Metadata, T : Resource<M>> loadLocalizedResources(projectName: String, type: ResourceType) =
-            projectFolder(projectName).listFiles()?.filter { it.name.startsWith(type.title) && it.extension == "properties" }?.associate { file ->
-                val locale = LocaleIsoCode(file.nameWithoutExtension.substringAfter('.'))
-                val props = Properties().apply { load(resourcesFile(projectName, type, locale).inputStream()) }
-                locale to buildMap<ResourceId, T> {
-                    when (type) {
-                        ResourceType.STRINGS -> props.stringPropertyNames().forEach { id -> put(ResourceId(id), Str(props.getProperty(id)) as T) }
-                        ResourceType.PLURALS -> props.stringPropertyNames().groupBy { it.substringBefore('.') }.forEach { (id, keys) ->
-                            put(ResourceId(id), Plural(keys.associate { Quantity.valueOf(it.substringAfter('.').uppercase()) to props.getProperty(it) }) as T)
-                        }
-                        ResourceType.ARRAYS -> props.stringPropertyNames().groupBy { it.substringBefore('.') }.forEach { (id, keys) ->
-                            put(ResourceId(id), StringArray(keys.sorted().map(props::getProperty)) as T)
-                        }
-                    }
-                }
-            }.orEmpty()
     }
 }

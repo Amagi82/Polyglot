@@ -8,16 +8,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import locales.LocaleIsoCode
 import project.*
-import utils.extensions.save
 
 sealed class ResourceTypeViewModel<M : Metadata, R : Resource<M>>(val project: MutableStateFlow<Project>, private val type: ResourceType) {
-    val resourceMetadata = MutableStateFlow(Project.loadResourceMetadata<M>(project.value.name, type))
-    val resourcesByLocale = MutableStateFlow(Project.loadLocalizedResources<M, R>(project.value.name, type))
+    val resourceMetadata = MutableStateFlow(project.value.loadMetadata<M>(type))
+    val resourcesByLocale = MutableStateFlow(project.value.loadResources<M, R>(type))
     val displayedResources = resourceMetadata.map { metadata -> metadata.toList().sortedBy { it.first.value } }
 
     init {
-        GlobalScope.launch(Dispatchers.IO) { resourceMetadata.collectLatest { it.save(project.value.name, type) } }
-        GlobalScope.launch(Dispatchers.IO) { resourcesByLocale.collectLatest { it.save(project.value.name, type) } }
+        GlobalScope.launch(Dispatchers.IO) { resourceMetadata.collectLatest { project.value.saveMetadata(it, type) } }
+        GlobalScope.launch(Dispatchers.IO) { resourcesByLocale.collectLatest { project.value.saveResources(it, type) } }
     }
 
     fun resource(resId: ResourceId, localeIsoCode: LocaleIsoCode) = resourcesByLocale.map { it[localeIsoCode]?.get(resId) }
