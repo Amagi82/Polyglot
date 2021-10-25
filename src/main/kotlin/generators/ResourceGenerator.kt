@@ -39,9 +39,10 @@ abstract class ResourceGenerator(
     }
 
     private fun <M : Metadata, R : Resource<M>> addAll(vm: ResourceTypeViewModel<M, R>, add: (ResourceId, R) -> Unit) {
-        vm.resourceMetadata.value.values.forEach { metadata ->
+        vm.resourceMetadata.value.forEach { (resId, metadata) ->
             if (platform !in metadata.platforms) return@forEach
-            vm.resourcesByLocale.value[locale]?.forEach { (resId, resource) -> add(resId, resource) }
+            val resource = vm.resourcesByLocale.value[locale]?.get(resId) ?: return@forEach
+            add(resId, resource)
         }
     }
 
