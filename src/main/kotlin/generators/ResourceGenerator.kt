@@ -6,10 +6,7 @@ import locales.LocaleIsoCode
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import project.*
-import ui.resource.ArrayResourceViewModel
-import ui.resource.PluralResourceViewModel
-import ui.resource.ResourceTypeViewModel
-import ui.resource.StringResourceViewModel
+import ui.resource.*
 import java.io.File
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
@@ -32,10 +29,10 @@ abstract class ResourceGenerator(
     protected abstract fun addPlurals(id: ResourceId, res: Plural)
     abstract fun generateFiles()
 
-    protected fun addAll(strings: StringResourceViewModel, plurals: PluralResourceViewModel, arrays: ArrayResourceViewModel) {
-        addAll(strings) { id, resource -> addString(id, resource) }
-        addAll(plurals) { id, resource -> addPlurals(id, resource) }
-        addAll(arrays) { id, resource -> addStringArray(id, resource) }
+    protected fun addAll(vm: ResourceViewModel) {
+        addAll(vm.strings, ::addString)
+        addAll(vm.plurals, ::addPlurals)
+        addAll(vm.arrays, ::addStringArray)
     }
 
     private fun <M : Metadata, R : Resource<M>> addAll(vm: ResourceTypeViewModel<M, R>, add: (ResourceId, R) -> Unit) {
@@ -97,13 +94,11 @@ abstract class ResourceGenerator(
         }
 
         suspend fun generateFiles(
-            project: Project,
-            strings: StringResourceViewModel,
-            plurals: PluralResourceViewModel,
-            arrays: ArrayResourceViewModel,
+            vm: ResourceViewModel,
             platforms: List<Platform> = Platform.ALL,
             formatters: List<StringFormatter> = StringFormatter.defaultFormatters
         ) = withContext(Dispatchers.IO) {
+            val project = vm.project.value
             val androidFormatters = formatters.filter { Platform.ANDROID in it.platforms }
             val iosFormatters = formatters.filter { Platform.IOS in it.platforms }
             platforms.forEach {
@@ -114,8 +109,8 @@ abstract class ResourceGenerator(
             project.locales.forEach { localeIsoCode ->
                 for (platform in platforms) {
                     when (platform) {
-                        Platform.ANDROID -> AndroidResourceGenerator(project, localeIsoCode, androidFormatters, strings, plurals, arrays)
-                        Platform.IOS -> IosResourceGenerator(project, localeIsoCode, iosFormatters, strings, plurals, arrays)
+                        Platform.ANDROID -> AndroidResourceGenerator(vm, localeIsoCode, androidFormatters)
+                        Platform.IOS -> IosResourceGenerator(vm, localeIsoCode, iosFormatters)
                     }.generateFiles()
                 }
             }

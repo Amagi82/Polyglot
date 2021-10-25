@@ -4,9 +4,7 @@ import locales.LocaleIsoCode
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import project.*
-import ui.resource.ArrayResourceViewModel
-import ui.resource.PluralResourceViewModel
-import ui.resource.StringResourceViewModel
+import ui.resource.ResourceViewModel
 import java.io.*
 import java.lang.StringBuilder
 import javax.xml.transform.OutputKeys
@@ -21,13 +19,10 @@ import javax.xml.transform.Transformer
  * Swift extension functions are generated for convenience.
  */
 class IosResourceGenerator(
-    project: Project,
+    vm: ResourceViewModel,
     locale: LocaleIsoCode,
-    formatters: List<StringFormatter>,
-    strings: StringResourceViewModel,
-    plurals: PluralResourceViewModel,
-    arrays: ArrayResourceViewModel
-) : ResourceGenerator(Platform.IOS, project, locale, formatters) {
+    formatters: List<StringFormatter>
+) : ResourceGenerator(Platform.IOS, vm.project.value, locale, formatters) {
     private val localizationFolder = File(outputFolder, "${locale.value}.lproj").also(File::mkdirs)
 
     private val stringsWriter = BufferedWriter(FileWriter(localizationFolder.createChildFile("Localizable.strings")))
@@ -38,10 +33,10 @@ class IosResourceGenerator(
     private val arraysDocument: Document = createDocument()
     private val arraysResourceElement: Element = arraysDocument.createAndAppendPlistElement()
 
-    private val shouldCreatePlurals = !plurals.resourcesByLocale.value[locale].isNullOrEmpty()
-    private val shouldCreateArrays = !arrays.resourcesByLocale.value[locale].isNullOrEmpty()
+    private val shouldCreatePlurals = !vm.plurals.resourcesByLocale.value[locale].isNullOrEmpty()
+    private val shouldCreateArrays = !vm.arrays.resourcesByLocale.value[locale].isNullOrEmpty()
 
-    private val shouldCreateReferences = locale == project.defaultLocale
+    private val shouldCreateReferences = locale == defaultLocale
     private val stringReferences = if (shouldCreateReferences) StringBuilder() else null
     private val pluralReferences = if (shouldCreateReferences) StringBuilder() else null
     private val stringArrayReferences = if (shouldCreateReferences) StringBuilder() else null
@@ -55,7 +50,7 @@ class IosResourceGenerator(
     """.trimIndent()
 
     init {
-        addAll(strings, plurals, arrays)
+        addAll(vm)
     }
 
     override fun generateFiles() {
