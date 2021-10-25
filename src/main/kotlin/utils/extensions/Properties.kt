@@ -1,5 +1,7 @@
 package utils.extensions
 
+import java.io.File
+import java.io.InputStream
 import java.util.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -13,3 +15,9 @@ fun <T> Properties.prop(save: () -> Unit, convert: String?.() -> T): ReadWritePr
             save()
         }
     }
+
+fun Properties(file: File) = Properties(file.inputStream())
+
+fun Properties(stream: InputStream) = Properties().apply { load(stream) }
+
+fun Properties.store(file: File, comment: String = "") = store(file.outputStream(), comment)

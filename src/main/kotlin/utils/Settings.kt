@@ -1,13 +1,13 @@
 package utils
 
 import project.Project
+import utils.extensions.Properties
 import utils.extensions.prop
 import java.io.File
-import java.util.*
 
 object Settings {
     private val file = File(Project.projectsFolder, "settings.properties").apply(File::createNewFile)
-    private val props = Properties().apply { load(file.inputStream()) }
+    private val props = Properties(file)
 
     private fun save() {
         runCatching { props.store(file.outputStream(), "Polyglot settings") }.onFailure {
