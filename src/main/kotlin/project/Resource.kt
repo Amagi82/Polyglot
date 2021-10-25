@@ -74,19 +74,3 @@ value class StringArray(val items: List<String> = listOf()) : Resource<StringArr
     ) : project.Metadata(ResourceType.ARRAYS)
 }
 
-fun <T : Metadata> Map<ResourceId, T>.save(projectName: String, type: ResourceType) {
-    val file = Project.metadataFile(projectName, type)
-    val props = Properties()
-    forEach { (resId, metadata) ->
-        val extraData = when (metadata) {
-            is Str.Metadata -> ""
-            is Plural.Metadata -> "|${metadata.quantities.joinToString(separator = ",") { it.name }}"
-            is StringArray.Metadata -> "|${metadata.size}"
-            else -> ""
-        }
-        props.setProperty(resId.value, "${metadata.group}|${metadata.platforms.sorted().joinToString(separator = ",") { it.name }}$extraData")
-    }
-    runCatching { props.store(file.outputStream(), "") }.onFailure {
-        println("Failed to save ${type.title} resources with $it")
-    }
-}
