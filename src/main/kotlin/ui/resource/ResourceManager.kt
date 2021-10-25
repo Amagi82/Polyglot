@@ -46,7 +46,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(project.name, modifier = Modifier.weight(1f))
-                        TabRow(selectedTab.index, modifier = Modifier.weight(1f), backgroundColor = MaterialTheme.colors.primary) {
+                        TabRow(selectedTab.ordinal, modifier = Modifier.weight(1f), backgroundColor = MaterialTheme.colors.primary) {
                             ResourceType.values().forEach { type ->
                                 Tab(
                                     selected = selectedTab == type,
