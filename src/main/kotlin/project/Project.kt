@@ -50,17 +50,11 @@ data class Project(
 
         private fun projectFile(projectName: String) = File(projectFolder(projectName), "project.properties").apply(File::createNewFile)
 
-        private fun resourceTypeFolder(projectName: String, type: ResourceType) =
-            File(projectFolder(projectName), type.name.lowercase()).apply(File::mkdirs)
+        fun metadataFile(projectName: String, type: ResourceType) =
+            File(projectFolder(projectName), "metadata.${type.title}.properties").apply(File::createNewFile)
 
-        fun resourceMetadataFile(projectName: String, type: ResourceType) =
-            File(resourceTypeFolder(projectName, type), "metadata.properties").apply(File::createNewFile)
-
-        private fun localizedResourcesFolder(projectName: String, type: ResourceType) =
-            File(resourceTypeFolder(projectName, type), "locales").apply(File::mkdirs)
-
-        fun localizedResourcesFile(projectName: String, type: ResourceType, locale: LocaleIsoCode) =
-            File(localizedResourcesFolder(projectName, type), "${locale.value}.properties").apply(File::createNewFile)
+        fun resourcesFile(projectName: String, type: ResourceType, locale: LocaleIsoCode) =
+            File(projectFolder(projectName), "${type.title}.${locale.value}.properties").apply(File::createNewFile)
 
         fun load(projectName: String): Project {
             val file = projectFile(projectName)
@@ -70,13 +64,13 @@ data class Project(
                 androidOutputUrl = props.getProperty(PROP_ANDROID_OUTPUT, "output/android"),
                 iosOutputUrl = props.getProperty(PROP_IOS_OUTPUT, "output/ios"),
                 defaultLocale = LocaleIsoCode(props.getProperty(PROP_DEFAULT_LOCALE, "en")),
-                locales = props.getProperty(PROP_LOCALES).split(",").filter(String::isNotEmpty).map(::LocaleIsoCode).sortedBy { Locale[it].displayName() }
+                locales = props.getProperty(PROP_LOCALES, "en").split(",").filter(String::isNotEmpty).map(::LocaleIsoCode).sortedBy { Locale[it].displayName() }
             )
         }
 
         @Suppress("UNCHECKED_CAST")
         fun <M : Metadata> loadResourceMetadata(projectName: String, type: ResourceType) = buildMap<ResourceId, M> {
-            val props = Properties().apply { load(resourceMetadataFile(projectName, type).inputStream()) }
+            val props = Properties().apply { load(metadataFile(projectName, type).inputStream()) }
             props.stringPropertyNames().forEach { k ->
                 val v = props.getProperty(k)
                 val splits = v.split('|')
@@ -99,12 +93,12 @@ data class Project(
 
         @Suppress("UNCHECKED_CAST")
         fun <M : Metadata, T : Resource<M>> loadLocalizedResources(projectName: String, type: ResourceType) =
-            localizedResourcesFolder(projectName, type).listFiles()?.filter { it.extension == "properties" }?.associate { file ->
-                val locale = LocaleIsoCode(file.nameWithoutExtension)
-                val props = Properties().apply { load(localizedResourcesFile(projectName, type, locale).inputStream()) }
+            projectFolder(projectName).listFiles()?.filter { it.name.startsWith(type.title) && it.extension == "properties" }?.associate { file ->
+                val locale = LocaleIsoCode(file.nameWithoutExtension.substringAfter('.'))
+                val props = Properties().apply { load(resourcesFile(projectName, type, locale).inputStream()) }
                 locale to buildMap<ResourceId, T> {
                     when (type) {
-                        ResourceType.STRINGS -> props.stringPropertyNames().forEach { k -> put(ResourceId(k), Str(props.getProperty(k)) as T) }
+                        ResourceType.STRINGS -> props.stringPropertyNames().forEach { id -> put(ResourceId(id), Str(props.getProperty(id)) as T) }
                         ResourceType.PLURALS -> props.stringPropertyNames().groupBy { it.substringBefore('.') }.forEach { (id, keys) ->
                             put(ResourceId(id), Plural(keys.associate { Quantity.valueOf(it.substringAfter('.').uppercase()) to props.getProperty(it) }) as T)
                         }

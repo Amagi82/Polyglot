@@ -1,6 +1,5 @@
 package ui.resource
 
-import generators.ResourceGenerator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.*
@@ -61,7 +60,7 @@ class ResourceViewModel(project: Project) {
         project.value = current.copy(locales = current.locales.minus(localesToRemove))
         localesToRemove.forEach {
             ResourceType.values().forEach { type ->
-                Project.localizedResourcesFile(project.value.name, type, it).delete()
+                Project.resourcesFile(project.value.name, type, it).delete()
             }
         }
     }
