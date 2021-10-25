@@ -44,7 +44,7 @@ data class Project(
 
         val projectsFolder = File("projects").apply(File::mkdirs)
 
-        val projectFolders = projectsFolder.listFiles()?.filter { it.isDirectory }.orEmpty()
+        val projectFolders = projectsFolder.listFiles()?.filter(File::isDirectory).orEmpty()
 
         private fun projectFolder(projectName: String) = File(projectsFolder, projectName).apply(File::mkdirs)
 
@@ -70,7 +70,7 @@ data class Project(
                 androidOutputUrl = props.getProperty(PROP_ANDROID_OUTPUT, "output/android"),
                 iosOutputUrl = props.getProperty(PROP_IOS_OUTPUT, "output/ios"),
                 defaultLocale = LocaleIsoCode(props.getProperty(PROP_DEFAULT_LOCALE, "en")),
-                locales = props.getProperty(PROP_LOCALES).split(",").filter(String::isNotEmpty).map { LocaleIsoCode(it) }.sortedBy { Locale[it].displayName() }
+                locales = props.getProperty(PROP_LOCALES).split(",").filter(String::isNotEmpty).map(::LocaleIsoCode).sortedBy { Locale[it].displayName() }
             )
         }
 
