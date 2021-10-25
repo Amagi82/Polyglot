@@ -1,6 +1,6 @@
 package locales
 
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 import utils.extensions.loadResource
 
 /**
@@ -8,7 +8,7 @@ import utils.extensions.loadResource
  * @param isoCode ISO 3166-1 alpha-2 region codes, e.g. JP, EE, DE
  * @param name Anglicized name of the region, e.g. Japan, Estonia, Germany
  */
-@Stable
+@Immutable
 data class Region(val isoCode: RegionIsoCode, val name: String) {
     init {
         when {
@@ -33,6 +33,6 @@ data class Region(val isoCode: RegionIsoCode, val name: String) {
 /**
  * ISO 3166-1 alpha-2 Two digit code, e.g. US, AR, GF
  */
-@Stable
+@Immutable
 @JvmInline
 value class RegionIsoCode(val value: String)
