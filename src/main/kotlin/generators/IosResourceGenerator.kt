@@ -4,6 +4,9 @@ import locales.LocaleIsoCode
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import project.*
+import ui.resource.ArrayResourceViewModel
+import ui.resource.PluralResourceViewModel
+import ui.resource.StringResourceViewModel
 import java.io.*
 import java.lang.StringBuilder
 import javax.xml.transform.OutputKeys
@@ -21,9 +24,10 @@ class IosResourceGenerator(
     project: Project,
     locale: LocaleIsoCode,
     formatters: List<StringFormatter>,
-    resourceMetadata: ResourceMetadata,
-    resources: Resources
-) : ResourceGenerator(Platform.IOS, project, formatters) {
+    strings: StringResourceViewModel,
+    plurals: PluralResourceViewModel,
+    arrays: ArrayResourceViewModel
+) : ResourceGenerator(Platform.IOS, project, locale, formatters) {
     private val localizationFolder = File(outputFolder, "${locale.value}.lproj").also(File::mkdirs)
 
     private val stringsWriter = BufferedWriter(FileWriter(localizationFolder.createChildFile("Localizable.strings")))
@@ -34,8 +38,8 @@ class IosResourceGenerator(
     private val arraysDocument: Document = createDocument()
     private val arraysResourceElement: Element = arraysDocument.createAndAppendPlistElement()
 
-    private val shouldCreatePlurals = resources.values.any { it is Plural }
-    private val shouldCreateArrays = resources.values.any { it is StringArray }
+    private val shouldCreatePlurals = !plurals.resourcesByLocale.value[locale].isNullOrEmpty()
+    private val shouldCreateArrays = !arrays.resourcesByLocale.value[locale].isNullOrEmpty()
 
     private val shouldCreateReferences = locale == project.defaultLocale
     private val stringReferences = if (shouldCreateReferences) StringBuilder() else null
@@ -51,7 +55,7 @@ class IosResourceGenerator(
     """.trimIndent()
 
     init {
-        addAll(resourceMetadata, resources)
+        addAll(strings, plurals, arrays)
     }
 
     override fun generateFiles() {
@@ -69,12 +73,12 @@ class IosResourceGenerator(
     override fun addString(id: ResourceId, res: Str) {
         // "identifier" = "Localized text";
         val txt = res.text.sanitized(isXml = false)
-        stringsWriter.appendLine("\"${id.id}\" = \"$txt\";")
+        stringsWriter.appendLine("\"${id.value}\" = \"$txt\";")
         stringReferences?.apply {
             appendLine()
             appendReferenceComment(txt)
             if (txt.contains('%')) appendReferenceFormattingArgs(id, txt, false)
-            else appendLine("\t\tstatic let ${id.id} = \"${id.id}\".localized()")
+            else appendLine("\t\tstatic let ${id.value} = \"${id.value}\".localized()")
         }
     }
 
@@ -98,7 +102,7 @@ class IosResourceGenerator(
      */
     override fun addPlurals(id: ResourceId, res: Plural) {
         var exampleText: String? = res[Quantity.OTHER]?.sanitized(isXml = true)
-        pluralsResourceElement.appendChild(pluralsDocument, KEY, id.id)
+        pluralsResourceElement.appendChild(pluralsDocument, KEY, id.value)
         pluralsResourceElement.appendChild(pluralsDocument.createElement("dict").apply {
             appendChild(pluralsDocument, KEY, "NSStringLocalizedFormatKey")
             appendChild(pluralsDocument, STRING, "%#@value@")
@@ -131,7 +135,7 @@ class IosResourceGenerator(
      * </array>
      */
     override fun addStringArray(id: ResourceId, res: StringArray) {
-        arraysResourceElement.appendChild(arraysDocument, KEY, id.id)
+        arraysResourceElement.appendChild(arraysDocument, KEY, id.value)
         arraysResourceElement.appendChild(arraysDocument.createElement("array").apply {
             for (text in res.items) {
                 appendChild(arraysDocument, STRING, text.sanitized(isXml = true))
@@ -139,7 +143,7 @@ class IosResourceGenerator(
         })
         stringArrayReferences?.apply {
             appendLine()
-            appendLine("\t\tstatic let ${id.id} = \"${id.id}\".localizedArray()")
+            appendLine("\t\tstatic let ${id.value} = \"${id.value}\".localizedArray()")
         }
     }
 

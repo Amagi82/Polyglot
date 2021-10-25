@@ -14,17 +14,12 @@ import kotlinx.coroutines.flow.map
 import locales.Locale
 import locales.LocaleIsoCode
 import project.*
-import project.ResourceInfo.Type.*
 import ui.core.IconButton
 import ui.core.onPressEnter
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ResourceRow(vm: ResourceViewModel, resId: ResourceId) {
-    val resourceMetadata by vm.resourceMetadata.collectAsState()
-    val info by remember { derivedStateOf { resourceMetadata[resId] } }
-    val resourceInfo = info ?: return
-
+fun <M : Metadata, R : Resource<M>> ResourceRow(vm: ResourceViewModel, resourceVM: ResourceTypeViewModel<M, R>, resId: ResourceId, metadata: M) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             val focusManager = LocalFocusManager.current
@@ -32,14 +27,14 @@ fun ResourceRow(vm: ResourceViewModel, resId: ResourceId) {
             var error by remember { mutableStateOf("") }
 
             OutlinedTextField(
-                value = id.id,
+                value = id.value,
                 onValueChange = {
                     error = ""
                     id = ResourceId(it.dropWhile(Char::isDigit).filter(Char::isLetterOrDigit))
                 },
                 modifier = Modifier.padding(vertical = 4.dp).onPressEnter { focusManager.moveFocus(FocusDirection.Next); true }.onFocusChanged {
                     if (!it.hasFocus && resId != id) {
-                        if (!vm.updateResourceId(resId, id)) {
+                        if (!resourceVM.updateResourceId(resId, id)) {
                             error = "id already exists"
                         }
                     }
@@ -56,17 +51,17 @@ fun ResourceRow(vm: ResourceViewModel, resId: ResourceId) {
         val displayedLocales by vm.displayedLocales.collectAsState(listOf())
         displayedLocales.forEach { locale ->
             Spacer(Modifier.width(8.dp))
-            when (resourceInfo.type) {
-                STRING -> StringField(vm, resId, locale)
-                PLURAL -> PluralFields(vm, resId, locale)
-                ARRAY -> ArrayFields(vm, resId, locale)
+            when (resourceVM) {
+                is StringResourceViewModel -> StringField(resourceVM, resId, locale)
+                is PluralResourceViewModel -> PluralFields(resourceVM, resId, locale)
+                is ArrayResourceViewModel -> ArrayFields(resourceVM, resId, locale)
             }
         }
         Spacer(Modifier.width(8.dp))
 
         Platform.values().forEach { platform ->
-            IconButton(platform.iconId, Modifier.alpha(if (platform in resourceInfo.platforms) 1f else 0.1f), contentDescription = platform.name) {
-                vm.togglePlatform(resId, resourceInfo, platform)
+            IconButton(platform.iconId, Modifier.alpha(if (platform in metadata.platforms) 1f else 0.1f), contentDescription = platform.name) {
+                resourceVM.togglePlatform(resId, metadata, platform)
             }
         }
 //        val menuState by vm.menuState.collectAsState()
@@ -78,9 +73,9 @@ fun ResourceRow(vm: ResourceViewModel, resId: ResourceId) {
 }
 
 @Composable
-fun RowScope.StringField(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
+fun RowScope.StringField(vm: StringResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
     val isDefaultLocale by vm.project.map { it.defaultLocale == localeIsoCode }.collectAsState(false)
-    val resource by vm.resource(resId, localeIsoCode).map { it as? Str ?: Str() }.collectAsState(Str())
+    val resource by vm.resource(resId, localeIsoCode).map { it ?: Str() }.collectAsState(Str())
     val focusManager = LocalFocusManager.current
     var oldText = remember { resource.text }
     var newText by remember { mutableStateOf(oldText) }
@@ -99,12 +94,12 @@ fun RowScope.StringField(vm: ResourceViewModel, resId: ResourceId, localeIsoCode
 }
 
 @Composable
-fun PluralFields(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
+fun PluralFields(vm: PluralResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
 
 }
 
 
 @Composable
-fun ArrayFields(vm: ResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
+fun ArrayFields(vm: ArrayResourceViewModel, resId: ResourceId, localeIsoCode: LocaleIsoCode) {
 
 }

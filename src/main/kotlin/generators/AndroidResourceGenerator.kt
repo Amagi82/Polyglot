@@ -4,6 +4,9 @@ import locales.LocaleIsoCode
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import project.*
+import ui.resource.ArrayResourceViewModel
+import ui.resource.PluralResourceViewModel
+import ui.resource.StringResourceViewModel
 import javax.xml.transform.Transformer
 import java.io.File
 
@@ -14,9 +17,10 @@ class AndroidResourceGenerator(
     project: Project,
     locale: LocaleIsoCode,
     formatters: List<StringFormatter>,
-    resourceMetadata: ResourceMetadata,
-    resources: Resources
-) : ResourceGenerator(Platform.ANDROID, project, formatters) {
+    strings: StringResourceViewModel,
+    plurals: PluralResourceViewModel,
+    arrays: ArrayResourceViewModel
+) : ResourceGenerator(Platform.ANDROID, project, locale, formatters) {
     private val valuesFolder = File(outputFolder, "values${if (locale == defaultLocale) "" else "-${locale.value}"}").also(File::mkdirs)
     private val document: Document = createDocument()
     private val resourceElement: Element = document.createElement("resources").also {
@@ -25,7 +29,7 @@ class AndroidResourceGenerator(
     }
 
     init {
-        addAll(resourceMetadata, resources)
+        addAll(strings, plurals, arrays)
     }
 
     override fun generateFiles() {
@@ -41,7 +45,7 @@ class AndroidResourceGenerator(
      */
     override fun addPlurals(id: ResourceId, res: Plural) {
         resourceElement.appendChild(document.createElement("plurals").apply {
-            setAttribute("name", id.id)
+            setAttribute("name", id.value)
             res.items.forEach { (quantity, text) ->
                 appendChild(document.createElement("item").apply {
                     setAttribute("quantity", quantity.label)
@@ -56,7 +60,7 @@ class AndroidResourceGenerator(
         if (txt.isBlank()) return
         /** <string name="dragon">Trogdor the Burninator</string> */
         resourceElement.appendChild(document.createElement("string").apply {
-            setAttribute("name", id.id)
+            setAttribute("name", id.value)
             appendChild(document.createTextNode(txt))
         })
     }
@@ -69,7 +73,7 @@ class AndroidResourceGenerator(
      */
     override fun addStringArray(id: ResourceId, res: StringArray) {
         resourceElement.appendChild(document.createElement("string-array").apply {
-            setAttribute("name", id.id)
+            setAttribute("name", id.value)
             for (text in res.items) {
                 appendChild(document, "item", text.sanitized())
             }

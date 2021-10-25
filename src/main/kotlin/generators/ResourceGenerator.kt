@@ -2,9 +2,14 @@ package generators
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import locales.LocaleIsoCode
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import project.*
+import ui.resource.ArrayResourceViewModel
+import ui.resource.PluralResourceViewModel
+import ui.resource.ResourceTypeViewModel
+import ui.resource.StringResourceViewModel
 import java.io.File
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
@@ -14,7 +19,12 @@ import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
-abstract class ResourceGenerator(private val platform: Platform, project: Project, private val formatters: List<StringFormatter>) {
+abstract class ResourceGenerator(
+    private val platform: Platform,
+    project: Project,
+    private val locale: LocaleIsoCode,
+    private val formatters: List<StringFormatter>
+) {
     protected val defaultLocale = project.defaultLocale
     protected val outputFolder = platform.outputFolder(project)
     protected abstract fun addString(id: ResourceId, res: Str)
@@ -22,14 +32,16 @@ abstract class ResourceGenerator(private val platform: Platform, project: Projec
     protected abstract fun addPlurals(id: ResourceId, res: Plural)
     abstract fun generateFiles()
 
-    protected fun addAll(resourceMetadata: ResourceMetadata, resources: Resources) {
-        for ((id, resourceType) in resources) {
-            if (resourceMetadata[id]?.platforms?.contains(platform) != true) continue
-            when (resourceType) {
-                is Str -> addString(id, resourceType)
-                is Plural -> addPlurals(id, resourceType)
-                is StringArray -> addStringArray(id, resourceType)
-            }
+    protected fun addAll(strings: StringResourceViewModel, plurals: PluralResourceViewModel, arrays: ArrayResourceViewModel) {
+        addAll(strings) { id, resource -> addString(id, resource) }
+        addAll(plurals) { id, resource -> addPlurals(id, resource) }
+        addAll(arrays) { id, resource -> addStringArray(id, resource) }
+    }
+
+    private fun <M : Metadata, R : Resource<M>> addAll(vm: ResourceTypeViewModel<M, R>, add: (ResourceId, R) -> Unit) {
+        vm.resourceMetadata.value.values.forEach { metadata ->
+            if (platform !in metadata.platforms) return@forEach
+            vm.resourcesByLocale.value[locale]?.forEach { (resId, resource) -> add(resId, resource) }
         }
     }
 
@@ -85,8 +97,9 @@ abstract class ResourceGenerator(private val platform: Platform, project: Projec
 
         suspend fun generateFiles(
             project: Project,
-            resourceMetadata: ResourceMetadata,
-            localizedResources: LocalizedResources,
+            strings: StringResourceViewModel,
+            plurals: PluralResourceViewModel,
+            arrays: ArrayResourceViewModel,
             platforms: List<Platform> = Platform.ALL,
             formatters: List<StringFormatter> = StringFormatter.defaultFormatters
         ) = withContext(Dispatchers.IO) {
@@ -97,11 +110,11 @@ abstract class ResourceGenerator(private val platform: Platform, project: Projec
                 if (folder.exists()) folder.deleteRecursively()
                 folder.mkdirs()
             }
-            localizedResources.forEach { (localeIsoCode, localizations) ->
+            project.locales.forEach { localeIsoCode ->
                 for (platform in platforms) {
                     when (platform) {
-                        Platform.ANDROID -> AndroidResourceGenerator(project, localeIsoCode, androidFormatters, resourceMetadata, localizations)
-                        Platform.IOS -> IosResourceGenerator(project, localeIsoCode, iosFormatters, resourceMetadata, localizations)
+                        Platform.ANDROID -> AndroidResourceGenerator(project, localeIsoCode, androidFormatters, strings, plurals, arrays)
+                        Platform.IOS -> IosResourceGenerator(project, localeIsoCode, iosFormatters, strings, plurals, arrays)
                     }.generateFiles()
                 }
             }

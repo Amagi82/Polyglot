@@ -17,8 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import project.Metadata
 import project.Project
-import project.ResourceInfo
+import project.Resource
+import project.ResourceType
 import ui.core.IconButton
 import ui.resource.backdrop.LocaleSettings
 import ui.resource.backdrop.OutputSettings
@@ -41,7 +43,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(project.name, modifier = Modifier.weight(1f))
                         TabRow(selectedTab.index, modifier = Modifier.weight(1f), backgroundColor = MaterialTheme.colors.primary) {
-                            ResourceInfo.Type.values().forEach { type ->
+                            ResourceType.values().forEach { type ->
                                 Tab(
                                     selected = selectedTab == type,
                                     onClick = { vm.selectedTab.value = type },
@@ -83,28 +85,44 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
         },
         frontLayerContent = {
             Row {
-                val state = rememberLazyListState()
-                val resources by vm.displayedResources.collectAsState(listOf())
-
-                LazyColumn(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f), state = state) {
-                    items(resources, key = { it.id }) { resId ->
-                        ResourceRow(vm = vm, resId = resId)
-                        Divider()
+                val resourceVM by remember {
+                    derivedStateOf {
+                        when (selectedTab) {
+                            ResourceType.STRINGS -> vm.strings
+                            ResourceType.PLURALS -> vm.plurals
+                            ResourceType.ARRAYS -> vm.arrays
+                        }
                     }
                 }
-
-                VerticalScrollbar(adapter = ScrollbarAdapter(state))
+                resourceList(vm, resourceVM)
             }
 
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
                 ExtendedFloatingActionButton(text = { Text("Add") },
-                    onClick = vm::createResource,
+                    onClick = when (selectedTab) {
+                        ResourceType.STRINGS -> vm.strings::createResource
+                        ResourceType.PLURALS -> vm.plurals::createResource
+                        ResourceType.ARRAYS -> vm.arrays::createResource
+                    },
                     modifier = Modifier.padding(16.dp),
                     icon = { Icon(Icons.Default.Add, contentDescription = "Add new resource") })
             }
         },
         scaffoldState = scaffoldState
     )
+}
+
+@Composable
+private fun <M : Metadata, R : Resource<M>> RowScope.resourceList(vm: ResourceViewModel, resourceVM: ResourceTypeViewModel<M, R>) {
+    val state = rememberLazyListState()
+    val resources by resourceVM.displayedResources.collectAsState(listOf())
+    LazyColumn(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f), state = state) {
+        items(resources, key = { it.first.value }) { (resId, metadata) ->
+            ResourceRow(vm = vm, resourceVM = resourceVM, resId = resId, metadata = metadata)
+            Divider()
+        }
+    }
+    VerticalScrollbar(adapter = ScrollbarAdapter(state))
 }
 
 @OptIn(ExperimentalMaterialApi::class)
