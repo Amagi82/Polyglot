@@ -21,9 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import project.Metadata
 import project.Project
-import project.Resource
 import project.ResourceType
 import ui.core.IconButton
 import ui.resource.backdrop.LocaleSettings
@@ -88,7 +86,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
             }
         },
         frontLayerContent = {
-            val resourceVM by remember {
+            val resourceVM by remember(selectedTab) {
                 derivedStateOf {
                     when (selectedTab) {
                         ResourceType.STRINGS -> vm.strings
@@ -98,7 +96,15 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                 }
             }
             Row {
-                ResourceList(vm, resourceVM)
+                val state = rememberLazyListState()
+                val resources by resourceVM.displayedResources.collectAsState(listOf())
+                LazyColumn(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f), state = state) {
+                    items(resources, key = { it.value }) { resId ->
+                        ResourceRow(vm = vm, resourceVM = resourceVM, resId = resId)
+                        Divider()
+                    }
+                }
+                VerticalScrollbar(adapter = ScrollbarAdapter(state))
             }
 
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
@@ -110,20 +116,6 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
         },
         scaffoldState = scaffoldState
     )
-}
-
-@Composable
-private fun <M : Metadata, R : Resource<M>> RowScope.ResourceList(vm: ResourceViewModel, resourceVM: ResourceTypeViewModel<M, R>) {
-    val state = rememberLazyListState()
-    val resources by resourceVM.displayedResources.collectAsState(listOf())
-    if (vm.selectedTab.value != resources.firstOrNull()?.second?.type) return
-    LazyColumn(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f), state = state) {
-        items(resources, key = { it.first.value }) { (resId, metadata) ->
-            ResourceRow(vm = vm, resourceVM = resourceVM, resId = resId, metadata = metadata)
-            Divider()
-        }
-    }
-    VerticalScrollbar(adapter = ScrollbarAdapter(state))
 }
 
 @OptIn(ExperimentalMaterialApi::class)

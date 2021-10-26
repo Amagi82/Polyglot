@@ -10,10 +10,14 @@ import kotlin.reflect.KProperty
  * Safe wrapper around Java Properties, which allows invalid types and then crashes at runtime
  */
 @Suppress("UNCHECKED_CAST")
-class PropertyStore(vararg properties: Pair<String, String>) : MutableMap<String, String> {
+class PropertyStore() : MutableMap<String, String> {
     private val props = Properties()
 
-    init {
+    constructor(vararg properties: Pair<String, String>) : this() {
+        putAll(properties)
+    }
+
+    constructor(properties: Map<String, String>) : this() {
         putAll(properties)
     }
 
