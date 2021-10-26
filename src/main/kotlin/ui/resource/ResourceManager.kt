@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import locales.Locale
 import project.Project
 import project.ResourceType
 import ui.core.IconButton
@@ -97,13 +98,28 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
             }
             Row {
                 val state = rememberLazyListState()
-                val resources by resourceVM.displayedResources.collectAsState(listOf())
-                LazyColumn(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f), state = state) {
-                    items(resources, key = { it.value }) { resId ->
-                        ResourceRow(vm = vm, resourceVM = resourceVM, resId = resId)
-                        Divider()
+
+                Column(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f)) {
+                    val displayedLocales by vm.displayedLocales.collectAsState(listOf())
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("id", Modifier.weight(1f).padding(8.dp))
+                        if (resourceVM is ArrayResourceViewModel) Spacer(Modifier.width(64.dp))
+                        displayedLocales.forEach {
+                            Text(Locale[it].displayName(it == project.defaultLocale), Modifier.weight(1f).padding(8.dp))
+                        }
+                        Spacer(Modifier.width(96.dp))
+                    }
+                    Divider()
+
+                    val resources by resourceVM.displayedResources.collectAsState(listOf())
+                    LazyColumn(state = state) {
+                        items(resources, key = { it.value }) { resId ->
+                            ResourceRow(vm = vm, resourceVM = resourceVM, resId = resId)
+                            Divider()
+                        }
                     }
                 }
+
                 VerticalScrollbar(adapter = ScrollbarAdapter(state))
             }
 
