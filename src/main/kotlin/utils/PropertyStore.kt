@@ -41,7 +41,8 @@ class PropertyStore() : MutableMap<String, String> {
     override fun remove(key: String): String? = props.remove(key) as String?
 
     fun store(file: File, comment: String = "") {
-        props.store(file.outputStream(), comment)
+        if (isEmpty()) file.delete()
+        else props.store(file.outputStream(), comment)
     }
 
     fun <T> prop(save: () -> Unit, convert: String?.() -> T): ReadWriteProperty<Any, T> =
