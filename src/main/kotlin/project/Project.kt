@@ -39,39 +39,31 @@ data class Project(
         File(projectFolder(name), "metadata.${type.title}.properties").apply(File::createNewFile)
 
     @Suppress("UNCHECKED_CAST")
-    fun <M : Metadata> loadMetadata(type: ResourceType): Map<ResourceId, M> = buildMap {
+    fun loadMetadata(type: ResourceType): Map<ResourceId, Metadata> = buildMap {
         PropertyStore(metadataFile(type)).forEach { (k, v) ->
             val splits = v.split('|')
-            val group = splits[0]
-            val platforms = splits[1].split(',').filter(String::isNotEmpty).map(Platform::valueOf)
-            put(
-                ResourceId(k),
-                when (type) {
-                    ResourceType.STRINGS -> Str.Metadata(group, platforms)
-                    ResourceType.PLURALS -> {
-                        val quantities = splits.getOrElse(2) { "" }.split(',').filter(String::isNotEmpty).map(Quantity::valueOf)
-                        Plural.Metadata(group, platforms, quantities)
-                    }
-                    ResourceType.ARRAYS -> StringArray.Metadata(group, platforms, splits.getOrNull(2)?.toInt() ?: 1)
-                } as M
-            )
+            put(ResourceId(k), Metadata(type, GroupId(splits[0]), splits[1].split(',').filter(String::isNotEmpty).map(Platform::valueOf)))
         }
     }
 
-    fun <M : Metadata> saveMetadata(metadata: Map<ResourceId, M>, type: ResourceType) {
+    fun saveMetadata(metadata: Map<ResourceId, Metadata>, type: ResourceType) {
         val props = PropertyStore()
         metadata.forEach { (resId, metadata) ->
-            props[resId.value] = "${metadata.group}|${metadata.platforms.sorted().joinToString(separator = ",") { it.name }}${
-                when (metadata) {
-                    is Str.Metadata -> ""
-                    is Plural.Metadata -> "|${metadata.quantities.joinToString(separator = ",", transform = Quantity::name)}"
-                    is StringArray.Metadata -> "|${metadata.size}"
-                    else -> ""
-                }
-            }"
+            props[resId.value] = "${metadata.group.value}|${metadata.platforms.sorted().joinToString(separator = ",") { it.name }}"
         }
         runCatching { props.store(metadataFile(type), "Resource metadata for ${type.title}") }.onFailure {
             println("Failed to save ${type.title} resources with $it")
+        }
+    }
+
+    private val arraySizesFile get() = File(projectFolder(name), "sizes.${ResourceType.ARRAYS.title}.properties").apply(File::createNewFile)
+
+    fun loadArraySizes(): Map<ResourceId, Int> = PropertyStore(arraySizesFile).entries.associate { (k, v) -> ResourceId(k) to (v.toIntOrNull() ?: 1) }
+
+    fun saveArraySizes(sizesMap: Map<ResourceId, Int>) {
+        val props = PropertyStore(sizesMap.entries.associate { (k, v) -> k.value to "$v" })
+        runCatching { props.store(arraySizesFile, "Required sizes for ${ResourceType.ARRAYS.title}") }.onFailure {
+            println("Failed to save sizes of ${ResourceType.ARRAYS.title} with $it")
         }
     }
 
@@ -79,7 +71,7 @@ data class Project(
         File(projectFolder(name), "${type.title}.${locale.value}.properties").apply(File::createNewFile)
 
     @Suppress("UNCHECKED_CAST")
-    fun <M : Metadata, R : Resource<M>> loadResources(type: ResourceType): Map<LocaleIsoCode, Map<ResourceId, R>> =
+    fun <R : Resource> loadResources(type: ResourceType): Map<LocaleIsoCode, Map<ResourceId, R>> =
         projectFolder(name).listFiles()?.filter { it.name.startsWith(type.title) && it.extension == "properties" }?.associate { file ->
             val locale = LocaleIsoCode(file.nameWithoutExtension.substringAfter('.'))
             val props = PropertyStore(resourcesFile(type, locale))
@@ -96,7 +88,7 @@ data class Project(
             }
         }.orEmpty()
 
-    fun <M : Metadata, R : Resource<M>> saveResources(localizedResources: Map<LocaleIsoCode, Map<ResourceId, R>>, type: ResourceType) {
+    fun <R : Resource> saveResources(localizedResources: Map<LocaleIsoCode, Map<ResourceId, R>>, type: ResourceType) {
         localizedResources.forEach { (locale, resources) ->
             val props = PropertyStore()
             resources.forEach { (k, v) ->
@@ -120,7 +112,7 @@ data class Project(
 
         val projectsFolder = File("projects").apply(File::mkdirs)
 
-        private fun projectFolder(projectName: String) = File(projectsFolder, projectName).apply(File::mkdirs)
+        fun projectFolder(projectName: String) = File(projectsFolder, projectName).apply(File::mkdirs)
 
         private fun projectFile(projectName: String) = File(projectFolder(projectName), "project.properties").apply(File::createNewFile)
 

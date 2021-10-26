@@ -9,15 +9,17 @@ import kotlinx.coroutines.launch
 import locales.LocaleIsoCode
 import project.*
 
-sealed class ResourceTypeViewModel<M : Metadata, R : Resource<M>>(val project: MutableStateFlow<Project>, private val type: ResourceType) {
-    val resourceMetadata = MutableStateFlow(project.value.loadMetadata<M>(type))
-    val resourcesByLocale = MutableStateFlow(project.value.loadResources<M, R>(type))
-    val displayedResources = resourceMetadata.map { metadata -> metadata.toList().sortedBy { it.first.value } }
+sealed class ResourceTypeViewModel<R : Resource>(val project: MutableStateFlow<Project>, private val type: ResourceType) {
+    val resourceMetadata = MutableStateFlow(project.value.loadMetadata(type))
+    val resourcesByLocale = MutableStateFlow(project.value.loadResources<R>(type))
+    val displayedResources = resourceMetadata.map { it.keys.sorted() }
 
     init {
         GlobalScope.launch(Dispatchers.IO) { resourceMetadata.collectLatest { project.value.saveMetadata(it, type) } }
         GlobalScope.launch(Dispatchers.IO) { resourcesByLocale.collectLatest { project.value.saveResources(it, type) } }
     }
+
+    fun platforms(resId: ResourceId) = resourceMetadata.map { it[resId]?.platforms ?: Platform.ALL }
 
     fun resource(resId: ResourceId, localeIsoCode: LocaleIsoCode) = resourcesByLocale.map { it[localeIsoCode]?.get(resId) }
 
@@ -29,10 +31,8 @@ sealed class ResourceTypeViewModel<M : Metadata, R : Resource<M>>(val project: M
             newId = ResourceId("new$n")
             n++
         }
-        resourceMetadata.value = resourceMetadata.value.plus(newId to createMetadata())
+        resourceMetadata.value = resourceMetadata.value.plus(newId to Metadata(type))
     }
-
-    protected abstract fun createMetadata(): M
 
     fun updateResourceId(oldId: ResourceId, newId: ResourceId): Boolean {
         val current = resourceMetadata.value
@@ -55,32 +55,29 @@ sealed class ResourceTypeViewModel<M : Metadata, R : Resource<M>>(val project: M
         resourcesByLocale.value = resourcesByLocale.value.map { it.key to it.value.minus(resId) }.toMap()
     }
 
-    fun togglePlatform(resId: ResourceId, info: M, platform: Platform) {
-        val platforms = if (platform in info.platforms) info.platforms.minus(platform) else info.platforms.plus(platform)
-        resourceMetadata.value = resourceMetadata.value.plus(resId to info.copyPlatforms(platforms))
+    fun togglePlatform(resId: ResourceId, platform: Platform) {
+        val metadata = resourceMetadata.value[resId] ?: Metadata(type)
+        val platforms = metadata.platforms.run { if (contains(platform)) minus(platform) else plus(platform) }
+        resourceMetadata.value = resourceMetadata.value.plus(resId to metadata.copy(platforms = platforms))
+    }
+}
+
+class StringResourceViewModel(project: MutableStateFlow<Project>) : ResourceTypeViewModel<Str>(project, ResourceType.STRINGS)
+
+class PluralResourceViewModel(project: MutableStateFlow<Project>) : ResourceTypeViewModel<Plural>(project, ResourceType.PLURALS)
+
+class ArrayResourceViewModel(project: MutableStateFlow<Project>) : ResourceTypeViewModel<StringArray>(project, ResourceType.ARRAYS) {
+    private val arraySizes = MutableStateFlow(project.value.loadArraySizes())
+    fun arraySize(resId: ResourceId) = arraySizes.map { it[resId]?.coerceAtLeast(1) ?: 1 }
+
+    init {
+        GlobalScope.launch(Dispatchers.IO) { arraySizes.collectLatest { project.value.saveArraySizes(it) } }
     }
 
-    protected abstract fun M.copyPlatforms(platforms: List<Platform>): M
-}
-
-class StringResourceViewModel(project: MutableStateFlow<Project>) : ResourceTypeViewModel<Str.Metadata, Str>(project, ResourceType.STRINGS) {
-    override fun createMetadata() = Str.Metadata()
-    override fun Str.Metadata.copyPlatforms(platforms: List<Platform>) = copy(platforms = platforms)
-}
-
-class PluralResourceViewModel(project: MutableStateFlow<Project>) : ResourceTypeViewModel<Plural.Metadata, Plural>(project, ResourceType.PLURALS) {
-    override fun createMetadata() = Plural.Metadata()
-    override fun Plural.Metadata.copyPlatforms(platforms: List<Platform>) = copy(platforms = platforms)
-}
-
-class ArrayResourceViewModel(project: MutableStateFlow<Project>) : ResourceTypeViewModel<StringArray.Metadata, StringArray>(project, ResourceType.ARRAYS) {
-    override fun createMetadata() = StringArray.Metadata()
-    override fun StringArray.Metadata.copyPlatforms(platforms: List<Platform>) = copy(platforms = platforms)
-
-    fun updateArraySize(resId: ResourceId, metadata: StringArray.Metadata) {
-        resourceMetadata.value = resourceMetadata.value.plus(resId to metadata)
+    fun updateArraySize(resId: ResourceId, size: Int) {
+        arraySizes.value = arraySizes.value.plus(resId to size)
         resourcesByLocale.value = resourcesByLocale.value.map { (locale, resourceMap) ->
-            locale to resourceMap.map { (resId, array) -> resId to StringArray(List(metadata.size) { i -> array.items.getOrElse(i) { "" } }) }.toMap()
+            locale to resourceMap.map { (resId, array) -> resId to StringArray(List(size) { i -> array.items.getOrElse(i) { "" } }) }.toMap()
         }.toMap()
     }
 }

@@ -1,38 +1,22 @@
 package project
 
 import androidx.compose.runtime.Immutable
-import java.util.*
+import kotlin.reflect.KClass
 
 /**
  * A Resource is a type of localized content: A string, a plural, or a string array.
  * Strings, Plurals, and Arrays each require different formatting on Android and iOS.
  */
 @Immutable
-sealed interface Resource<M : Metadata> {
-    val type: ResourceType
-}
-
-@Immutable
-sealed class Metadata(val type: ResourceType) {
-    abstract val group: String
-    abstract val platforms: List<Platform>
-}
+sealed interface Resource
 
 @Immutable
 @JvmInline
-value class Str(val text: String = "") : Resource<Str.Metadata> {
-    override val type: ResourceType get() = ResourceType.STRINGS
-
-    @Immutable
-    data class Metadata(
-        override val group: String = "",
-        override val platforms: List<Platform> = Platform.ALL
-    ) : project.Metadata(ResourceType.STRINGS)
-}
+value class Str(val text: String = "") : Resource
 
 @Immutable
 @JvmInline
-value class Plural(val items: Map<Quantity, String> = mapOf(Quantity.ONE to "", Quantity.OTHER to "")) : Resource<Plural.Metadata> {
+value class Plural(val items: Map<Quantity, String> = mapOf(Quantity.ONE to "", Quantity.OTHER to "")) : Resource {
     constructor(
         zero: String? = null,
         one: String?,
@@ -50,27 +34,16 @@ value class Plural(val items: Map<Quantity, String> = mapOf(Quantity.ONE to "", 
     })
 
     operator fun get(quantity: Quantity) = items[quantity]
-
-    override val type: ResourceType get() = ResourceType.PLURALS
-
-    @Immutable
-    data class Metadata(
-        override val group: String = "",
-        override val platforms: List<Platform> = Platform.ALL,
-        val quantities: List<Quantity> = listOf(Quantity.ONE, Quantity.OTHER)
-    ) : project.Metadata(ResourceType.PLURALS)
 }
 
 @Immutable
 @JvmInline
-value class StringArray(val items: List<String> = listOf()) : Resource<StringArray.Metadata> {
-    override val type: ResourceType get() = ResourceType.ARRAYS
+value class StringArray(val items: List<String> = listOf()) : Resource
 
-    @Immutable
-    data class Metadata(
-        override val group: String = "",
-        override val platforms: List<Platform> = Platform.ALL,
-        val size: Int = 1
-    ) : project.Metadata(ResourceType.ARRAYS)
-}
-
+val <R : Resource> KClass<R>.type
+    get() = when (this) {
+        Str::class -> ResourceType.STRINGS
+        Plural::class -> ResourceType.PLURALS
+        StringArray::class -> ResourceType.ARRAYS
+        else -> throw IllegalStateException("Could not resolve ResourceType from: $this")
+    }
