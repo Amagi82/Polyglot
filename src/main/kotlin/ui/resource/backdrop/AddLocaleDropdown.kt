@@ -42,7 +42,7 @@ fun AddLocaleDropdown(vm: ResourceViewModel) {
                 newLocaleText = it
                 isDropdownExpanded = it.isNotBlank()
             },
-            modifier = Modifier.padding(top = 16.dp).onPressEnter { addLocale(); true },
+            modifier = Modifier.padding(top = 16.dp).onPressEnter(::addLocale),
             label = { Text("Add locale") },
             singleLine = true,
             colors = TextFieldDefaults.outlinedTextFieldColorsOnPrimary()
