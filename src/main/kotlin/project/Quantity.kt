@@ -21,4 +21,5 @@ enum class Quantity {
     OTHER;
 
     val label: String = name.lowercase()
+    val isRequired: Boolean get() = this == ONE || this == OTHER
 }
