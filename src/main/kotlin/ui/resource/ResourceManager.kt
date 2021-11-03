@@ -3,16 +3,17 @@ package ui.resource
 import R
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.ScrollbarAdapter
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -21,7 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import locales.Locale
 import project.Project
 import project.ResourceType
 import ui.core.IconButton
@@ -87,50 +87,21 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
             }
         },
         frontLayerContent = {
-            val resourceVM by remember(selectedTab) {
-                derivedStateOf {
-                    when (selectedTab) {
-                        ResourceType.STRINGS -> vm.strings
-                        ResourceType.PLURALS -> vm.plurals
-                        ResourceType.ARRAYS -> vm.arrays
-                    }
-                }
-            }
-            Row {
-                val state = rememberLazyListState()
+            val displayedLocales by vm.displayedLocales.collectAsState(listOf())
 
-                Column(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f)) {
-                    val displayedLocales by vm.displayedLocales.collectAsState(listOf())
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("id", Modifier.weight(1f).padding(8.dp))
-                        when(resourceVM){
-                            is StringResourceViewModel -> Unit
-                            is PluralResourceViewModel -> Spacer(Modifier.width(40.dp))
-                            is ArrayResourceViewModel -> Spacer(Modifier.width(64.dp))
-
-                        }
-                        displayedLocales.forEach {
-                            Text(Locale[it].displayName(it == project.defaultLocale), Modifier.weight(1f).padding(8.dp))
-                        }
-                        Spacer(Modifier.width(96.dp))
-                    }
-                    Divider()
-
-                    val resources by resourceVM.displayedResources.collectAsState(listOf())
-                    LazyColumn(state = state) {
-                        items(resources, key = { it.value }) { resId ->
-                            ResourceRow(vm = resourceVM, displayedLocales = displayedLocales, resId = resId)
-                            Divider()
-                        }
-                    }
-                }
-
-                VerticalScrollbar(adapter = ScrollbarAdapter(state))
+            when (selectedTab) {
+                ResourceType.STRINGS -> ResourceTable(vm.strings, displayedLocales, project.defaultLocale)
+                ResourceType.PLURALS -> ResourceTable(vm.plurals, displayedLocales, project.defaultLocale)
+                ResourceType.ARRAYS -> ResourceTable(vm.arrays, displayedLocales, project.defaultLocale)
             }
 
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
                 ExtendedFloatingActionButton(text = { Text("Add") },
-                    onClick = resourceVM::createResource,
+                    onClick = when (selectedTab) {
+                        ResourceType.STRINGS -> vm.strings::createResource
+                        ResourceType.PLURALS -> vm.plurals::createResource
+                        ResourceType.ARRAYS -> vm.arrays::createResource
+                    },
                     modifier = Modifier.padding(16.dp),
                     icon = { Icon(Icons.Default.Add, contentDescription = "Add new resource") })
             }
