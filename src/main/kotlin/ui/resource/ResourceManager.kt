@@ -114,7 +114,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                     val resources by resourceVM.displayedResources.collectAsState(listOf())
                     LazyColumn(state = state) {
                         items(resources, key = { it.value }) { resId ->
-                            ResourceRow(vm = vm, resourceVM = resourceVM, resId = resId)
+                            ResourceRow(vm = resourceVM, displayedLocales = displayedLocales, resId = resId)
                             Divider()
                         }
                     }
