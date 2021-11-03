@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import locales.Locale
 import locales.LocaleIsoCode
@@ -21,22 +22,23 @@ import project.Resource
 fun <R : Resource> ResourceTable(vm: ResourceTypeViewModel<R>, displayedLocales: List<LocaleIsoCode>, defaultLocale: LocaleIsoCode) {
     Row {
         val state = rememberLazyListState()
-        Column(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f)) {
-            Row(Modifier.fillMaxWidth().padding(top = 12.dp, end = 104.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("id", Modifier.weight(1f))
+        Column(Modifier.weight(1f)) {
+            val modifier = Modifier.padding(start = 16.dp, end = 8.dp)
+            Row(modifier.fillMaxWidth().padding(top = 12.dp, end = 104.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("id", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
                 when (vm) {
                     is StringResourceViewModel -> Unit
                     is PluralResourceViewModel -> Spacer(Modifier.width(40.dp))
                     is ArrayResourceViewModel -> Spacer(Modifier.width(64.dp))
                 }
                 displayedLocales.forEach {
-                    Text(Locale[it].displayName(it == defaultLocale), Modifier.weight(1f))
+                    Text(Locale[it].displayName(it == defaultLocale), Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
                 }
             }
             Divider()
 
             val resources by vm.displayedResources.collectAsState(listOf())
-            LazyColumn(state = state) {
+            LazyColumn(modifier = modifier, state = state) {
                 items(resources, key = { it.value }) { resId ->
                     ResourceRow(vm = vm, displayedLocales = displayedLocales, resId = resId)
                     Divider()
