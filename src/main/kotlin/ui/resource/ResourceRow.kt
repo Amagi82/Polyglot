@@ -1,5 +1,6 @@
 package ui.resource
 
+import R
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -23,7 +24,6 @@ import ui.core.DenseTextField
 import ui.core.IconButton
 import ui.core.onPressEnter
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <R : Resource> ResourceRow(vm: ResourceTypeViewModel<R>, displayedLocales: List<LocaleIsoCode>, resId: ResourceId) {
     Row(verticalAlignment = Alignment.CenterVertically) {
