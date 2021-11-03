@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import locales.Locale
 import locales.LocaleIsoCode
@@ -26,6 +27,7 @@ fun AddLocaleDropdown(vm: ResourceViewModel) {
             }
         }
     }
+    val focusManager = LocalFocusManager.current
 
     fun addLocale(isoCode: LocaleIsoCode? = locales.find { it.isoCode.value == newLocaleText || it.displayName() == newLocaleText }?.isoCode) {
         if (isoCode != null && isoCode !in project.locales && locales.any { it.isoCode == isoCode }) {
@@ -33,6 +35,7 @@ fun AddLocaleDropdown(vm: ResourceViewModel) {
             newLocaleText = ""
             isDropdownExpanded = false
         }
+        focusManager.clearFocus()
     }
 
     Box {
