@@ -22,17 +22,16 @@ fun <R : Resource> ResourceTable(vm: ResourceTypeViewModel<R>, displayedLocales:
     Row {
         val state = rememberLazyListState()
         Column(Modifier.padding(start = 16.dp, end = 8.dp).weight(1f)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("id", Modifier.weight(1f).padding(8.dp))
+            Row(Modifier.fillMaxWidth().padding(top = 12.dp, end = 104.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("id", Modifier.weight(1f))
                 when (vm) {
                     is StringResourceViewModel -> Unit
                     is PluralResourceViewModel -> Spacer(Modifier.width(40.dp))
                     is ArrayResourceViewModel -> Spacer(Modifier.width(64.dp))
                 }
                 displayedLocales.forEach {
-                    Text(Locale[it].displayName(it == defaultLocale), Modifier.weight(1f).padding(8.dp))
+                    Text(Locale[it].displayName(it == defaultLocale), Modifier.weight(1f))
                 }
-                Spacer(Modifier.width(96.dp))
             }
             Divider()
 
