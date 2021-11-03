@@ -82,7 +82,7 @@ private fun ProjectPickerCreateDialog(projects: List<File>, onProjectSelected: (
                             errorMsg = ""
                         }
                     },
-                    modifier = Modifier.onPressEnter { newProjectName.isNotBlank().also { isValid -> if (isValid) onClickCreate() } }.focusRequester(requester),
+                    modifier = Modifier.onPressEnter { if (newProjectName.isNotBlank()) onClickCreate() }.focusRequester(requester),
                     label = { Text("Name") },
                     isError = errorMsg.isNotEmpty(),
                     singleLine = true
