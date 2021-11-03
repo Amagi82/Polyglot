@@ -1,5 +1,6 @@
 package ui.resource
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
@@ -9,7 +10,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.map
 import locales.LocaleIsoCode
@@ -22,33 +26,46 @@ import ui.core.focusNextOnEnter
 @Composable
 fun <R : Resource> ResourceRow(vm: ResourceViewModel, resourceVM: ResourceTypeViewModel<R>, resId: ResourceId) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(1f)) {
-            var id by remember { mutableStateOf(resId) }
-            var error by remember { mutableStateOf("") }
+        var editMode by remember { mutableStateOf(false) }
+        val idModifier = Modifier.weight(1f).padding(vertical = 4.dp)
 
-            DenseTextField(
-                value = id.value,
-                onValueChange = {
-                    error = ""
-                    id = ResourceId(it.dropWhile(Char::isDigit).filter(Char::isLetterOrDigit))
-                },
-                modifier = Modifier.padding(vertical = 4.dp).fillMaxWidth()
-                    .focusNextOnEnter()
-                    .onFocusChanged {
-                        if (!it.hasFocus && resId != id) {
-                            if (id.value.isEmpty()) {
-                                resourceVM.removeResource(resId)
-                            } else if (!resourceVM.updateResourceId(resId, id)) {
-                                error = "id already exists"
-                            }
-                        }
+        if (editMode) {
+            Column(modifier = idModifier) {
+                var id by remember { mutableStateOf(resId) }
+                var error by remember { mutableStateOf("") }
+                val focusRequester = remember { FocusRequester() }
+                var hasBeenFocused by remember { mutableStateOf(false) }
+
+                DenseTextField(
+                    value = id.value,
+                    onValueChange = {
+                        error = ""
+                        id = ResourceId(it.dropWhile(Char::isDigit).filter(Char::isLetterOrDigit))
                     },
-                isError = error.isNotEmpty(),
-                singleLine = true,
-            )
-            if (error.isNotEmpty()) {
-                Text(error, color = MaterialTheme.colors.error)
+                    modifier = Modifier.fillMaxWidth()
+                        .focusRequester(focusRequester)
+                        .focusNextOnEnter()
+                        .onFocusChanged {
+                            when {
+                                it.hasFocus -> Unit
+                                !hasBeenFocused -> hasBeenFocused = true
+                                resId == id -> editMode = false
+                                id.value.isEmpty() -> resourceVM.removeResource(resId)
+                                !resourceVM.updateResourceId(resId, id) -> error = "id already exists"
+                                else -> Unit
+                            }
+                        },
+                    isError = error.isNotEmpty(),
+                    singleLine = true,
+                )
+
+                LaunchedEffect(Unit) { focusRequester.requestFocus() }
+                if (error.isNotEmpty()) {
+                    Text(error, color = MaterialTheme.colors.error)
+                }
             }
+        } else {
+            Text(resId.value, modifier = idModifier.pointerInput(Unit) { detectTapGestures(onDoubleTap = { editMode = true }) })
         }
 
         if (resourceVM is ArrayResourceViewModel) {
