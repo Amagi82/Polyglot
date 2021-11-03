@@ -103,7 +103,12 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                     val displayedLocales by vm.displayedLocales.collectAsState(listOf())
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("id", Modifier.weight(1f).padding(8.dp))
-                        if (resourceVM is ArrayResourceViewModel) Spacer(Modifier.width(64.dp))
+                        when(resourceVM){
+                            is StringResourceViewModel -> Unit
+                            is PluralResourceViewModel -> Spacer(Modifier.width(40.dp))
+                            is ArrayResourceViewModel -> Spacer(Modifier.width(64.dp))
+
+                        }
                         displayedLocales.forEach {
                             Text(Locale[it].displayName(it == project.defaultLocale), Modifier.weight(1f).padding(8.dp))
                         }
