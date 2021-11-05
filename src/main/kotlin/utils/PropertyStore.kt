@@ -49,7 +49,8 @@ class PropertyStore() : MutableMap<String, String> {
         object : ReadWriteProperty<Any, T> {
             override fun getValue(thisRef: Any, property: KProperty<*>): T = props.getProperty(property.name).convert()
             override fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
-                props.setProperty(property.name, "$value")
+                if (value == null) props.remove(property.name)
+                else props.setProperty(property.name, "$value")
                 save()
             }
         }
