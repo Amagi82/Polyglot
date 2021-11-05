@@ -9,15 +9,15 @@ import locales.LocaleIsoCode
 import project.*
 import java.util.*
 
-class ResourceViewModel(project: Project) {
-    val project = MutableStateFlow(project)
+class ResourceViewModel(projectName: String) {
+    val project = MutableStateFlow(Project.load(projectName))
 
     val excludedLocales = MutableStateFlow(setOf<LocaleIsoCode>())
     val selectedTab = MutableStateFlow(ResourceType.STRINGS)
 
-    val strings = StringResourceViewModel(this@ResourceViewModel.project)
-    val plurals = PluralResourceViewModel(this@ResourceViewModel.project)
-    val arrays = ArrayResourceViewModel(this@ResourceViewModel.project)
+    val strings = StringResourceViewModel(project)
+    val plurals = PluralResourceViewModel(project)
+    val arrays = ArrayResourceViewModel(project)
 
     private val comparator = this.project.map { project ->
         Comparator<LocaleIsoCode> { o1, o2 ->
@@ -29,12 +29,12 @@ class ResourceViewModel(project: Project) {
         }
     }
 
-    val displayedLocales = combine(comparator, this@ResourceViewModel.project, excludedLocales) { comparator, project, excludedLocales ->
+    val displayedLocales = combine(comparator, project, excludedLocales) { comparator, project, excludedLocales ->
         project.locales.minus(excludedLocales).sortedWith(comparator)
     }
 
     init {
-        GlobalScope.launch(Dispatchers.IO) { this@ResourceViewModel.project.collectLatest { it.save() } }
+        GlobalScope.launch(Dispatchers.IO) { project.collectLatest { it.save() } }
     }
 
     fun addLocale(isoCode: LocaleIsoCode) {
