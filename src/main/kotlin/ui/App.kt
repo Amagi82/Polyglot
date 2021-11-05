@@ -13,10 +13,7 @@ fun App(project: Project?, updateProject: (Project?) -> Unit) {
     var darkTheme by remember { mutableStateOf(Settings.isDarkTheme) }
     PolyglotTheme(darkTheme = darkTheme) {
         if (project == null) {
-            ProjectPicker {
-                updateProject(it)
-                Settings.currentProject = it.name
-            }
+            ProjectPicker(updateProject)
         } else {
             val vm = remember { ResourceViewModel(project) }
             ResourceManager(
@@ -25,7 +22,7 @@ fun App(project: Project?, updateProject: (Project?) -> Unit) {
                     Settings.isDarkTheme = !darkTheme
                     darkTheme = !darkTheme
                 },
-                updateProject = updateProject
+                closeProject = { updateProject(null) }
             )
         }
     }

@@ -4,10 +4,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowPosition
-import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.*
 import project.Project
 import ui.App
 import utils.Settings
@@ -27,6 +24,9 @@ fun main() = application {
         icon = painterResource(R.drawable.language),
         undecorated = false
     ) {
-        App(project.value) { project.value = it }
+        App(project.value) {
+            Settings.currentProject = it?.name
+            project.value = it
+        }
     }
 }
