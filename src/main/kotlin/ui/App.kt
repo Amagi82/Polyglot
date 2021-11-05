@@ -1,7 +1,6 @@
 package ui
 
 import androidx.compose.runtime.*
-import project.Project
 import ui.project.ProjectPicker
 import ui.resource.ResourceManager
 import ui.resource.ResourceViewModel
@@ -9,20 +8,22 @@ import ui.core.theme.PolyglotTheme
 import utils.Settings
 
 @Composable
-fun App(project: Project?, updateProject: (Project?) -> Unit) {
+fun App() {
     var darkTheme by remember { mutableStateOf(Settings.isDarkTheme) }
     PolyglotTheme(darkTheme = darkTheme) {
-        if (project == null) {
-            ProjectPicker(updateProject)
+        var savedProject by remember { mutableStateOf(Settings.currentProject) }
+        val currentProject = savedProject
+        Settings.currentProject = currentProject
+        if (currentProject == null) {
+            ProjectPicker { savedProject = it }
         } else {
-            val vm = remember { ResourceViewModel(project) }
             ResourceManager(
-                vm,
+                ResourceViewModel(currentProject),
                 toggleDarkTheme = {
                     Settings.isDarkTheme = !darkTheme
                     darkTheme = !darkTheme
                 },
-                closeProject = { updateProject(null) }
+                closeProject = { savedProject = null }
             )
         }
     }

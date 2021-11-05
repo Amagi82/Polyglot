@@ -20,7 +20,7 @@ import ui.core.onPressEnter
 import java.io.File
 
 @Composable
-fun ProjectPicker(onProjectSelected: (Project) -> Unit) {
+fun ProjectPicker(onProjectNameSelected: (String) -> Unit) {
     val projects by remember { derivedStateOf { Project.projectsFolder.listFiles()?.filter(File::isDirectory).orEmpty() } }
     var showDialog by remember { mutableStateOf(projects.isEmpty()) }
 
@@ -37,7 +37,7 @@ fun ProjectPicker(onProjectSelected: (Project) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             projects.forEach { project ->
-                Button(onClick = { onProjectSelected(Project.load(project.nameWithoutExtension)) }) {
+                Button(onClick = { onProjectNameSelected(project.nameWithoutExtension) }) {
                     Text(project.nameWithoutExtension)
                 }
             }
@@ -45,7 +45,7 @@ fun ProjectPicker(onProjectSelected: (Project) -> Unit) {
             if (showDialog) {
                 ProjectPickerCreateDialog(
                     projects = projects,
-                    onProjectSelected = onProjectSelected,
+                    onProjectNameSelected = onProjectNameSelected,
                     onDismiss = { showDialog = false })
             }
         }
@@ -54,7 +54,7 @@ fun ProjectPicker(onProjectSelected: (Project) -> Unit) {
 
 @OptIn(ExperimentalMaterialApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
-private fun ProjectPickerCreateDialog(projects: List<File>, onProjectSelected: (Project) -> Unit, onDismiss: () -> Unit) {
+private fun ProjectPickerCreateDialog(projects: List<File>, onProjectNameSelected: (String) -> Unit, onDismiss: () -> Unit) {
     var newProjectName by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf("") }
 
@@ -62,7 +62,7 @@ private fun ProjectPickerCreateDialog(projects: List<File>, onProjectSelected: (
         when {
             newProjectName.isBlank() -> errorMsg = "Name required"
             projects.any { it.name == newProjectName } -> errorMsg = "Project already exists"
-            else -> onProjectSelected(Project(name = newProjectName))
+            else -> onProjectNameSelected(newProjectName)
         }
     }
 
