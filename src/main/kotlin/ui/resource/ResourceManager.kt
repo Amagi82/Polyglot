@@ -3,17 +3,12 @@ package ui.resource
 import R
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.filled.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -33,7 +28,7 @@ import kotlin.math.abs
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updateProject: (Project?) -> Unit) {
+fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closeProject: () -> Unit) {
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
     val project by vm.project.collectAsState()
@@ -71,6 +66,13 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, updatePr
                 actions = {
                     IconButton(R.drawable.darkMode, contentDescription = "Toggle dark theme", onClick = toggleDarkTheme)
                     IconButton(Icons.Default.Send) { scope.launch { generateFiles(vm, scaffoldState.snackbarHostState) } }
+                    var isMenuExpanded by remember { mutableStateOf(false) }
+                    IconButton(Icons.Default.MoreVert, contentDescription = "Options") { isMenuExpanded = true }
+                    Box {
+                        DropdownMenu(expanded = isMenuExpanded, onDismissRequest = { isMenuExpanded = false }) {
+                            DropdownMenuItem(onClick = closeProject) { Text("Close project") }
+                        }
+                    }
                 },
                 backgroundColor = MaterialTheme.colors.primary,
                 elevation = 0.dp
