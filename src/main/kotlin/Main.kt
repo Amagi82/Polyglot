@@ -16,8 +16,6 @@ fun main() = application {
     // Look at https://github.com/adrielcafe/lyricist for localization
 
     val project = remember { mutableStateOf(Settings.currentProject?.let(Project::load)) }
-    project.value?.save()
-
     val state = rememberWindowState()
     state.size = if (project.value == null) DpSize(400.dp, 600.dp) else DpSize(2560.dp, 1440.dp)
     state.position = WindowPosition(Alignment.Center)
