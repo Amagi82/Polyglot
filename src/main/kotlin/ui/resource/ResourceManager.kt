@@ -3,7 +3,6 @@ package ui.resource
 import R
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -17,14 +16,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import project.Project
 import project.ResourceType
 import ui.core.IconButton
 import ui.resource.backdrop.LocaleSettings
 import ui.resource.backdrop.OutputSettings
 import java.awt.Desktop
 import java.io.File
-import kotlin.math.abs
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -52,9 +49,12 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                     }
                 },
                 navigationIcon = {
-                    val transition = updateTransition(scaffoldState.progress)
-                    val iconSize by transition.animateDp { 24.dp * abs(2 * (0.5f - it.fraction)) }
-                    IconButton(onClick = { scope.launch { if (scaffoldState.isRevealed) scaffoldState.conceal() else scaffoldState.reveal() } }) {
+                    IconButton(
+                        onClick = { scope.launch { if (scaffoldState.isRevealed) scaffoldState.conceal() else scaffoldState.reveal() } },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        val transition = updateTransition(scaffoldState.progress)
+                        val iconSize by transition.animateDp { 24.dp * it.fraction }
                         val showConcealed = scaffoldState.showConcealed
                         Icon(
                             if (showConcealed) Icons.Default.Menu else Icons.Default.Close,
