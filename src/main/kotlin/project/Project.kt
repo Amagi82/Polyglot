@@ -94,7 +94,11 @@ data class Project(
             resources.forEach { (k, v) ->
                 when (v) {
                     is Str -> props[k.value] = v.text
-                    is Plural -> v.items.forEach { (quantity, text) -> props["${k.value}.${quantity.label}"] = text }
+                    is Plural -> v.items.forEach { (quantity, text) ->
+                        val key = "${k.value}.${quantity.label}"
+                        if (quantity.isRequired || text.isNotEmpty()) props[key] = text
+                        else props.remove(key)
+                    }
                     is StringArray -> v.items.forEachIndexed { i, text -> props["${k.value}.$i"] = text }
                 }
             }
