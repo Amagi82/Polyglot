@@ -25,7 +25,7 @@ class IosResourceGenerator(
 ) : ResourceGenerator(Platform.IOS, vm.project.value, locale, formatters) {
     private val localizationFolder = File(outputFolder, "${locale.value}.lproj").also(File::mkdirs)
 
-    private val stringsWriter = BufferedWriter(FileWriter(localizationFolder.createChildFile("Localizable.strings")))
+    private val stringsWriter = BufferedWriter(FileWriter(localizationFolder.createChildFile(stringsFile)))
 
     private val pluralsDocument: Document = createDocument()
     private val pluralsResourceElement: Element = pluralsDocument.createAndAppendPlistElement()
@@ -56,10 +56,10 @@ class IosResourceGenerator(
     override fun generateFiles() {
         stringsWriter.close()
         if (shouldCreatePlurals) {
-            transformer.transform(pluralsDocument, localizationFolder, "Localizable.stringsdict")
+            transformer.transform(pluralsDocument, localizationFolder, pluralsFile)
         }
         if (shouldCreateArrays) {
-            transformer.transform(arraysDocument, localizationFolder, "LocalizableArrays.plist")
+            transformer.transform(arraysDocument, localizationFolder, arraysFile)
         }
         generateReferences()
         generateStringLocalizationExtensions()
@@ -264,6 +264,9 @@ class IosResourceGenerator(
     companion object {
         private const val KEY = "key"
         private const val STRING = "string"
+        const val stringsFile = "Localizable.strings"
+        const val pluralsFile = "Localizable.stringsdict"
+        const val arraysFile = "LocalizableArrays.plist"
 
         private val transformer: Transformer by lazy {
             createTransformer().apply {
