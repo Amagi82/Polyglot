@@ -11,7 +11,7 @@ import kotlin.reflect.KProperty
  */
 @Suppress("UNCHECKED_CAST")
 class PropertyStore() : MutableMap<String, String> {
-    private val props = Properties()
+    private val props = OrderedProperties()
 
     constructor(vararg properties: Pair<String, String>) : this() {
         putAll(properties)
@@ -32,8 +32,8 @@ class PropertyStore() : MutableMap<String, String> {
     override fun containsValue(value: String): Boolean = props.containsValue(value)
     override fun get(key: String): String? = props.getProperty(key)
     override fun isEmpty(): Boolean = props.isEmpty
-    override val entries get() = props.entries as MutableSet<MutableMap.MutableEntry<String, String>>
-    override val keys: MutableSet<String> get() = props.keys as MutableSet<String>
+    override val entries get() = props.entries as SortedSet<MutableMap.MutableEntry<String, String>>
+    override val keys: MutableSet<String> get() = props.keys as SortedSet<String>
     override val values: MutableCollection<String> get() = props.values as MutableCollection<String>
     override fun clear() = props.clear()
     override fun put(key: String, value: String): String? = props.setProperty(key, value) as String?
