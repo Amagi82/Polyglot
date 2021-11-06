@@ -40,16 +40,18 @@ data class Project(
 
     @Suppress("UNCHECKED_CAST")
     fun loadMetadata(type: ResourceType): Map<ResourceId, Metadata> = buildMap {
-        PropertyStore(metadataFile(type)).forEach { (k, v) ->
-            val splits = v.split('|')
-            put(ResourceId(k), Metadata(type, GroupId(splits[0]), splits[1].split(',').filter(String::isNotEmpty).map(Platform::valueOf)))
+        PropertyStore(metadataFile(type)).entries.groupBy { it.key.substringBefore('.') }.forEach { (k, v) ->
+            val group = v.find { it.key.endsWith("group") }?.value.orEmpty()
+            val platforms = v.find { it.key.endsWith("platforms") }?.value.orEmpty().split(',').filter(String::isNotEmpty).map(Platform::valueOf)
+            put(ResourceId(k), Metadata(type, GroupId(group), platforms))
         }
     }
 
     fun saveMetadata(metadata: Map<ResourceId, Metadata>, type: ResourceType) {
         val props = PropertyStore()
         metadata.forEach { (resId, metadata) ->
-            props[resId.value] = "${metadata.group.value}|${metadata.platforms.sorted().joinToString(separator = ",") { it.name }}"
+            props["${resId.value}.group"] = metadata.group.value
+            props["${resId.value}.platforms"] = metadata.platforms.sorted().joinToString(separator = ",") { it.name }
         }
         runCatching { props.store(metadataFile(type), "Resource metadata for ${type.title}") }.onFailure {
             println("Failed to save ${type.title} resources with $it")
