@@ -67,7 +67,7 @@ class StringResourceViewModel(project: MutableStateFlow<Project>) : ResourceType
 class PluralResourceViewModel(project: MutableStateFlow<Project>) : ResourceTypeViewModel<Plural>(project, ResourceType.PLURALS)
 
 class ArrayResourceViewModel(project: MutableStateFlow<Project>) : ResourceTypeViewModel<StringArray>(project, ResourceType.ARRAYS) {
-    private val arraySizes = MutableStateFlow(project.value.loadArraySizes())
+    val arraySizes = MutableStateFlow(project.value.loadArraySizes())
     fun arraySize(resId: ResourceId) = arraySizes.map { it[resId]?.coerceAtLeast(1) ?: 1 }
 
     init {

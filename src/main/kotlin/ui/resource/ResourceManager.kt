@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import project.ResourceType
 import ui.core.IconButton
+import ui.resource.backdrop.ImportSettings
 import ui.resource.backdrop.LocaleSettings
 import ui.resource.backdrop.OutputSettings
 import java.awt.Desktop
@@ -84,6 +85,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                 Modifier.fillMaxWidth().padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+                ImportSettings(vm)
                 OutputSettings(vm)
                 LocaleSettings(vm)
             }
