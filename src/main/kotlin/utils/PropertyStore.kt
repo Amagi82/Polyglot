@@ -36,8 +36,8 @@ class PropertyStore() : MutableMap<String, String> {
     override val keys: MutableSet<String> get() = props.keys as SortedSet<String>
     override val values: MutableCollection<String> get() = props.values as MutableCollection<String>
     override fun clear() = props.clear()
-    override fun put(key: String, value: String): String? = props.setProperty(key, value) as String?
-    override fun putAll(from: Map<out String, String>) = from.forEach { (k, v) -> props.setProperty(k, v) }
+    override fun put(key: String, value: String): String? = if (value.isEmpty()) remove(key) else props.setProperty(key, value) as String?
+    override fun putAll(from: Map<out String, String>) = from.forEach { (k, v) -> put(k, v) }
     override fun remove(key: String): String? = props.remove(key) as String?
 
     fun store(file: File, comment: String = "") {
