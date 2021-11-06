@@ -175,7 +175,7 @@ class IosResourceGenerator(
         append("\t\t\t\"$id\".localized")
 
         if (isPlural) {
-            append("resources.Plural(quantity: quantity")
+            append("Plural(quantity: quantity")
             if (ct > 0) append(", ")
         } else append('(')
 
