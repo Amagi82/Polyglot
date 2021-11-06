@@ -16,6 +16,12 @@ enum class Platform(val iconId: String, val displayName: String) {
         IOS -> project.iosOutputUrl
     }.let(::File)
 
+    val resourceFileExtensions
+        get() = when (this) {
+            ANDROID -> arrayOf("xml")
+            IOS -> arrayOf("strings", "stringsdict", "plist")
+        }
+
     companion object {
         val ANDROID_ONLY = listOf(ANDROID)
         val IOS_ONLY = listOf(IOS)
