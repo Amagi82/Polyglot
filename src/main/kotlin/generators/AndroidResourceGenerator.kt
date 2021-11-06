@@ -5,6 +5,7 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 import project.*
 import ui.resource.ResourceViewModel
+import utils.extensions.toSnakeCase
 import javax.xml.transform.Transformer
 import java.io.File
 
@@ -40,7 +41,7 @@ class AndroidResourceGenerator(
      */
     override fun addPlurals(id: ResourceId, res: Plural) {
         resourceElement.appendChild(document.createElement("plurals").apply {
-            setAttribute("name", id.value)
+            setAttribute("name", id.value.toSnakeCase())
             res.items.forEach { (quantity, text) ->
                 appendChild(document.createElement("item").apply {
                     setAttribute("quantity", quantity.label)
@@ -55,7 +56,7 @@ class AndroidResourceGenerator(
         if (txt.isBlank()) return
         /** <string name="dragon">Trogdor the Burninator</string> */
         resourceElement.appendChild(document.createElement("string").apply {
-            setAttribute("name", id.value)
+            setAttribute("name", id.value.toSnakeCase())
             appendChild(document.createTextNode(txt))
         })
     }
@@ -68,7 +69,7 @@ class AndroidResourceGenerator(
      */
     override fun addStringArray(id: ResourceId, res: StringArray) {
         resourceElement.appendChild(document.createElement("string-array").apply {
-            setAttribute("name", id.value)
+            setAttribute("name", id.value.toSnakeCase())
             for (text in res.items) {
                 appendChild(document, "item", text.sanitized())
             }
