@@ -4,7 +4,6 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import ui.core.theme.onPrimarySurface
 
 @Composable
 fun TextFieldDefaults.outlinedTextFieldColorsOnPrimary() = outlinedTextFieldColors(
