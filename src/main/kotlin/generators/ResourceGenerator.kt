@@ -82,11 +82,8 @@ abstract class ResourceGenerator(
     }
 
     companion object {
-        private val transformerFactory: TransformerFactory by lazy { TransformerFactory.newInstance() }
-        private val documentBuilder: DocumentBuilder by lazy { DocumentBuilderFactory.newInstance().newDocumentBuilder() }
-
-        fun createDocument(): Document = documentBuilder.newDocument().apply { xmlStandalone = true }
-        fun createTransformer(): Transformer = transformerFactory.newTransformer().apply {
+        fun createDocument(): Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument().apply { xmlStandalone = true }
+        fun createTransformer(): Transformer = TransformerFactory.newInstance().newTransformer().apply {
             setOutputProperty(OutputKeys.ENCODING, "UTF-8")
             setOutputProperty(OutputKeys.INDENT, "yes")
             setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4")
