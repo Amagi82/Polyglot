@@ -1,9 +1,11 @@
 package importers
 
+import generators.androidRootElementTag
 import locales.LocaleIsoCode
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import project.*
+import project.Platform.ANDROID
 import ui.resource.ResourceViewModel
 import utils.extensions.toLowerCamelCase
 import java.io.File
@@ -16,21 +18,21 @@ suspend fun importAndroidResources(vm: ResourceViewModel, file: File, overwrite:
             val locale = LocaleIsoCode(if (parentFolderName.contains('-')) parentFolderName.substringAfter('-') else "en")
             val document = fileToImport.parseDocument()
 
-            importStrings(document).mergeWith(Platform.ANDROID, locale, overwrite, stringMetadata, strings)
-            importPlurals(document).mergeWith(Platform.ANDROID, locale, overwrite, pluralMetadata, plurals)
-            importArrays(document).mergeWith(Platform.ANDROID, locale, overwrite, arrayMetadata, arrays, arraySizes)
+            importStrings(document).mergeWith(ANDROID, locale, overwrite, stringMetadata, strings)
+            importPlurals(document).mergeWith(ANDROID, locale, overwrite, pluralMetadata, plurals)
+            importArrays(document).mergeWith(ANDROID, locale, overwrite, arrayMetadata, arrays, arraySizes)
         }
         files
     }
 
 private fun importStrings(doc: Document): Map<ResourceId, Str> =
-    doc.strings.associate { it.resourceId to Str(it.unescapedText) }
+    doc.elements(ResourceType.STRINGS).associate { it.resourceId to Str(it.unescapedText) }
 
 private fun importPlurals(doc: Document): Map<ResourceId, Plural> =
-    doc.plurals.associate { plural -> plural.resourceId to Plural(plural.items.associate { it.quantity to it.unescapedText }) }
+    doc.elements(ResourceType.PLURALS).associate { plural -> plural.resourceId to Plural(plural.items.associate { it.quantity to it.unescapedText }) }
 
 private fun importArrays(doc: Document): Map<ResourceId, StringArray> =
-    doc.arrays.associate { it.resourceId to StringArray(it.items.map(Element::unescapedText)) }
+    doc.elements(ResourceType.ARRAYS).associate { it.resourceId to StringArray(it.items.map(Element::unescapedText)) }
 
 private fun File.findAllStringsFilesInDirectory(): List<File> = buildList {
     val validFolders = arrayOf("app", "src", "main", "res")
@@ -43,9 +45,7 @@ private fun File.findAllStringsFilesInDirectory(): List<File> = buildList {
     }
 }
 
-private val Document.strings: List<Element> get() = getElementsByTagName("string").toList()
-private val Document.plurals: List<Element> get() = getElementsByTagName("plurals").toList()
-private val Document.arrays: List<Element> get() = getElementsByTagName("string-array").toList()
+private fun Document.elements(type: ResourceType) = getElementsByTagName(type.androidRootElementTag).toList()
 private val Element.resourceId: ResourceId get() = ResourceId(getAttribute("name").toLowerCamelCase())
 private val Element.quantity: Quantity get() = getAttribute("quantity").uppercase().let(Quantity::valueOf)
 private val Element.items: List<Element> get() = getElementsByTagName("item").toList()

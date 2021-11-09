@@ -1,6 +1,13 @@
 package project
 
 import androidx.compose.runtime.Immutable
+import generators.generateAndroidResources
+import generators.generateIOSResources
+import importers.importAndroidResources
+import importers.importIosResources
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import ui.resource.ResourceViewModel
 import java.io.File
 
 /**
@@ -16,11 +23,26 @@ enum class Platform(val iconId: String, val displayName: String) {
         IOS -> project.iosOutputUrl
     }.let(::File)
 
-    val resourceFileExtensions
-        get() = when (this) {
-            ANDROID -> arrayOf("xml")
-            IOS -> arrayOf("strings", "stringsdict", "plist")
+    fun fileName(type: ResourceType) = when (this) {
+        ANDROID -> "strings.xml"
+        IOS -> when (type) {
+            ResourceType.STRINGS -> "Localizable.strings"
+            ResourceType.PLURALS -> "Localizable.stringsdict"
+            ResourceType.ARRAYS -> "LocalizableArrays.plist"
         }
+    }
+
+    suspend fun importResources(vm: ResourceViewModel, file: File, overwrite: Boolean) = when (this) {
+        ANDROID -> importAndroidResources(vm, file, overwrite)
+        IOS -> importIosResources(vm, file, overwrite)
+    }
+
+    suspend fun exportResources(vm: ResourceViewModel) = withContext(Dispatchers.IO) {
+        when (this@Platform) {
+            ANDROID -> generateAndroidResources(vm)
+            IOS -> generateIOSResources(vm)
+        }
+    }
 
     companion object {
         val ANDROID_ONLY = listOf(ANDROID)

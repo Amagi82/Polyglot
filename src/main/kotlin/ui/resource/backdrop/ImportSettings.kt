@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import project.Platform
+import project.ResourceType
 import ui.resource.ResourceViewModel
 import java.io.File
 import javax.swing.JFileChooser
@@ -66,18 +67,16 @@ fun ImportSettings(vm: ResourceViewModel) {
                     dialogTitle = "Select file/directory to import"
                     fileSelectionMode = JFileChooser.FILES_AND_DIRECTORIES
                     fileFilter = object : FileFilter() {
-                        override fun accept(f: File?): Boolean = f?.isDirectory == true || f?.extension in platform.resourceFileExtensions
-                        override fun getDescription(): String = platform.resourceFileExtensions.joinToString { "*.$it" }
+                        val resourceFileExtensions = ResourceType.values().map { platform.fileName(it).substringAfterLast('.') }.distinct()
+                        override fun accept(f: File?): Boolean = f?.isDirectory == true || f?.extension in resourceFileExtensions
+                        override fun getDescription(): String = resourceFileExtensions.joinToString { "*.$it" }
                     }
                     showOpenDialog(null)
                     selectedFile?.let { file ->
                         importingState = importingState.plus(platform to ImportingState.Importing)
                         scope.launch {
                             importingState = try {
-                                val importedFiles = when (platform) {
-                                    Platform.ANDROID -> importAndroidResources(vm, file, overwrite = overwrite)
-                                    Platform.IOS -> importIosResources(vm, file, overwrite = overwrite)
-                                }
+                                val importedFiles = platform.importResources(vm, file, overwrite = overwrite)
                                 importingState.plus(platform to ImportingState.Success(importedFiles))
                             } catch (e: Exception) {
                                 importingState.plus(platform to ImportingState.Failure(e))
