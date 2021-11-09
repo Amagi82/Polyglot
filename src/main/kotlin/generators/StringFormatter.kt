@@ -21,7 +21,7 @@ class StringFormatter(
     val formatter: (index: Int, isXml: Boolean) -> String
 ) {
     init {
-        if (arg.isEmpty()) throw IllegalArgumentException("generators.StringFormatter arg cannot be empty")
+        if (arg.isEmpty()) throw IllegalArgumentException("StringFormatter arg cannot be empty")
     }
 
     companion object {
