@@ -1,13 +1,12 @@
 package importers
 
-import generators.IosResourceGenerator.Companion.arraysFile
-import generators.IosResourceGenerator.Companion.pluralsFile
-import generators.IosResourceGenerator.Companion.stringsFile
 import locales.LocaleIsoCode
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import project.*
+import project.Platform.IOS
+import project.ResourceType.*
 import ui.resource.ResourceViewModel
 import utils.extensions.toLowerCamelCase
 import java.io.File
@@ -18,9 +17,9 @@ suspend fun importIosResources(vm: ResourceViewModel, file: File, overwrite: Boo
         files.forEach { fileToImport ->
             val locale = LocaleIsoCode(fileToImport.parentFile.name.substringBefore('.'))
             when (fileToImport.name) {
-                stringsFile -> importStrings(fileToImport).mergeWith(Platform.IOS, locale, overwrite, stringMetadata, strings)
-                pluralsFile -> importPlurals(fileToImport.parseDocument()).mergeWith(Platform.IOS, locale, overwrite, pluralMetadata, plurals)
-                arraysFile -> importArrays(fileToImport.parseDocument()).mergeWith(Platform.IOS, locale, overwrite, arrayMetadata, arrays, arraySizes)
+                IOS.fileName(STRINGS) -> importStrings(fileToImport).mergeWith(IOS, locale, overwrite, stringMetadata, strings)
+                IOS.fileName(PLURALS) -> importPlurals(fileToImport.parseDocument()).mergeWith(IOS, locale, overwrite, pluralMetadata, plurals)
+                IOS.fileName(ARRAYS) -> importArrays(fileToImport.parseDocument()).mergeWith(IOS, locale, overwrite, arrayMetadata, arrays, arraySizes)
             }
         }
         files
@@ -46,7 +45,7 @@ private fun importArrays(doc: Document): Map<ResourceId, StringArray> = doc.cont
     ResourceId(it.textContent.toLowerCamelCase()) to StringArray(it.nextElement?.strings?.map(Node::unescapedText).orEmpty())
 }
 
-private val iosResourceFiles = arrayOf(stringsFile, pluralsFile, arraysFile)
+private val iosResourceFiles = ResourceType.values().map(IOS::fileName)
 
 private fun File.findAllStringsFilesInDirectory(): List<File> = buildList {
     listFiles()?.forEach { file ->

@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 import locales.LocaleIsoCode
 import project.*
 
-sealed class ResourceTypeViewModel<R : Resource>(val project: MutableStateFlow<Project>, private val type: ResourceType) {
+sealed class ResourceTypeViewModel<R : Resource>(val project: MutableStateFlow<Project>, val type: ResourceType) {
     val resourceMetadata = MutableStateFlow(project.value.loadMetadata(type))
     val resourcesByLocale = MutableStateFlow(project.value.loadResources<R>(type))
     val displayedResources = resourceMetadata.map { it.keys.sorted() }

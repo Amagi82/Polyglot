@@ -11,11 +11,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import generators.ResourceGenerator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import project.Platform
 import project.ResourceType
 import ui.core.IconButton
 import ui.resource.backdrop.ImportSettings
@@ -123,9 +120,9 @@ private val BackdropScaffoldState.showConcealed
     }
 
 private suspend fun generateFiles(vm: ResourceViewModel, snackbarHostState: SnackbarHostState) = withContext(Dispatchers.Main) {
-    val generateFiles = async(Dispatchers.IO) { ResourceGenerator.generateFiles(vm) }
+    val generateFiles = Platform.values().map { async(Dispatchers.IO) { it.exportResources(vm) } }
     val result = snackbarHostState.showSnackbar(message = "Generating outputs", actionLabel = "Show")
-    generateFiles.await()
+    generateFiles.awaitAll()
     if (result == SnackbarResult.ActionPerformed) {
         openUrl(vm.project.value.androidOutputUrl, snackbarHostState)
         openUrl(vm.project.value.iosOutputUrl, snackbarHostState)
