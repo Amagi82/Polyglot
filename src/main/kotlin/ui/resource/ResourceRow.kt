@@ -126,7 +126,7 @@ private fun <R : Resource> PlatformEditor(vm: ResourceTypeViewModel<R>, resId: R
 private fun RowScope.StringRow(vm: StringResourceViewModel, displayedLocales: List<LocaleIsoCode>, resId: ResourceId) {
     displayedLocales.forEach { localeIsoCode ->
         Spacer(Modifier.width(8.dp))
-        val resource by vm.resource(resId, localeIsoCode).map { it ?: Str() }.collectAsState(Str())
+        val resource by vm.resource(resId, localeIsoCode).map { it ?: Str() }.collectAsState(Str(" "))
         var text by remember(resource) { mutableStateOf(resource.text) }
         val isError = localeIsoCode == displayedLocales.first() && !resource.isValid
         DoubleTapToEditDenseTextField(
@@ -168,7 +168,7 @@ private fun RowScope.PluralRow(vm: PluralResourceViewModel, displayedLocales: Li
     displayedLocales.forEach { localeIsoCode ->
         Spacer(Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
-            val resource by vm.resource(resId, localeIsoCode).map { it ?: Plural() }.collectAsState(Plural())
+            val resource by vm.resource(resId, localeIsoCode).map { it ?: Plural() }.collectAsState(Plural(mapOf(Quantity.ONE to " ", Quantity.OTHER to " ")))
             val quantityModifier = Modifier.padding(vertical = 2.dp).fillMaxWidth()
             Quantity.values().forEach { quantity ->
                 var text by remember(resource) { mutableStateOf(resource[quantity].orEmpty()) }
@@ -238,7 +238,7 @@ private fun RowScope.ArrayRow(vm: ArrayResourceViewModel, displayedLocales: List
     val size by vm.arraySize(resId).collectAsState(1)
     displayedLocales.forEach { localeIsoCode ->
         Spacer(Modifier.width(8.dp))
-        val items by vm.resource(resId, localeIsoCode).map { it?.items ?: listOf() }.collectAsState(listOf())
+        val items by vm.resource(resId, localeIsoCode).map { it?.items ?: listOf() }.collectAsState(listOf(" "))
         var newItems by remember(size, items) { mutableStateOf(List(size) { items.getOrElse(it) { "" } }) }
 
         Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
