@@ -1,20 +1,19 @@
 package ui.resource.backdrop
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
 import project.Platform
-import ui.core.outlinedTextFieldColorsOnPrimary
 import ui.resource.ResourceViewModel
 import java.io.File
 import javax.swing.JFileChooser
@@ -25,17 +24,17 @@ fun ExportSettings(vm: ResourceViewModel) {
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Export Resources", style = MaterialTheme.typography.h6)
-        DestinationFileSelectionButton(Platform.ANDROID.displayName, project.androidOutputUrl) {
+        DestinationFileSelectionButton(Platform.ANDROID, project.androidOutputUrl) {
             vm.project.value = project.copy(androidOutputUrl = it)
         }
-        DestinationFileSelectionButton(Platform.IOS.displayName, project.iosOutputUrl) {
+        DestinationFileSelectionButton(Platform.IOS, project.iosOutputUrl) {
             vm.project.value = project.copy(iosOutputUrl = it)
         }
     }
 }
 
 @Composable
-private fun DestinationFileSelectionButton(platformName: String, outputUrl: String, onOutputFolderChanged: (String) -> Unit) {
+private fun DestinationFileSelectionButton(platform: Platform, outputUrl: String, onOutputFolderChanged: (String) -> Unit) {
     val scope = rememberCoroutineScope()
     var isFileDialogOpen: Boolean by remember { mutableStateOf(false) }
     var outputFolder: String by remember { mutableStateOf(outputUrl) }
@@ -50,15 +49,12 @@ private fun DestinationFileSelectionButton(platformName: String, outputUrl: Stri
         })
     }
 
-    OutlinedTextField(
-        value = outputFolder,
-        onValueChange = { outputFolder = it },
-        modifier = Modifier.clickable { isFileDialogOpen = true },
-        enabled = false,
-        label = { Text("$platformName destination") },
-        singleLine = true,
-        colors = TextFieldDefaults.outlinedTextFieldColorsOnPrimary()
-    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Button(onClick = { isFileDialogOpen = true }, colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.surface)) {
+            Text(platform.displayName)
+        }
+        Text(outputUrl)
+    }
 }
 
 @Composable
