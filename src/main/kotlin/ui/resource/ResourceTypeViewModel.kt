@@ -33,6 +33,7 @@ sealed class ResourceTypeViewModel<R : Resource>(val project: MutableStateFlow<P
             n++
         }
         resourceMetadata.value = resourceMetadata.value.plus(newId to Metadata(type))
+        scrollToItem.value = newId
     }
 
     fun updateResourceId(oldId: ResourceId, newId: ResourceId): Boolean {
