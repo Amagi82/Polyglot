@@ -124,8 +124,7 @@ private suspend fun generateFiles(vm: ResourceViewModel, snackbarHostState: Snac
     val result = snackbarHostState.showSnackbar(message = "Generating outputs", actionLabel = "Show")
     generateFiles.awaitAll()
     if (result == SnackbarResult.ActionPerformed) {
-        openUrl(vm.project.value.androidOutputUrl, snackbarHostState)
-        openUrl(vm.project.value.iosOutputUrl, snackbarHostState)
+        vm.project.value.exportUrls.forEach { openUrl(it.value, snackbarHostState) }
     }
 }
 

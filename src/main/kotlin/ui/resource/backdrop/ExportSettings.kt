@@ -24,26 +24,25 @@ fun ExportSettings(vm: ResourceViewModel) {
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Export Resources", style = MaterialTheme.typography.h6)
-        DestinationFileSelectionButton(Platform.ANDROID, project.androidOutputUrl) {
-            vm.project.value = project.copy(androidOutputUrl = it)
-        }
-        DestinationFileSelectionButton(Platform.IOS, project.iosOutputUrl) {
-            vm.project.value = project.copy(iosOutputUrl = it)
+        Platform.values().forEach { platform ->
+            DestinationFileSelectionButton(platform, platform.exportUrl(project)) {
+                vm.project.value = project.copy(exportUrls = project.exportUrls.plus(platform to it))
+            }
         }
     }
 }
 
 @Composable
-private fun DestinationFileSelectionButton(platform: Platform, outputUrl: String, onOutputFolderChanged: (String) -> Unit) {
+private fun DestinationFileSelectionButton(platform: Platform, exportUrl: String, onExportUrlChanged: (String) -> Unit) {
     val scope = rememberCoroutineScope()
     var isFileDialogOpen: Boolean by remember { mutableStateOf(false) }
-    var outputFolder: String by remember { mutableStateOf(outputUrl) }
+    var exportFolder: String by remember { mutableStateOf(exportUrl) }
 
     if (isFileDialogOpen) {
-        FileDialog(File(outputFolder), onCloseRequest = {
+        FileDialog(File(exportFolder), onCloseRequest = {
             if (it != null) scope.launch {
-                outputFolder = it
-                onOutputFolderChanged(it)
+                exportFolder = it
+                onExportUrlChanged(it)
             }
             isFileDialogOpen = false
         })
@@ -53,7 +52,7 @@ private fun DestinationFileSelectionButton(platform: Platform, outputUrl: String
         Button(onClick = { isFileDialogOpen = true }, colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.surface)) {
             Text(platform.displayName)
         }
-        Text(outputUrl)
+        Text(exportUrl)
     }
 }
 

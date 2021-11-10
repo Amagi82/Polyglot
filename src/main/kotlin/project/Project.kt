@@ -8,8 +8,7 @@ import java.io.File
 
 /**
  * @param name: Name of the project
- * @param androidOutputUrl: Set this to your project folder and Polyglot will output the files directly to that folder
- * @param iosOutputUrl: Set this to your project folder and Polyglot will output the files directly to that folder
+ * @param exportUrls: Set this to your project folders and Polyglot will generate files directly to that folder
  * @param defaultLocale: The current locale set as default, which will be used as backup if no suitable translation is found.
  * Android and iOS handle this differently:
  * With Android, the base values folder gets the default strings, and values-en, values-de, etc get the localized translations
@@ -18,18 +17,18 @@ import java.io.File
 @Immutable
 data class Project(
     val name: String,
-    val androidOutputUrl: String = "output/android",
-    val iosOutputUrl: String = "output/ios",
+    val exportUrls: Map<Platform, String> = mapOf(),
     val defaultLocale: LocaleIsoCode = LocaleIsoCode("en"),
     val locales: List<LocaleIsoCode> = listOf(defaultLocale)
 ) {
 
     fun save() {
         val props = PropertyStore(
-            PROP_ANDROID_OUTPUT to androidOutputUrl,
-            PROP_IOS_OUTPUT to iosOutputUrl,
             PROP_DEFAULT_LOCALE to defaultLocale.value,
             PROP_LOCALES to locales.sorted().joinToString(",") { it.value })
+        Platform.values().forEach { platform ->
+            props["$PROP_EXPORT_URLS.${platform.name.lowercase()}"] = exportUrls[platform] ?: "output/${platform.name.lowercase()}"
+        }
         runCatching { props.store(projectFile(name), "Project settings for $name") }.onFailure {
             println("Failed to save settings with $it")
         }
@@ -111,8 +110,7 @@ data class Project(
     }
 
     companion object {
-        private const val PROP_ANDROID_OUTPUT = "androidOutputUrl"
-        private const val PROP_IOS_OUTPUT = "iosOutputUrl"
+        private const val PROP_EXPORT_URLS = "exportUrls"
         private const val PROP_DEFAULT_LOCALE = "defaultLocale"
         private const val PROP_LOCALES = "locales"
 
@@ -125,10 +123,12 @@ data class Project(
         fun load(projectName: String): Project = with(PropertyStore(projectFile(projectName))) {
             Project(
                 name = projectName,
-                androidOutputUrl = get(PROP_ANDROID_OUTPUT) ?: "output/android",
-                iosOutputUrl = get(PROP_IOS_OUTPUT) ?: "output/ios",
+                exportUrls = filter { it.key.startsWith(PROP_EXPORT_URLS) }
+                    .map { it.key.substringAfter('.').uppercase().let(Platform::valueOf) to it.value }.toMap(),
                 defaultLocale = LocaleIsoCode(get(PROP_DEFAULT_LOCALE) ?: "en"),
-                locales = get(PROP_LOCALES)?.split(",")?.filter(String::isNotEmpty)?.map(::LocaleIsoCode)?.sortedBy { Locale[it].displayName() } ?: listOf(LocaleIsoCode("en"))
+                locales = get(PROP_LOCALES)?.split(",")?.filter(String::isNotEmpty)?.map(::LocaleIsoCode)?.sortedBy { Locale[it].displayName() } ?: listOf(
+                    LocaleIsoCode("en")
+                )
             )
         }
     }

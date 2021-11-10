@@ -18,10 +18,7 @@ enum class Platform(val iconId: String, val displayName: String) {
     ANDROID(R.drawable.android, "Android"),
     IOS(R.drawable.apple, "iOS");
 
-    fun outputFolder(project: Project) = when (this) {
-        ANDROID -> project.androidOutputUrl
-        IOS -> project.iosOutputUrl
-    }.let(::File)
+    fun exportUrl(project: Project) = project.exportUrls[this] ?: "outputs/${name.lowercase()}"
 
     fun fileName(type: ResourceType) = when (this) {
         ANDROID -> "strings.xml"

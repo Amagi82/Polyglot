@@ -23,7 +23,7 @@ import javax.xml.transform.Transformer
 fun generateIOSResources(vm: ResourceViewModel) {
     val project = vm.project.value
     val formatters = StringFormatter.defaultFormatters.filter { IOS in it.platforms }
-    val outputFolder = IOS.outputFolder(project)
+    val outputFolder = IOS.exportUrl(project).let(::File)
 
     val outputFolders = project.locales.associateWith { locale ->
         File(outputFolder, "${locale.value}.lproj").also(File::mkdirs)

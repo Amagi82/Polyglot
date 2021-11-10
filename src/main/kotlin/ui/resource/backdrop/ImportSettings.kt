@@ -9,8 +9,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import importers.importAndroidResources
-import importers.importIosResources
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.swing.Swing
@@ -63,7 +61,7 @@ fun ImportSettings(vm: ResourceViewModel) {
         val platform = fileDialog
         if (platform != null) {
             scope.launch((Dispatchers.Swing)) {
-                JFileChooser(platform.outputFolder(project).apply(File::mkdirs).absoluteFile).apply {
+                JFileChooser(platform.exportUrl(project).let(::File).apply(File::mkdirs).absoluteFile).apply {
                     dialogTitle = "Select file/directory to import"
                     fileSelectionMode = JFileChooser.FILES_AND_DIRECTORIES
                     fileFilter = object : FileFilter() {
