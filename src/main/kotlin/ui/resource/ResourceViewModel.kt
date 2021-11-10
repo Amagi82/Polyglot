@@ -2,12 +2,16 @@ package ui.resource
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import locales.Locale
 import locales.LocaleIsoCode
-import project.*
-import java.util.*
+import project.Project
+import project.ResourceId
+import project.ResourceType
 
 class ResourceViewModel(projectName: String) {
     val project = MutableStateFlow(Project.load(projectName))
@@ -18,6 +22,21 @@ class ResourceViewModel(projectName: String) {
     val strings = StringResourceViewModel(project)
     val plurals = PluralResourceViewModel(project)
     val arrays = ArrayResourceViewModel(project)
+
+    fun resourceViewModel(type: ResourceType) = when (type) {
+        ResourceType.STRINGS -> strings
+        ResourceType.PLURALS -> plurals
+        ResourceType.ARRAYS -> arrays
+    }
+
+    fun findFirstInvalidResource(): Pair<ResourceType, ResourceId>? {
+        val tab = selectedTab.value
+        resourceViewModel(tab).findFirstInvalidResource()?.let { return tab to it }
+        ResourceType.values().forEach { resourceType ->
+            if (tab != resourceType) resourceViewModel(resourceType).findFirstInvalidResource()?.let { return resourceType to it }
+        }
+        return null
+    }
 
     private val comparator = this.project.map { project ->
         Comparator<LocaleIsoCode> { o1, o2 ->

@@ -13,6 +13,7 @@ sealed class ResourceTypeViewModel<R : Resource>(val project: MutableStateFlow<P
     val resourceMetadata = MutableStateFlow(project.value.loadMetadata(type))
     val resourcesByLocale = MutableStateFlow(project.value.loadResources<R>(type))
     val displayedResources = resourceMetadata.map { it.keys.sorted() }
+    val scrollToItem = MutableStateFlow<ResourceId?>(null)
 
     init {
         GlobalScope.launch(Dispatchers.IO) { resourceMetadata.collectLatest { project.value.saveMetadata(it, type) } }
@@ -59,6 +60,11 @@ sealed class ResourceTypeViewModel<R : Resource>(val project: MutableStateFlow<P
         val metadata = resourceMetadata.value[resId] ?: Metadata(type)
         val platforms = metadata.platforms.run { if (contains(platform)) minus(platform) else plus(platform) }
         resourceMetadata.value = resourceMetadata.value.plus(resId to metadata.copy(platforms = platforms))
+    }
+
+    fun findFirstInvalidResource(): ResourceId? {
+        val defaultResources = resourcesByLocale.value[project.value.defaultLocale]!!
+        return resourceMetadata.value.keys.find { resId -> defaultResources[resId]?.isValid != true }
     }
 }
 
