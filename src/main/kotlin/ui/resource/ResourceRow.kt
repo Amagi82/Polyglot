@@ -1,6 +1,7 @@
 package ui.resource
 
 import R
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -127,12 +128,16 @@ private fun RowScope.StringRow(vm: StringResourceViewModel, displayedLocales: Li
         Spacer(Modifier.width(8.dp))
         val resource by vm.resource(resId, localeIsoCode).map { it ?: Str() }.collectAsState(Str())
         var text by remember(resource) { mutableStateOf(resource.text) }
-
+        val isError = localeIsoCode == displayedLocales.first() && !resource.isValid
         DoubleTapToEditDenseTextField(
             text = {
                 Text(
                     resource.text.ifEmpty { "(empty)" },
-                    modifier = Modifier.weight(1f).alpha(if (resource.text.isEmpty()) ContentAlpha.disabled else ContentAlpha.high).then(it)
+                    modifier = Modifier.weight(1f)
+                        .alpha(if (resource.text.isEmpty()) ContentAlpha.disabled else ContentAlpha.high)
+                        .background(color = if (isError) MaterialTheme.colors.error else Color.Unspecified)
+                        .padding(8.dp).then(it),
+                    color = if (isError) MaterialTheme.colors.onError else Color.Unspecified
                 )
             },
             textField = { modifier ->
@@ -148,7 +153,6 @@ private fun RowScope.StringRow(vm: StringResourceViewModel, displayedLocales: Li
                 true
             }
         )
-
     }
 }
 
@@ -169,12 +173,16 @@ private fun RowScope.PluralRow(vm: PluralResourceViewModel, displayedLocales: Li
             Quantity.values().forEach { quantity ->
                 var text by remember(resource) { mutableStateOf(resource[quantity].orEmpty()) }
                 if (isExpanded || quantity.isRequired || text.isNotEmpty()) {
+                    val isError = localeIsoCode == displayedLocales.first() && quantity.isRequired && text.isEmpty()
                     DoubleTapToEditDenseTextField(
                         text = {
                             Text(
                                 text = "${quantity.label}: ${resource[quantity].orEmpty().ifEmpty { "(empty)" }}",
-                                modifier = quantityModifier.alpha(if (text.isEmpty() && !quantity.isRequired) ContentAlpha.disabled else ContentAlpha.high)
-                                    .then(it)
+                                modifier = quantityModifier
+                                    .alpha(if (text.isEmpty() && !quantity.isRequired) ContentAlpha.disabled else ContentAlpha.high)
+                                    .background(color = if (isError) MaterialTheme.colors.error else Color.Unspecified)
+                                    .padding(2.dp).then(it),
+                                color = if (isError) MaterialTheme.colors.onError else Color.Unspecified
                             )
                         },
                         textField = { modifier ->
@@ -204,7 +212,6 @@ private fun RowScope.PluralRow(vm: PluralResourceViewModel, displayedLocales: Li
 private fun RowScope.ArrayRow(vm: ArrayResourceViewModel, displayedLocales: List<LocaleIsoCode>, resId: ResourceId) {
     val oldSize by vm.arraySize(resId).collectAsState(1)
     var newSize by remember(oldSize) { mutableStateOf(oldSize) }
-
     var sizeFieldHasFocus by remember { mutableStateOf(false) }
     DenseTextField(
         value = newSize.toString(),
@@ -236,11 +243,15 @@ private fun RowScope.ArrayRow(vm: ArrayResourceViewModel, displayedLocales: List
 
         Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
             newItems.forEachIndexed { index, item ->
+                val isError = localeIsoCode == displayedLocales.first() && item.isEmpty()
                 DoubleTapToEditDenseTextField(
                     text = {
                         Text(
                             item.ifEmpty { "(empty)" },
-                            modifier = Modifier.alpha(if (item.isEmpty()) ContentAlpha.disabled else ContentAlpha.high).padding(vertical = 2.dp).then(it)
+                            modifier = Modifier.alpha(if (item.isEmpty()) ContentAlpha.disabled else ContentAlpha.high)
+                                .background(color = if (isError) MaterialTheme.colors.error else Color.Unspecified)
+                                .padding(2.dp).then(it),
+                            color = if (isError) MaterialTheme.colors.onError else Color.Unspecified
                         )
                     },
                     textField = { modifier ->
