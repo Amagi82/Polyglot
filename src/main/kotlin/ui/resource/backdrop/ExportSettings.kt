@@ -20,22 +20,22 @@ import java.io.File
 import javax.swing.JFileChooser
 
 @Composable
-fun OutputSettings(vm: ResourceViewModel) {
+fun ExportSettings(vm: ResourceViewModel) {
     val project by vm.project.collectAsState()
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Outputs", style = MaterialTheme.typography.h6)
-        OutputFileSelectionButton(Platform.ANDROID.displayName, project.androidOutputUrl) {
+        Text("Export Resources", style = MaterialTheme.typography.h6)
+        DestinationFileSelectionButton(Platform.ANDROID.displayName, project.androidOutputUrl) {
             vm.project.value = project.copy(androidOutputUrl = it)
         }
-        OutputFileSelectionButton(Platform.IOS.displayName, project.iosOutputUrl) {
+        DestinationFileSelectionButton(Platform.IOS.displayName, project.iosOutputUrl) {
             vm.project.value = project.copy(iosOutputUrl = it)
         }
     }
 }
 
 @Composable
-private fun OutputFileSelectionButton(platformName: String, outputUrl: String, onOutputFolderChanged: (String) -> Unit) {
+private fun DestinationFileSelectionButton(platformName: String, outputUrl: String, onOutputFolderChanged: (String) -> Unit) {
     val scope = rememberCoroutineScope()
     var isFileDialogOpen: Boolean by remember { mutableStateOf(false) }
     var outputFolder: String by remember { mutableStateOf(outputUrl) }
@@ -55,7 +55,7 @@ private fun OutputFileSelectionButton(platformName: String, outputUrl: String, o
         onValueChange = { outputFolder = it },
         modifier = Modifier.clickable { isFileDialogOpen = true },
         enabled = false,
-        label = { Text("$platformName output") },
+        label = { Text("$platformName destination") },
         singleLine = true,
         colors = TextFieldDefaults.outlinedTextFieldColorsOnPrimary()
     )
@@ -66,7 +66,7 @@ private fun FileDialog(folder: File, onCloseRequest: (result: String?) -> Unit) 
     val scope = rememberCoroutineScope()
     scope.launch((Dispatchers.Swing)) {
         JFileChooser(folder.apply(File::mkdirs).absoluteFile).apply {
-            dialogTitle = "Choose output folder"
+            dialogTitle = "Choose destination folder"
             fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
             showOpenDialog(null)
             onCloseRequest(selectedFile?.path)
