@@ -11,9 +11,11 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import locales.Locale
 import locales.LocaleIsoCode
 import project.Resource
@@ -42,6 +44,16 @@ fun <R : Resource> ResourceTable(vm: ResourceTypeViewModel<R>, displayedLocales:
                 items(resources, key = { it.value }) { resId ->
                     ResourceRow(vm = vm, displayedLocales = displayedLocales, resId = resId)
                     Divider()
+                }
+            }
+
+            val scope = rememberCoroutineScope()
+            val scrollToItem by vm.scrollToItem.collectAsState()
+            if (scrollToItem != null) {
+                val i = resources.indexOf(scrollToItem)
+                if (i != -1) {
+                    scope.launch { state.animateScrollToItem(i) }
+                    vm.scrollToItem.value = null
                 }
             }
         }

@@ -63,7 +63,18 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                 },
                 actions = {
                     IconButton(R.drawable.darkMode, contentDescription = "Toggle dark theme", onClick = toggleDarkTheme)
-                    IconButton(Icons.Default.Send) { scope.launch { generateFiles(vm, scaffoldState.snackbarHostState) } }
+                    IconButton(Icons.Default.Send) {
+                        val firstInvalid = vm.findFirstInvalidResource()
+                        if (firstInvalid == null) {
+                            scope.launch { generateFiles(vm, scaffoldState.snackbarHostState) }
+                        } else {
+                            val (tab, resId) = firstInvalid
+                            if (tab != selectedTab) {
+                                vm.selectedTab.value = tab
+                            }
+                            vm.resourceViewModel(tab).scrollToItem.value = resId
+                        }
+                    }
                     var isMenuExpanded by remember { mutableStateOf(false) }
                     IconButton(Icons.Default.MoreVert, contentDescription = "Options") { isMenuExpanded = true }
                     Box {
@@ -90,19 +101,11 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
         frontLayerContent = {
             val displayedLocales by vm.displayedLocales.collectAsState(listOf())
 
-            when (selectedTab) {
-                ResourceType.STRINGS -> ResourceTable(vm.strings, displayedLocales, project.defaultLocale)
-                ResourceType.PLURALS -> ResourceTable(vm.plurals, displayedLocales, project.defaultLocale)
-                ResourceType.ARRAYS -> ResourceTable(vm.arrays, displayedLocales, project.defaultLocale)
-            }
+            ResourceTable(vm.resourceViewModel(selectedTab), displayedLocales, project.defaultLocale)
 
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
                 ExtendedFloatingActionButton(text = { Text("Add") },
-                    onClick = when (selectedTab) {
-                        ResourceType.STRINGS -> vm.strings::createResource
-                        ResourceType.PLURALS -> vm.plurals::createResource
-                        ResourceType.ARRAYS -> vm.arrays::createResource
-                    },
+                    onClick = vm.resourceViewModel(selectedTab)::createResource,
                     modifier = Modifier.padding(16.dp),
                     icon = { Icon(Icons.Default.Add, contentDescription = "Add new resource") })
             }
