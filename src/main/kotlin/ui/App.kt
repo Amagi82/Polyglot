@@ -17,8 +17,9 @@ fun App() {
         if (currentProject == null) {
             ProjectPicker { savedProject = it }
         } else {
+            val vm by remember { mutableStateOf(ResourceViewModel(currentProject)) }
             ResourceManager(
-                ResourceViewModel(currentProject),
+                vm,
                 toggleDarkTheme = {
                     Settings.isDarkTheme = !darkTheme
                     darkTheme = !darkTheme
