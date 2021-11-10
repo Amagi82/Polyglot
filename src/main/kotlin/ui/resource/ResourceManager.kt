@@ -17,7 +17,7 @@ import project.ResourceType
 import ui.core.IconButton
 import ui.resource.backdrop.ImportSettings
 import ui.resource.backdrop.LocaleSettings
-import ui.resource.backdrop.OutputSettings
+import ui.resource.backdrop.ExportSettings
 import java.awt.Desktop
 import java.io.File
 
@@ -83,7 +83,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 ImportSettings(vm)
-                OutputSettings(vm)
+                ExportSettings(vm)
                 LocaleSettings(vm)
             }
         },
