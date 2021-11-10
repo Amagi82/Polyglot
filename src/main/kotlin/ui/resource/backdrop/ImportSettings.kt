@@ -30,7 +30,7 @@ fun ImportSettings(vm: ResourceViewModel) {
         var importingState: Map<Platform, ImportingState> by remember { mutableStateOf(Platform.values().associateWith { ImportingState.Idle }) }
         var overwrite by remember { mutableStateOf(true) }
 
-        Text("Import", style = MaterialTheme.typography.h6)
+        Text("Import Resources", style = MaterialTheme.typography.h6)
 
         importingState.forEach { (platform, state) ->
             Button(onClick = { fileDialog = platform }, colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.surface)) {
