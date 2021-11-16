@@ -8,7 +8,7 @@ object Settings {
     private val props = PropertyStore(file)
 
     private fun save() {
-        runCatching { props.store(file, "Polyglot settings") }.onFailure {
+        runCatching { props.store("Polyglot settings") }.onFailure {
             println("Failed to save settings with $it")
         }
     }

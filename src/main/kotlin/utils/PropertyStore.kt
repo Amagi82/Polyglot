@@ -10,22 +10,12 @@ import kotlin.reflect.KProperty
  * Safe wrapper around Java Properties, which allows invalid types and then crashes at runtime
  */
 @Suppress("UNCHECKED_CAST")
-class PropertyStore() : MutableMap<String, String> {
+class PropertyStore(private val file: File) : MutableMap<String, String> {
     private val props = OrderedProperties()
 
-    constructor(vararg properties: Pair<String, String>) : this() {
-        putAll(properties)
+    init {
+        props.load(file.apply(File::createNewFile).inputStream())
     }
-
-    constructor(properties: Map<String, String>) : this() {
-        putAll(properties)
-    }
-
-    constructor(inputStream: InputStream) : this() {
-        props.load(inputStream)
-    }
-
-    constructor(file: File) : this(file.inputStream())
 
     override val size: Int = props.size
     override fun containsKey(key: String): Boolean = props.containsKey(key)
@@ -40,7 +30,7 @@ class PropertyStore() : MutableMap<String, String> {
     override fun putAll(from: Map<out String, String>) = from.forEach { (k, v) -> put(k, v) }
     override fun remove(key: String): String? = props.remove(key) as String?
 
-    fun store(file: File, comment: String = "") {
+    fun store(comment: String = "") {
         if (isEmpty()) file.delete()
         else props.store(file.outputStream(), comment)
     }
