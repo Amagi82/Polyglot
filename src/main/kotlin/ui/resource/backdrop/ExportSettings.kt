@@ -20,13 +20,13 @@ import javax.swing.JFileChooser
 
 @Composable
 fun ExportSettings(vm: ResourceViewModel) {
-    val project by vm.project.collectAsState()
+    val exportUrls by vm.exportUrls.collectAsState()
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Export Resources", style = MaterialTheme.typography.h6)
         Platform.values().forEach { platform ->
-            DestinationFileSelectionButton(platform, platform.exportUrl(project)) {
-                vm.project.value = project.copy(exportUrls = project.exportUrls.plus(platform to it))
+            DestinationFileSelectionButton(platform, exportUrls[platform] ?: platform.defaultOutputUrl) {
+                vm.exportUrls.value = exportUrls.plus(platform to it)
             }
         }
     }

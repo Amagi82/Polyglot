@@ -18,7 +18,8 @@ enum class Platform(val iconId: String, val displayName: String) {
     ANDROID(R.drawable.android, "Android"),
     IOS(R.drawable.apple, "iOS");
 
-    fun exportUrl(project: Project) = project.exportUrls[this] ?: "outputs/${name.lowercase()}"
+    val lowercase get() = name.lowercase()
+    val defaultOutputUrl: String get() = "output/$lowercase"
 
     fun fileName(type: ResourceType) = when (this) {
         ANDROID -> "strings.xml"

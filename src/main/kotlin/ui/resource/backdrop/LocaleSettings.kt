@@ -18,20 +18,19 @@ import ui.resource.ResourceViewModel
 @Composable
 fun LocaleSettings(vm: ResourceViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        val project by vm.project.collectAsState()
+        val locales by vm.locales.collectAsState()
+        val defaultLocale by vm.defaultLocale.collectAsState()
         val excludedLocales by vm.excludedLocales.collectAsState()
 
         Text("Locales", style = MaterialTheme.typography.h6)
 
-        project.locales.forEach { isoCode ->
-            val isDefault = isoCode == project.defaultLocale
+        locales.forEach { isoCode ->
+            val isDefault = isoCode == defaultLocale
             var isMenuExpanded by remember { mutableStateOf(false) }
             val isExcluded = isoCode in excludedLocales
             Chip(
-                text = { Text(Locale[isoCode].displayName(project.defaultLocale == isoCode)) },
-                onClick = {
-                    vm.excludedLocales.value = if (isExcluded) vm.excludedLocales.value.minus(isoCode) else vm.excludedLocales.value.plus(isoCode)
-                },
+                text = { Text(Locale[isoCode].displayName(defaultLocale == isoCode)) },
+                onClick = { vm.excludedLocales.value = if (isExcluded) excludedLocales.minus(isoCode) else excludedLocales.plus(isoCode) },
                 isClickEnabled = !isDefault,
                 leadingIcon = {
                     if (isExcluded) Icon(painterResource(R.drawable.visibilityOff), contentDescription = "Hidden")
@@ -48,7 +47,7 @@ fun LocaleSettings(vm: ResourceViewModel) {
                             DropdownMenu(expanded = isMenuExpanded, onDismissRequest = { isMenuExpanded = false }) {
                                 if (isoCode.isBaseLanguage) {
                                     DropdownMenuItem(onClick = {
-                                        vm.project.value = vm.project.value.copy(defaultLocale = isoCode)
+                                        vm.defaultLocale.value = isoCode
                                     }) { Text("Make default") }
                                 }
                                 DropdownMenuItem(onClick = { vm.deleteLocale(isoCode) }) { Text("Delete") }

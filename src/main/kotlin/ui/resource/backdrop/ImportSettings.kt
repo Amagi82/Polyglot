@@ -22,7 +22,6 @@ import javax.swing.filechooser.FileFilter
 @Composable
 fun ImportSettings(vm: ResourceViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        val project by vm.project.collectAsState()
         val scope = rememberCoroutineScope()
         var fileDialog: Platform? by remember { mutableStateOf(null) }
         var importingState: Map<Platform, ImportingState> by remember { mutableStateOf(Platform.values().associateWith { ImportingState.Idle }) }
@@ -59,9 +58,10 @@ fun ImportSettings(vm: ResourceViewModel) {
         }
 
         val platform = fileDialog
+        val exportUrls by vm.exportUrls.collectAsState()
         if (platform != null) {
             scope.launch((Dispatchers.Swing)) {
-                JFileChooser(platform.exportUrl(project).let(::File).apply(File::mkdirs).absoluteFile).apply {
+                JFileChooser((exportUrls[platform] ?: platform.defaultOutputUrl).let(::File).apply(File::mkdirs).absoluteFile).apply {
                     dialogTitle = "Select file/directory to import"
                     fileSelectionMode = JFileChooser.FILES_AND_DIRECTORIES
                     fileFilter = object : FileFilter() {
