@@ -1,6 +1,7 @@
 package ui.resource
 
 import R
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.*
@@ -26,7 +27,6 @@ import java.io.File
 fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closeProject: () -> Unit) {
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
-    val project by vm.project.collectAsState()
     val selectedTab by vm.selectedTab.collectAsState()
 
     BackdropScaffold(
@@ -34,7 +34,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(project.name, modifier = Modifier.weight(1f))
+                        Text(vm.project.name, modifier = Modifier.weight(1f))
                         TabRow(selectedTab.ordinal, modifier = Modifier.weight(1f), backgroundColor = MaterialTheme.colors.primary) {
                             ResourceType.values().forEach { type ->
                                 Tab(
@@ -99,9 +99,10 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
             }
         },
         frontLayerContent = {
-            val displayedLocales by vm.displayedLocales.collectAsState(listOf())
-
-            ResourceTable(vm.resourceViewModel(selectedTab), displayedLocales, project.defaultLocale)
+            val displayedLocales by vm.displayedLocales.collectAsState(null)
+            displayedLocales?.let {
+                ResourceTable(vm.resourceViewModel(selectedTab), it)
+            }
 
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
                 ExtendedFloatingActionButton(text = { Text("Add") },
@@ -127,7 +128,7 @@ private suspend fun generateFiles(vm: ResourceViewModel, snackbarHostState: Snac
     val result = snackbarHostState.showSnackbar(message = "Generating outputs", actionLabel = "Show")
     generateFiles.awaitAll()
     if (result == SnackbarResult.ActionPerformed) {
-        vm.project.value.exportUrls.forEach { openUrl(it.value, snackbarHostState) }
+        vm.exportUrls.value.forEach { openUrl(it.value, snackbarHostState) }
     }
 }
 

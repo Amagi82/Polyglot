@@ -11,16 +11,16 @@ import utils.extensions.toLowerCamelCase
 import java.io.File
 
 suspend fun importAndroidResources(vm: ResourceViewModel, file: File, overwrite: Boolean): List<File> =
-    importResources(vm) { strings, stringMetadata, plurals, pluralMetadata, arrays, arrayMetadata, arraySizes ->
+    importResources(vm) { strings, plurals, arrays, arraySizes ->
         val files = if (file.isDirectory) file.findAllStringsFilesInDirectory() else listOf(file)
         files.forEach { fileToImport ->
             val parentFolderName = fileToImport.parentFile.name
             val locale = LocaleIsoCode(if (parentFolderName.contains('-')) parentFolderName.substringAfter('-') else "en")
             val document = fileToImport.parseDocument()
 
-            importStrings(document).mergeWith(ANDROID, locale, overwrite, stringMetadata, strings)
-            importPlurals(document).mergeWith(ANDROID, locale, overwrite, pluralMetadata, plurals)
-            importArrays(document).mergeWith(ANDROID, locale, overwrite, arrayMetadata, arrays, arraySizes)
+            importStrings(document).mergeWith(ANDROID, locale, overwrite, strings)
+            importPlurals(document).mergeWith(ANDROID, locale, overwrite, plurals)
+            importArrays(document).mergeWith(ANDROID, locale, overwrite, arrays, arraySizes)
         }
         files
     }

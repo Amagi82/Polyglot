@@ -1,6 +1,7 @@
 package ui
 
 import androidx.compose.runtime.*
+import project.Project
 import ui.project.ProjectPicker
 import ui.resource.ResourceManager
 import ui.resource.ResourceViewModel
@@ -17,7 +18,7 @@ fun App() {
         if (currentProject == null) {
             ProjectPicker { savedProject = it }
         } else {
-            val vm by remember { mutableStateOf(ResourceViewModel(currentProject)) }
+            val vm by remember { mutableStateOf(ResourceViewModel(Project(currentProject))) }
             ResourceManager(
                 vm,
                 toggleDarkTheme = {

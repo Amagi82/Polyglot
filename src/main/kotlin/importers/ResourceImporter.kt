@@ -7,6 +7,7 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
 import project.*
+import ui.resource.ResourceTypeViewModel
 import ui.resource.ResourceViewModel
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
@@ -14,33 +15,27 @@ import javax.xml.parsers.DocumentBuilderFactory
 suspend fun importResources(
     vm: ResourceViewModel,
     importFiles: (
-        strings: MutableMap<LocaleIsoCode, Map<ResourceId, Str>>,
-        stringMetadata: MutableMap<ResourceId, Metadata>,
-        plurals: MutableMap<LocaleIsoCode, Map<ResourceId, Plural>>,
-        pluralMetadata: MutableMap<ResourceId, Metadata>,
-        arrays: MutableMap<LocaleIsoCode, Map<ResourceId, StringArray>>,
-        arrayMetadata: MutableMap<ResourceId, Metadata>,
+        strings: MutableResourceData<Str>,
+        plurals: MutableResourceData<Plural>,
+        arrays: MutableResourceData<StringArray>,
         arraySizes: MutableMap<ResourceId, Int>
     ) -> List<File>
 ): List<File> {
-    val strings = vm.strings.resourcesByLocale.value.toMutableMap()
-    val stringMetadata = vm.strings.resourceMetadata.value.toMutableMap()
-    val plurals = vm.plurals.resourcesByLocale.value.toMutableMap()
-    val pluralMetadata = vm.plurals.resourceMetadata.value.toMutableMap()
-    val arrays = vm.arrays.resourcesByLocale.value.toMutableMap()
-    val arrayMetadata = vm.arrays.resourceMetadata.value.toMutableMap()
+    val strings = MutableResourceData(vm.strings)
+    val plurals = MutableResourceData(vm.plurals)
+    val arrays = MutableResourceData(vm.arrays)
     val arraySizes = vm.arrays.arraySizes.value.toMutableMap()
 
     val importedFiles = withContext(Dispatchers.IO) {
-        importFiles(strings, stringMetadata, plurals, pluralMetadata, arrays, arrayMetadata, arraySizes)
+        importFiles(strings, plurals, arrays, arraySizes)
     }
 
-    vm.strings.resourcesByLocale.value = strings
-    vm.strings.resourceMetadata.value = stringMetadata
-    vm.plurals.resourcesByLocale.value = plurals
-    vm.plurals.resourceMetadata.value = pluralMetadata
-    vm.arrays.resourcesByLocale.value = arrays
-    vm.arrays.resourceMetadata.value = arrayMetadata
+    vm.strings.localizedResourcesById.value = strings.localizedResourcesById
+    vm.strings.metadataById.value = strings.metadataById.toSortedMap()
+    vm.plurals.localizedResourcesById.value = plurals.localizedResourcesById
+    vm.plurals.metadataById.value = plurals.metadataById.toSortedMap()
+    vm.arrays.localizedResourcesById.value = arrays.localizedResourcesById
+    vm.arrays.metadataById.value = arrays.metadataById.toSortedMap()
     vm.arrays.arraySizes.value = arraySizes
 
     return importedFiles
@@ -50,13 +45,13 @@ fun <R : Resource> Map<ResourceId, R>.mergeWith(
     platform: Platform,
     locale: LocaleIsoCode,
     overwrite: Boolean,
-    metadata: MutableMap<ResourceId, Metadata>,
-    resources: MutableMap<LocaleIsoCode, Map<ResourceId, R>>,
+    data: MutableResourceData<R>,
     arraySizes: MutableMap<ResourceId, Int>? = null,
 ) {
-    resources.merge(locale, this) { old, new -> if (overwrite) old + new else new + old }
     forEach { (resId, resource) ->
-        metadata.compute(resId) { _, metadata ->
+        val localeMap = data.localizedResourcesById.getOrElse(resId) { mapOf() }
+        if (overwrite || !localeMap.contains(locale)) data.localizedResourcesById[resId] = localeMap.plus(locale to resource)
+        data.metadataById.compute(resId) { _, metadata ->
             when {
                 metadata == null -> Metadata(type = resource::class.type, platforms = listOf(platform))
                 metadata.platforms.contains(platform) -> metadata
@@ -65,6 +60,16 @@ fun <R : Resource> Map<ResourceId, R>.mergeWith(
         }
         arraySizes?.merge(resId, (resource as StringArray).items.size) { old, new -> if (overwrite) new else old }
     }
+}
+
+data class MutableResourceData<R : Resource>(
+    val metadataById: MutableMap<ResourceId, Metadata>,
+    val localizedResourcesById: MutableMap<ResourceId, Map<LocaleIsoCode, R>>
+) {
+    constructor(vm: ResourceTypeViewModel<R>) : this(
+        metadataById = vm.metadataById.value.toMutableMap(),
+        localizedResourcesById = vm.localizedResourcesById.value.toMutableMap()
+    )
 }
 
 fun File.parseDocument(): Document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(this)

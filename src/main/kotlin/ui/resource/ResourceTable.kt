@@ -8,10 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -21,7 +18,9 @@ import locales.LocaleIsoCode
 import project.Resource
 
 @Composable
-fun <R : Resource> ResourceTable(vm: ResourceTypeViewModel<R>, displayedLocales: List<LocaleIsoCode>, defaultLocale: LocaleIsoCode) {
+fun <R : Resource> ResourceTable(vm: ResourceTypeViewModel<R>, displayedLocales: List<LocaleIsoCode>) {
+    val metadataById by vm.metadataById.collectAsState()
+    if (metadataById.any { it.value.type != vm.type }) return
     Row {
         val state = rememberLazyListState()
         Column(Modifier.weight(1f)) {
@@ -33,16 +32,22 @@ fun <R : Resource> ResourceTable(vm: ResourceTypeViewModel<R>, displayedLocales:
                     is PluralResourceViewModel -> Spacer(Modifier.width(40.dp))
                     is ArrayResourceViewModel -> Spacer(Modifier.width(64.dp))
                 }
-                displayedLocales.forEach {
-                    Text(Locale[it].displayName(it == defaultLocale), Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                displayedLocales.forEachIndexed { i, it ->
+                    Text(Locale[it].displayName(i == 0), Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
                 }
             }
             Divider()
 
-            val resources by vm.displayedResources.collectAsState(listOf())
+            val localizedResourcesById by vm.localizedResourcesById.collectAsState()
             LazyColumn(modifier = modifier, state = state) {
-                items(resources, key = { it.value }) { resId ->
-                    ResourceRow(vm = vm, displayedLocales = displayedLocales, resId = resId)
+                items(metadataById.keys.toList(), key = { it.value }) { resId ->
+                    ResourceRow(
+                        vm = vm,
+                        metadata = metadataById[resId]!!,
+                        displayedLocales = displayedLocales,
+                        resources = localizedResourcesById[resId].orEmpty(),
+                        resId = resId
+                    )
                     Divider()
                 }
             }
@@ -50,7 +55,7 @@ fun <R : Resource> ResourceTable(vm: ResourceTypeViewModel<R>, displayedLocales:
             val scope = rememberCoroutineScope()
             val scrollToItem by vm.scrollToItem.collectAsState()
             if (scrollToItem != null) {
-                val i = resources.indexOf(scrollToItem)
+                val i = metadataById.keys.indexOf(scrollToItem)
                 if (i != -1) {
                     scope.launch { state.animateScrollToItem(i) }
                     vm.scrollToItem.value = null

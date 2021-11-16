@@ -21,23 +21,22 @@ import javax.xml.transform.Transformer
  * Swift extension functions are generated for convenience.
  */
 fun generateIOSResources(vm: ResourceViewModel) {
-    val project = vm.project.value
+    val defaultLocale = vm.defaultLocale.value
+    val locales = vm.locales.value
     val formatters = StringFormatter.defaultFormatters.filter { IOS in it.platforms }
-    val outputFolder = IOS.exportUrl(project).let(::File)
+    val outputFolder = File(vm.exportUrls.value[IOS] ?: IOS.defaultOutputUrl)
 
-    val outputFolders = project.locales.associateWith { locale ->
+    val outputFolders = locales.associateWith { locale ->
         File(outputFolder, "${locale.value}.lproj").also(File::mkdirs)
     }
 
-    val stringWritersByLocale = outputFolders.map { (locale, outputFolder) ->
-        locale to outputFolder.createChildFile(IOS.fileName(STRINGS)).bufferedWriter()
-    }.toMap()
+    val stringWritersByLocale = outputFolders.mapValues { it.value.createChildFile(IOS.fileName(STRINGS)).bufferedWriter() }
 
-    val pluralRootXmlElementsByLocale: Map<LocaleIsoCode, Element> = project.locales
-        .filter { !vm.plurals.resourcesByLocale.value[it].isNullOrEmpty() }
+    val pluralRootXmlElementsByLocale: Map<LocaleIsoCode, Element> = vm.plurals.localizedResourcesById.value.flatMapTo(mutableSetOf()) { it.value.keys }
+        .filter { it in locales }
         .associateWith { createDocumentWithPlistDictElement() }
-    val arrayRootXmlElementsByLocale: Map<LocaleIsoCode, Element> = project.locales
-        .filter { !vm.arrays.resourcesByLocale.value[it].isNullOrEmpty() }
+    val arrayRootXmlElementsByLocale: Map<LocaleIsoCode, Element> = vm.arrays.localizedResourcesById.value.flatMapTo(mutableSetOf()) { it.value.keys }
+        .filter { it in locales }
         .associateWith { createDocumentWithPlistDictElement() }
 
     /**
@@ -146,9 +145,9 @@ fun generateIOSResources(vm: ResourceViewModel) {
     outputFolder.createChildFile("R.swift").bufferedWriter().use { writer ->
         writer.appendLine(generatedFileWarning)
         writer.appendLine("struct R {")
-        writer.appendReferences(vm.strings, project.defaultLocale, formatters)
-        writer.appendReferences(vm.plurals, project.defaultLocale, formatters)
-        writer.appendReferences(vm.arrays, project.defaultLocale, formatters)
+        writer.appendReferences(vm.strings, defaultLocale, formatters)
+        writer.appendReferences(vm.plurals, defaultLocale, formatters)
+        writer.appendReferences(vm.arrays, defaultLocale, formatters)
         writer.appendLine('}')
     }
     outputFolder.createChildFile("String+Localization.swift").bufferedWriter().use {
@@ -208,12 +207,10 @@ private fun <R : Resource> addAll(
     vm: ResourceTypeViewModel<R>,
     add: (ResourceId, LocaleIsoCode, R) -> Unit
 ) {
-    vm.resourceMetadata.value.forEach { (resId, metadata) ->
+    vm.metadataById.value.forEach { (resId, metadata) ->
         if (IOS !in metadata.platforms) return@forEach
-        vm.resourcesByLocale.value.forEach { (locale, resourceMap) ->
-            resourceMap[resId]?.let { resource ->
-                add(resId, locale, resource)
-            }
+        vm.localizedResourcesById.value[resId]?.forEach { (locale, resource) ->
+            add(resId, locale, resource)
         }
     }
 }
@@ -240,10 +237,10 @@ private val generatedFileWarning = """
     """.trimIndent()
 
 private fun <R : Resource> Writer.appendReferences(vm: ResourceTypeViewModel<R>, defaultLocale: LocaleIsoCode, formatters: List<StringFormatter>) {
-    if (vm.resourceMetadata.value.isEmpty()) return
+    if (vm.metadataById.value.isEmpty()) return
     appendLine("\tstruct ${vm.type.title.dropLast(1)} {")
-    vm.resourceMetadata.value.forEach { (resId, _) ->
-        val text = when (val res = vm.resourcesByLocale.value[defaultLocale]!![resId]!!) {
+    vm.metadataById.value.forEach { (resId, _) ->
+        val text = when (val res = vm.localizedResourcesById.value[resId]!![defaultLocale]!!) {
             is Str -> res.text.sanitized(formatters, isXml = false)
             is Plural -> res[Quantity.OTHER]!!.sanitized(formatters, isXml = false)
             is StringArray -> res.items.joinToString { it.sanitized(formatters, isXml = false) }

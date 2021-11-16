@@ -13,10 +13,9 @@ import java.io.File
  * Generates Android resources for a given language in the specified folder
  */
 fun generateAndroidResources(vm: ResourceViewModel) {
-    val project = vm.project.value
     val formatters = StringFormatter.defaultFormatters.filter { ANDROID in it.platforms }
 
-    val xmlByLocale: Map<LocaleIsoCode, Element> = project.locales.associateWith {
+    val xmlByLocale: Map<LocaleIsoCode, Element> = vm.locales.value.associateWith {
         createDocument().appendElement("resources")
     }
 
@@ -75,8 +74,10 @@ fun generateAndroidResources(vm: ResourceViewModel) {
     }
 
     val transformer = createTransformer()
+    val exportUrl = vm.exportUrls.value[ANDROID] ?: ANDROID.defaultOutputUrl
+    val defaultLocale = vm.defaultLocale.value
     xmlByLocale.forEach { (locale, xml) ->
-        val valuesFolder = File(ANDROID.exportUrl(project), "values${if (locale == project.defaultLocale) "" else "-${locale.value}"}").also(File::mkdirs)
+        val valuesFolder = File(exportUrl, "values${if (locale == defaultLocale) "" else "-${locale.value}"}").also(File::mkdirs)
         transformer.transform(xml.ownerDocument, valuesFolder.createChildFile(ANDROID.fileName(ResourceType.STRINGS)))
     }
 }
@@ -86,13 +87,12 @@ private fun <R : Resource> addAll(
     xmlByLocale: Map<LocaleIsoCode, Element>,
     add: Element.(R) -> Unit
 ) {
-    vm.resourceMetadata.value.forEach { (resId, metadata) ->
+    vm.metadataById.value.forEach { (resId, metadata) ->
         if (ANDROID !in metadata.platforms) return@forEach
-        vm.resourcesByLocale.value.forEach forEachLocale@{ (locale, resourceMap) ->
-            val resource = resourceMap[resId] ?: return@forEachLocale
+        vm.localizedResourcesById.value[resId]?.forEach { (locale, res) ->
             xmlByLocale[locale]!!.appendElement(vm.type.androidRootElementTag) {
                 setAttribute("name", resId.value.toSnakeCase())
-                add(resource)
+                add(res)
             }
         }
     }
