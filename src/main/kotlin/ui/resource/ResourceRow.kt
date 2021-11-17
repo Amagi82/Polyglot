@@ -24,6 +24,7 @@ import project.*
 import ui.core.DenseTextField
 import ui.core.IconButton
 import ui.core.onPressEnter
+import ui.core.onPressEsc
 
 
 @Composable
@@ -58,6 +59,10 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
                         .composed {
                             val focusManager = LocalFocusManager.current
                             onPressEnter(focusManager::clearFocus)
+                            onPressEsc {
+                                size = metadata.size
+                                focusManager.clearFocus()
+                            }
                         }
                         .onFocusChanged {
                             if (!it.hasFocus && metadata.size != size) {
@@ -148,7 +153,8 @@ private fun RowScope.StringField(
         shouldDropFocus = {
             if (resource.text != text) updateResource(resId, localeIsoCode, Str(text))
             true
-        }
+        },
+        cancel = { text = resource.text }
     )
 }
 
@@ -192,7 +198,8 @@ private fun RowScope.PluralFields(
                             updateResource(resId, localeIsoCode, Plural(resource.items.plus(quantity to text)))
                         }
                         true
-                    }
+                    },
+                    cancel = { text = resource[quantity].orEmpty() }
                 )
             }
         }
@@ -236,7 +243,8 @@ private fun RowScope.ArrayFields(
                 shouldDropFocus = {
                     if (item != text) updateResource(resId, localeIsoCode, StringArray(items.mapIndexed { i, item -> if (i == index) text else item }))
                     true
-                }
+                },
+                cancel = { text = item }
             )
         }
     }
@@ -246,7 +254,8 @@ private fun RowScope.ArrayFields(
 private fun DoubleTapToEditDenseTextField(
     text: @Composable (modifier: Modifier) -> Unit,
     textField: @Composable (modifier: Modifier) -> Unit,
-    shouldDropFocus: () -> Boolean
+    shouldDropFocus: () -> Boolean,
+    cancel: () -> Unit
 ) {
     var editMode by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -257,6 +266,7 @@ private fun DoubleTapToEditDenseTextField(
 
         textField(Modifier.focusRequester(focusRequester)
             .onPressEnter { if (shouldDropFocus()) focusManager.clearFocus() }
+            .onPressEsc { cancel(); focusManager.clearFocus() }
             .onFocusChanged {
                 when {
                     it.hasFocus -> Unit
@@ -313,6 +323,10 @@ private fun RowScope.EditableIdField(
                 }
                 else -> false
             }
+        },
+        cancel = {
+            error = ""
+            id = resId
         })
 }
 
