@@ -75,6 +75,7 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
         }
 
         displayedLocales.forEachIndexed { i, locale ->
+            Spacer(Modifier.width(8.dp))
             val resource = resources[locale]
             when {
                 resource is Str? && vm is StringResourceViewModel -> {
@@ -122,7 +123,6 @@ private fun RowScope.StringField(
     resId: ResourceId,
     updateResource: (ResourceId, LocaleIsoCode, Str) -> Unit,
 ) {
-    Spacer(Modifier.width(8.dp))
     var text by remember(resource) { mutableStateOf(resource.text) }
     val isError = isDefaultLocale && !resource.isValid
     DoubleTapToEditDenseTextField(
@@ -132,7 +132,7 @@ private fun RowScope.StringField(
                 modifier = Modifier.weight(1f)
                     .alpha(if (resource.text.isEmpty()) ContentAlpha.disabled else ContentAlpha.high)
                     .background(color = if (isError) MaterialTheme.colors.error else Color.Unspecified)
-                    .padding(8.dp).then(it),
+                    .padding(2.dp).then(it),
                 color = if (isError) MaterialTheme.colors.onError else Color.Unspecified
             )
         },
@@ -160,7 +160,6 @@ private fun RowScope.PluralFields(
     resId: ResourceId,
     updateResource: (ResourceId, LocaleIsoCode, Plural) -> Unit
 ) {
-    Spacer(Modifier.width(8.dp))
     Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
         val quantityModifier = Modifier.padding(vertical = 2.dp).fillMaxWidth()
         Quantity.values().forEach { quantity ->
@@ -172,7 +171,7 @@ private fun RowScope.PluralFields(
                         Text(
                             text = "${quantity.label}: ${resource[quantity].orEmpty().ifEmpty { "(empty)" }}",
                             modifier = quantityModifier
-                                .alpha(if (text.isEmpty() && !quantity.isRequired) ContentAlpha.disabled else ContentAlpha.high)
+                                .alpha(if (text.isEmpty() && (!quantity.isRequired || !isExpanded)) ContentAlpha.disabled else ContentAlpha.high)
                                 .background(color = if (isError) MaterialTheme.colors.error else Color.Unspecified)
                                 .padding(2.dp).then(it),
                             color = if (isError) MaterialTheme.colors.onError else Color.Unspecified
@@ -209,7 +208,6 @@ private fun RowScope.ArrayFields(
     resId: ResourceId,
     updateResource: (ResourceId, LocaleIsoCode, StringArray) -> Unit
 ) {
-    Spacer(Modifier.width(8.dp))
     val items = remember(resource, size) { List(size) { resource.items.getOrNull(it) ?: "" } }
 
     Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
