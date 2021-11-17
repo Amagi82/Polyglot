@@ -79,7 +79,6 @@ sealed class ResourceTypeViewModel<R : Resource, M : Metadata<M>>(
             propertyStore["${newId.value}.${k.substringAfter('.')}"] = v
         }
         saveToDisk()
-
         return true
     }
 
@@ -113,9 +112,8 @@ sealed class ResourceTypeViewModel<R : Resource, M : Metadata<M>>(
     fun findFirstInvalidResource(): ResourceId? =
         localizedResourcesById.value.entries.find { (_, localeMap) -> localeMap[defaultLocale()]?.isValid != true }?.key
 
-    protected abstract fun MutableMap<LocaleIsoCode, R>.addResource(resId: ResourceId, key: String, value: String)
-
     protected open fun M?.copyOrCreate(arraySize: Int): M? = null
+    protected abstract fun MutableMap<LocaleIsoCode, R>.addResource(resId: ResourceId, key: String, value: String)
     protected abstract fun PropertyStore.putResource(baseKey: String, res: R)
 
     protected fun saveToDisk() {
@@ -165,10 +163,10 @@ class ArrayResourceViewModel(project: Project, defaultLocale: () -> LocaleIsoCod
     ResourceTypeViewModel<StringArray, ArrayMetadata>(project, ResourceType.ARRAYS, defaultLocale) {
 
     override fun MutableMap<LocaleIsoCode, StringArray>.addResource(resId: ResourceId, key: String, value: String) {
-        if (key == "size") return
+        if (key == ArrayMetadata.PROP_SIZE) return
         val locale = LocaleIsoCode(key.substringBefore('.'))
         val index = key.substringAfter('.').toInt()
-        val size = propertyStore["${resId.value}.size"]?.toInt() ?: (index + 1)
+        val size = propertyStore[ArrayMetadata.sizeKey(resId)]?.toInt() ?: (index + 1)
         val items = get(locale)?.items
         put(locale, StringArray(List(size) { i -> if (i == index) value else items?.getOrNull(i) ?: "" }))
     }
@@ -184,7 +182,7 @@ class ArrayResourceViewModel(project: Project, defaultLocale: () -> LocaleIsoCod
             it.plus(resId to it[resId]?.mapValues { (_, array) -> StringArray(List(size) { i -> array.items.getOrElse(i) { "" } }) }.orEmpty())
         }
 
-        propertyStore["${resId.value}.size"] = "$size"
+        propertyStore[ArrayMetadata.sizeKey(resId)] = "$size"
         if (oldSize > size) {
             propertyStore.forEach { (k, _) ->
                 if (k.substringBefore('.') == resId.value && k.last().isDigit() && k.substringAfterLast('.').toInt() > size) {
