@@ -146,8 +146,7 @@ private fun RowScope.StringField(
             DenseTextField(
                 value = text,
                 onValueChange = { text = it },
-                modifier = Modifier.weight(1f).then(modifier),
-                singleLine = true
+                modifier = Modifier.weight(1f).then(modifier)
             )
         },
         shouldDropFocus = {
@@ -189,8 +188,7 @@ private fun RowScope.PluralFields(
                             value = text,
                             onValueChange = { text = it },
                             modifier = quantityModifier.then(modifier),
-                            label = { Text(quantity.label) },
-                            singleLine = true
+                            label = { Text(quantity.label) }
                         )
                     },
                     shouldDropFocus = {
@@ -236,8 +234,7 @@ private fun RowScope.ArrayFields(
                     DenseTextField(
                         value = text,
                         onValueChange = { text = it },
-                        modifier = Modifier.padding(vertical = 2.dp).fillMaxWidth().then(modifier),
-                        singleLine = true
+                        modifier = Modifier.padding(vertical = 2.dp).fillMaxWidth().then(modifier)
                     )
                 },
                 shouldDropFocus = {
