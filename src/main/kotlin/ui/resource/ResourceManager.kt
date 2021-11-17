@@ -13,9 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.update
+import project.GroupId
 import project.Platform
 import project.ResourceType
 import ui.core.IconButton
+import ui.core.onPressEnter
+import ui.core.onPressEsc
 import ui.resource.backdrop.ImportSettings
 import ui.resource.backdrop.LocaleSettings
 import ui.resource.backdrop.ExportSettings
@@ -29,6 +32,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
     val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
     val selectedTab by vm.selectedTab.collectAsState()
     val isMultiSelectEnabled by vm.isMultiSelectEnabled.collectAsState()
+    var isLabelDialogShown by remember { mutableStateOf(false) }
 
     BackdropScaffold(
         appBar = {
@@ -63,6 +67,14 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                     }
                 },
                 actions = {
+                    if (isMultiSelectEnabled) {
+                        IconButton(R.drawable.label, contentDescription = "Add to Group") { isLabelDialogShown = true }
+                        IconButton(R.drawable.labelOff, contentDescription = "Remove from Group") {
+                            vm.resourceViewModel(selectedTab).putSelectedInGroup(GroupId())
+                        }
+                    } else {
+                        Spacer(Modifier.width(96.dp))
+                    }
                     IconButton(
                         if (isMultiSelectEnabled) R.drawable.rule else R.drawable.checklist,
                         contentDescription = "Toggle multi-select",
@@ -109,6 +121,16 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                 ResourceTable(vm.resourceViewModel(selectedTab), displayedLocales = it, isMultiSelectEnabled = isMultiSelectEnabled)
             }
 
+            if (isLabelDialogShown) {
+                GroupIdSelectionDialog(
+                    dismiss = { isLabelDialogShown = false },
+                    putSelectedInGroup = {
+                        vm.resourceViewModel(selectedTab).putSelectedInGroup(it)
+                        isLabelDialogShown = false
+                    }
+                )
+            }
+
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
                 ExtendedFloatingActionButton(text = { Text("Add") },
                     onClick = vm.resourceViewModel(selectedTab)::createResource,
@@ -118,6 +140,38 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
         },
         scaffoldState = scaffoldState
     )
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun GroupIdSelectionDialog(dismiss: () -> Unit, putSelectedInGroup: (GroupId) -> Unit) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        var group by remember { mutableStateOf(GroupId()) }
+        AlertDialog(
+            onDismissRequest = dismiss,
+            confirmButton = {
+                TextButton(onClick = { putSelectedInGroup(group) }, enabled = group.value.isNotEmpty()) {
+                    Text("Add")
+                }
+            },
+            modifier = Modifier.onPressEnter { putSelectedInGroup(group) }.onPressEsc(dismiss),
+            dismissButton = {
+                TextButton(onClick = dismiss) {
+                    Text("Cancel")
+                }
+            },
+            text = {
+                Column(Modifier.padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("Add selected rows to group", style = MaterialTheme.typography.subtitle1)
+                    TextField(
+                        value = group.value,
+                        onValueChange = { group = GroupId(it.filter(Char::isLetterOrDigit)) },
+                        singleLine = true
+                    )
+                }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterialApi::class)
