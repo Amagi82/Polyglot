@@ -12,14 +12,14 @@ import utils.extensions.toLowerCamelCase
 import java.io.File
 
 suspend fun importIosResources(vm: ResourceViewModel, file: File, overwrite: Boolean): List<File> =
-    importResources(vm) { strings, plurals, arrays, arraySizes ->
+    importResources(vm) { strings, plurals, arrays ->
         val files = if (file.isDirectory) file.findAllStringsFilesInDirectory() else listOf(file)
         files.forEach { fileToImport ->
             val locale = LocaleIsoCode(fileToImport.parentFile.name.substringBefore('.'))
             when (fileToImport.name) {
                 IOS.fileName(STRINGS) -> importStrings(fileToImport).mergeWith(IOS, locale, overwrite, strings)
                 IOS.fileName(PLURALS) -> importPlurals(fileToImport.parseDocument()).mergeWith(IOS, locale, overwrite, plurals)
-                IOS.fileName(ARRAYS) -> importArrays(fileToImport.parseDocument()).mergeWith(IOS, locale, overwrite, arrays, arraySizes)
+                IOS.fileName(ARRAYS) -> importArrays(fileToImport.parseDocument()).mergeWith(IOS, locale, overwrite, arrays)
             }
         }
         files

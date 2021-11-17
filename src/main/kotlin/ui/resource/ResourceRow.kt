@@ -26,9 +26,9 @@ import ui.core.onPressEnter
 
 
 @Composable
-fun <T : Resource> ResourceRow(
-    vm: ResourceTypeViewModel<T>,
-    metadata: Metadata,
+fun <T : Resource, M : Metadata<M>> ResourceRow(
+    vm: ResourceTypeViewModel<T, M>,
+    metadata: M,
     displayedLocales: List<LocaleIsoCode>,
     resources: Map<LocaleIsoCode, T>,
     resId: ResourceId
@@ -36,11 +36,10 @@ fun <T : Resource> ResourceRow(
     Row(verticalAlignment = Alignment.CenterVertically) {
         EditableIdField(resId = resId, removeResource = vm::removeResource, updateResourceId = vm::updateResourceId)
         var isPluralExpanded by remember { mutableStateOf(false) }
-        var arraySize by remember { mutableStateOf(0) }
 
-        when (vm) {
-            is StringResourceViewModel -> Unit
-            is PluralResourceViewModel -> {
+        when {
+            vm is StringResourceViewModel -> Unit
+            vm is PluralResourceViewModel -> {
                 IconButton(
                     resourcePath = if (isPluralExpanded) R.drawable.compress else R.drawable.expand,
                     contentDescription = if (isPluralExpanded) "Collapse quantity options" else "Show all quantity options"
@@ -48,21 +47,20 @@ fun <T : Resource> ResourceRow(
                     isPluralExpanded = !isPluralExpanded
                 }
             }
-            is ArrayResourceViewModel -> {
-                val arraySizes by vm.arraySizes.collectAsState()
-                arraySize = arraySizes[resId] ?: 0
+            vm is ArrayResourceViewModel && metadata is ArrayMetadata -> {
+                var size by remember(metadata) { mutableStateOf(metadata.size) }
                 var sizeFieldHasFocus by remember { mutableStateOf(false) }
                 DenseTextField(
-                    value = arraySize.toString(),
-                    onValueChange = { arraySize = it.filter(Char::isDigit).toIntOrNull()?.coerceAtLeast(1) ?: 1 },
+                    value = size.toString(),
+                    onValueChange = { size = it.filter(Char::isDigit).toIntOrNull()?.coerceAtLeast(1) ?: 1 },
                     modifier = Modifier.padding(start = 8.dp).width(64.dp)
                         .composed {
                             val focusManager = LocalFocusManager.current
                             onPressEnter(focusManager::clearFocus)
                         }
                         .onFocusChanged {
-                            if (!it.hasFocus && arraySizes[resId] != arraySize) {
-                                vm.updateArraySize(resId, arraySize)
+                            if (!it.hasFocus && metadata.size != size) {
+                                vm.updateArraySize(resId, size)
                             }
                             sizeFieldHasFocus = it.hasFocus
                         },
@@ -98,12 +96,12 @@ fun <T : Resource> ResourceRow(
                         updateResource = vm::updateResource
                     )
                 }
-                resource is StringArray? && vm is ArrayResourceViewModel -> {
+                resource is StringArray? && vm is ArrayResourceViewModel && metadata is ArrayMetadata -> {
                     ArrayFields(
                         localeIsoCode = locale,
-                        resource = resource ?: StringArray(List(arraySize) { "" }),
+                        resource = resource ?: StringArray(),
                         isDefaultLocale = i == 0,
-                        size = arraySize,
+                        size = metadata.size,
                         resId = resId,
                         updateResource = vm::updateResource
                     )
@@ -547,7 +545,6 @@ private fun RowScope.ArrayFields(
         }
     }
 }*/
-
 
 /*
 @Composable

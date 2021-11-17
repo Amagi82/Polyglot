@@ -82,8 +82,8 @@ fun generateAndroidResources(vm: ResourceViewModel) {
     }
 }
 
-private fun <R : Resource> addAll(
-    vm: ResourceTypeViewModel<R>,
+private fun <R : Resource, M : Metadata<M>> addAll(
+    vm: ResourceTypeViewModel<R, M>,
     xmlByLocale: Map<LocaleIsoCode, Element>,
     add: Element.(R) -> Unit
 ) {

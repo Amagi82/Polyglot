@@ -15,19 +15,17 @@ import javax.xml.parsers.DocumentBuilderFactory
 suspend fun importResources(
     vm: ResourceViewModel,
     importFiles: (
-        strings: MutableResourceData<Str>,
-        plurals: MutableResourceData<Plural>,
-        arrays: MutableResourceData<StringArray>,
-        arraySizes: MutableMap<ResourceId, Int>
+        strings: MutableResourceData<Str, StringMetadata>,
+        plurals: MutableResourceData<Plural, PluralMetadata>,
+        arrays: MutableResourceData<StringArray, ArrayMetadata>
     ) -> List<File>
 ): List<File> {
     val strings = MutableResourceData(vm.strings)
     val plurals = MutableResourceData(vm.plurals)
     val arrays = MutableResourceData(vm.arrays)
-    val arraySizes = vm.arrays.arraySizes.value.toMutableMap()
 
     val importedFiles = withContext(Dispatchers.IO) {
-        importFiles(strings, plurals, arrays, arraySizes)
+        importFiles(strings, plurals, arrays)
     }
 
     vm.strings.localizedResourcesById.value = strings.localizedResourcesById
@@ -36,17 +34,15 @@ suspend fun importResources(
     vm.plurals.metadataById.value = plurals.metadataById.toSortedMap()
     vm.arrays.localizedResourcesById.value = arrays.localizedResourcesById
     vm.arrays.metadataById.value = arrays.metadataById.toSortedMap()
-    vm.arrays.arraySizes.value = arraySizes
 
     return importedFiles
 }
 
-fun <R : Resource> Map<ResourceId, R>.mergeWith(
+fun <R : Resource, M : Metadata<M>> Map<ResourceId, R>.mergeWith(
     platform: Platform,
     locale: LocaleIsoCode,
     overwrite: Boolean,
-    data: MutableResourceData<R>,
-    arraySizes: MutableMap<ResourceId, Int>? = null,
+    data: MutableResourceData<R, M>,
 ) {
     forEach { (resId, resource) ->
         val localeMap = data.localizedResourcesById.getOrElse(resId) { mapOf() }
@@ -55,18 +51,17 @@ fun <R : Resource> Map<ResourceId, R>.mergeWith(
             when {
                 metadata == null -> Metadata(type = resource::class.type, platforms = listOf(platform))
                 metadata.platforms.contains(platform) -> metadata
-                else -> metadata.copy(platforms = metadata.platforms.plus(platform).sorted())
+                else -> metadata.copyImpl(platforms = metadata.platforms.plus(platform).sorted())
             }
         }
-        arraySizes?.merge(resId, (resource as StringArray).items.size) { old, new -> if (overwrite) new else old }
     }
 }
 
-data class MutableResourceData<R : Resource>(
-    val metadataById: MutableMap<ResourceId, Metadata>,
+data class MutableResourceData<R : Resource, M : Metadata<M>>(
+    val metadataById: MutableMap<ResourceId, M>,
     val localizedResourcesById: MutableMap<ResourceId, Map<LocaleIsoCode, R>>
 ) {
-    constructor(vm: ResourceTypeViewModel<R>) : this(
+    constructor(vm: ResourceTypeViewModel<R, M>) : this(
         metadataById = vm.metadataById.value.toMutableMap(),
         localizedResourcesById = vm.localizedResourcesById.value.toMutableMap()
     )
