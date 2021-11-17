@@ -42,33 +42,10 @@ fun generateIOSResources(vm: ResourceViewModel) {
     /**
      * "identifier" = "Localized text";
      */
-
-    /**
-     * "identifier" = "Localized text";
-     */
     addAll(vm.strings) { id, locale, res ->
         val txt = res.text.sanitized(formatters, isXml = false)
         stringWritersByLocale[locale]!!.appendLine("\"${id.value.toLowerCamelCase()}\" = \"$txt\";")
     }
-
-    /**
-     * <key>duration_days</key>
-     * <dict>
-     *   <key>NSStringLocalizedFormatKey</key>
-     *   <string>%#@value@</string>
-     *   <key>value</key>
-     *   <dict>
-     *       <key>NSStringFormatSpecTypeKey</key>
-     *       <string>NSStringPluralRuleType</string>
-     *       <key>NSStringFormatValueTypeKey</key>
-     *       <string>d</string>
-     *       <key>one</key>
-     *       <string>%d day</string>
-     *       <key>other</key>
-     *       <string>%d days</string>
-     *   </dict>
-     * </dict>
-     */
 
     /**
      * <key>duration_days</key>
@@ -105,14 +82,6 @@ fun generateIOSResources(vm: ResourceViewModel) {
             }
         }
     }
-
-    /**
-     * <key>alert_cancel_reasons</key>
-     * <array>
-     *   <string>Time</string>
-     *   <string>Wage</string>
-     * </array>
-     */
 
     /**
      * <key>alert_cancel_reasons</key>

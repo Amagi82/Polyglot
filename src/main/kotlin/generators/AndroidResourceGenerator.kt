@@ -22,21 +22,9 @@ fun generateAndroidResources(vm: ResourceViewModel) {
     /**
      * <string name="dragon">Trogdor the Burninator</string>
      * */
-
-    /**
-     * <string name="dragon">Trogdor the Burninator</string>
-     * */
     addAll(vm.strings, xmlByLocale) { res ->
         appendTextNode(res.text.sanitized(formatters))
     }
-
-    /**
-     * <plurals name="numberOfSongsAvailable">
-     *     <item quantity="one">Znaleziono %d piosenkę.</item>
-     *     <item quantity="few">Znaleziono %d piosenki.</item>
-     *     <item quantity="other">Znaleziono %d piosenek.</item>
-     * </plurals>
-     */
 
     /**
      * <plurals name="numberOfSongsAvailable">
@@ -53,13 +41,6 @@ fun generateAndroidResources(vm: ResourceViewModel) {
             }
         }
     }
-
-    /**
-     * <string-array name="country_names">
-     *      <item>France</item>
-     *      <item>Germany</item>
-     * </string-array>
-     */
 
     /**
      * <string-array name="country_names">
