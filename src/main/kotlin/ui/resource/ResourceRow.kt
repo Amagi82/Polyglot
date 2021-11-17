@@ -5,6 +5,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.mouseClickable
 import androidx.compose.material.*
 import androidx.compose.material.TextFieldDefaults.BackgroundOpacity
 import androidx.compose.runtime.*
@@ -16,7 +17,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.isCtrlPressed
+import androidx.compose.ui.input.pointer.isShiftPressed
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
@@ -34,10 +36,18 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
     metadata: M,
     displayedLocales: List<LocaleIsoCode>,
     resources: Map<LocaleIsoCode, T>,
-    resId: ResourceId
+    resId: ResourceId,
+    isMultiSelectEnabled: Boolean,
+    isSelected: Boolean,
+    onClick: (isCtrlPressed: Boolean, isShiftPressed: Boolean) -> Unit
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        EditableIdField(resId = resId, removeResource = vm::removeResource, updateResourceId = vm::updateResourceId)
+    Row(
+        modifier = Modifier.background(if (isSelected) MaterialTheme.colors.onSurface.copy(alpha = 0.12f) else Color.Unspecified)
+            .mouseClickable(enabled = isMultiSelectEnabled) { onClick(keyboardModifiers.isCtrlPressed, keyboardModifiers.isShiftPressed) }
+            .animateContentSize(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        EditableIdField(resId = resId, isSelectable = !isMultiSelectEnabled, removeResource = vm::removeResource, updateResourceId = vm::updateResourceId)
         var isPluralExpanded by remember { mutableStateOf(false) }
 
         when {
@@ -90,6 +100,7 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
                         localeIsoCode = locale,
                         resource = resource ?: Str(),
                         isDefaultLocale = i == 0,
+                        isSelectable = !isMultiSelectEnabled,
                         resId = resId,
                         updateResource = vm::updateResource
                     )
@@ -99,6 +110,7 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
                         localeIsoCode = locale,
                         resource = resource ?: Plural(),
                         isDefaultLocale = i == 0,
+                        isSelectable = !isMultiSelectEnabled,
                         isExpanded = isPluralExpanded,
                         resId = resId,
                         updateResource = vm::updateResource
@@ -109,6 +121,7 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
                         localeIsoCode = locale,
                         resource = resource ?: StringArray(),
                         isDefaultLocale = i == 0,
+                        isSelectable = !isMultiSelectEnabled,
                         size = metadata.size,
                         resId = resId,
                         updateResource = vm::updateResource
@@ -127,6 +140,7 @@ private fun RowScope.StringField(
     localeIsoCode: LocaleIsoCode,
     resource: Str,
     isDefaultLocale: Boolean,
+    isSelectable: Boolean,
     resId: ResourceId,
     updateResource: (ResourceId, LocaleIsoCode, Str) -> Unit,
 ) {
@@ -150,6 +164,7 @@ private fun RowScope.StringField(
                 modifier = Modifier.weight(1f).then(modifier)
             )
         },
+        isSelectable = isSelectable,
         shouldDropFocus = {
             if (resource.text != text) updateResource(resId, localeIsoCode, Str(text))
             true
@@ -163,11 +178,12 @@ private fun RowScope.PluralFields(
     localeIsoCode: LocaleIsoCode,
     resource: Plural,
     isDefaultLocale: Boolean,
+    isSelectable: Boolean,
     isExpanded: Boolean,
     resId: ResourceId,
     updateResource: (ResourceId, LocaleIsoCode, Plural) -> Unit
 ) {
-    Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp).animateContentSize()) {
+    Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
         val quantityModifier = Modifier.padding(vertical = 2.dp).fillMaxWidth()
         Quantity.values().forEach { quantity ->
             var text by remember(resource) { mutableStateOf(resource[quantity].orEmpty()) }
@@ -192,6 +208,7 @@ private fun RowScope.PluralFields(
                             label = { Text(quantity.label) }
                         )
                     },
+                    isSelectable = isSelectable,
                     shouldDropFocus = {
                         if (resource[quantity].orEmpty() != text) {
                             updateResource(resId, localeIsoCode, Plural(resource.items.plus(quantity to text)))
@@ -211,6 +228,7 @@ private fun RowScope.ArrayFields(
     localeIsoCode: LocaleIsoCode,
     resource: StringArray,
     isDefaultLocale: Boolean,
+    isSelectable: Boolean,
     size: Int,
     resId: ResourceId,
     updateResource: (ResourceId, LocaleIsoCode, StringArray) -> Unit
@@ -238,6 +256,7 @@ private fun RowScope.ArrayFields(
                         modifier = Modifier.padding(vertical = 2.dp).fillMaxWidth().then(modifier)
                     )
                 },
+                isSelectable = isSelectable,
                 shouldDropFocus = {
                     if (item != text) updateResource(resId, localeIsoCode, StringArray(items.mapIndexed { i, item -> if (i == index) text else item }))
                     true
@@ -255,6 +274,7 @@ private fun RowScope.ArrayFields(
 private fun DoubleClickToEditTextField(
     text: @Composable (modifier: Modifier) -> Unit,
     textField: @Composable (modifier: Modifier) -> Unit,
+    isSelectable: Boolean,
     shouldDropFocus: () -> Boolean,
     cancel: () -> Unit
 ) {
@@ -280,7 +300,7 @@ private fun DoubleClickToEditTextField(
     } else {
         text(
             Modifier.defaultMinSize(minHeight = 40.dp)
-                .combinedClickable(onDoubleClick = { editMode = true }) {}
+                .run { if (isSelectable) combinedClickable(onDoubleClick = { editMode = true }) {} else this }
                 .wrapContentHeight(Alignment.CenterVertically)
         )
     }
@@ -289,6 +309,7 @@ private fun DoubleClickToEditTextField(
 @Composable
 private fun RowScope.EditableIdField(
     resId: ResourceId,
+    isSelectable: Boolean,
     removeResource: (ResourceId) -> Unit,
     updateResourceId: (old: ResourceId, new: ResourceId) -> Boolean
 ) {
@@ -315,6 +336,7 @@ private fun RowScope.EditableIdField(
                 }
             }
         },
+        isSelectable = isSelectable,
         shouldDropFocus = {
             when {
                 resId == id -> true

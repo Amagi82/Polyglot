@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.update
 import project.Platform
 import project.ResourceType
 import ui.core.IconButton
@@ -27,6 +28,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberBackdropScaffoldState(BackdropValue.Concealed)
     val selectedTab by vm.selectedTab.collectAsState()
+    val isMultiSelectEnabled by vm.isMultiSelectEnabled.collectAsState()
 
     BackdropScaffold(
         appBar = {
@@ -61,6 +63,10 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                     }
                 },
                 actions = {
+                    IconButton(
+                        if (isMultiSelectEnabled) R.drawable.rule else R.drawable.checklist,
+                        contentDescription = "Toggle multi-select",
+                        onClick = { vm.isMultiSelectEnabled.update { !it } })
                     IconButton(R.drawable.darkMode, contentDescription = "Toggle dark theme", onClick = toggleDarkTheme)
                     IconButton(Icons.Default.Send) {
                         val firstInvalid = vm.findFirstInvalidResource()
@@ -100,7 +106,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
         frontLayerContent = {
             val displayedLocales by vm.displayedLocales.collectAsState(null)
             displayedLocales?.let {
-                ResourceTable(vm.resourceViewModel(selectedTab), it)
+                ResourceTable(vm.resourceViewModel(selectedTab), displayedLocales = it, isMultiSelectEnabled = isMultiSelectEnabled)
             }
 
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {

@@ -27,6 +27,7 @@ sealed class ResourceTypeViewModel<R : Resource, M : Metadata<M>>(
 
     val metadataById: MutableStateFlow<SortedMap<ResourceId, M>>
     val localizedResourcesById: MutableStateFlow<Map<ResourceId, Map<LocaleIsoCode, R>>>
+    val selectedRows = MutableStateFlow(listOf<ResourceId>())
 
     init {
         val metadata = sortedMapOf<ResourceId, M>()

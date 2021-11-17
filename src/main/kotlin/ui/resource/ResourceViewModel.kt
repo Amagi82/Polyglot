@@ -19,6 +19,7 @@ import java.io.File
 class ResourceViewModel(val project: Project) {
     val excludedLocales = MutableStateFlow(setOf<LocaleIsoCode>())
     val selectedTab = MutableStateFlow(ResourceType.STRINGS)
+    val isMultiSelectEnabled = MutableStateFlow(false)
 
     private val projectStore = PropertyStore(File(Project.projectFolder(project.name), "project.properties"))
 

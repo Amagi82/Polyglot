@@ -19,9 +19,10 @@ import locales.Locale
 import locales.LocaleIsoCode
 import project.Metadata
 import project.Resource
+import project.ResourceId
 
 @Composable
-fun <R : Resource, M : Metadata<M>> ResourceTable(vm: ResourceTypeViewModel<R, M>, displayedLocales: List<LocaleIsoCode>) {
+fun <R : Resource, M : Metadata<M>> ResourceTable(vm: ResourceTypeViewModel<R, M>, displayedLocales: List<LocaleIsoCode>, isMultiSelectEnabled: Boolean) {
     Row {
         val state = rememberLazyListState()
         Column(Modifier.weight(1f)) {
@@ -38,15 +39,37 @@ fun <R : Resource, M : Metadata<M>> ResourceTable(vm: ResourceTypeViewModel<R, M
 
             val metadataById by vm.metadataById.collectAsState()
             val filteredMetadata = metadataById.filter { it.value.type == vm.type }
+            val keys = filteredMetadata.keys.toList()
             val localizedResourcesById by vm.localizedResourcesById.collectAsState()
+
+            val selectedRows by vm.selectedRows.collectAsState()
+            var firstClickIndex by remember(metadataById) { mutableStateOf<Int?>(null) }
+
             LazyColumn(modifier = modifier, state = state) {
-                items(filteredMetadata.keys.toList(), key = { it.value }) { resId ->
+                items(keys, key = { it.value }) { resId ->
                     ResourceRow(
                         vm = vm,
                         metadata = filteredMetadata[resId]!!,
                         displayedLocales = displayedLocales,
                         resources = localizedResourcesById[resId].orEmpty(),
-                        resId = resId
+                        resId = resId,
+                        isMultiSelectEnabled = isMultiSelectEnabled,
+                        isSelected = resId in selectedRows,
+                        onClick = { isCtrlPressed, isShiftPressed ->
+                            val isSelected = resId in selectedRows
+                            val clickIndex = keys.indexOf(resId)
+                            val firstIndex = firstClickIndex
+                            vm.selectedRows.value = when {
+                                isCtrlPressed && isSelected -> selectedRows.minus(resId).also { if (it.isEmpty()) firstClickIndex = null }
+                                isCtrlPressed -> selectedRows.plus(resId).also { if (firstClickIndex == null) firstClickIndex = clickIndex }
+                                isShiftPressed && selectedRows.isEmpty() -> listOf(resId).also { firstClickIndex = clickIndex }
+                                isShiftPressed && firstIndex != null && clickIndex < firstIndex -> keys.slice(clickIndex..firstIndex)
+                                isShiftPressed && firstIndex != null && clickIndex > firstIndex -> keys.slice(firstIndex..clickIndex)
+                                isShiftPressed && firstIndex == clickIndex -> selectedRows
+                                isSelected -> listOf<ResourceId>().also { firstClickIndex = null }
+                                else -> listOf(resId).also { firstClickIndex = clickIndex }
+                            }
+                        }
                     )
                     Divider()
                 }
@@ -55,7 +78,7 @@ fun <R : Resource, M : Metadata<M>> ResourceTable(vm: ResourceTypeViewModel<R, M
             val scope = rememberCoroutineScope()
             val scrollToItem by vm.scrollToItem.collectAsState()
             if (scrollToItem != null) {
-                val i = filteredMetadata.keys.indexOf(scrollToItem)
+                val i = keys.indexOf(scrollToItem)
                 if (i != -1) {
                     scope.launch { state.animateScrollToItem(i) }
                     vm.scrollToItem.value = null
