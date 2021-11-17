@@ -18,10 +18,11 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import locales.LocaleIsoCode
 import project.*
-import ui.core.DenseTextField
 import ui.core.IconButton
 import ui.core.onPressEnter
 import ui.core.onPressEsc
@@ -52,7 +53,7 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
             vm is ArrayResourceViewModel && metadata is ArrayMetadata -> {
                 var size by remember(metadata) { mutableStateOf(metadata.size) }
                 var sizeFieldHasFocus by remember { mutableStateOf(false) }
-                DenseTextField(
+                TextField(
                     value = size.toString(),
                     onValueChange = { size = it.filter(Char::isDigit).toIntOrNull()?.coerceAtLeast(1) ?: 1 },
                     modifier = Modifier.padding(start = 8.dp).width(64.dp)
@@ -131,7 +132,7 @@ private fun RowScope.StringField(
 ) {
     var text by remember(resource) { mutableStateOf(resource.text) }
     val isError = isDefaultLocale && !resource.isValid
-    DoubleTapToEditDenseTextField(
+    DoubleClickToEditTextField(
         text = {
             Text(
                 resource.text.ifEmpty { "(empty)" },
@@ -143,7 +144,7 @@ private fun RowScope.StringField(
             )
         },
         textField = { modifier ->
-            DenseTextField(
+            TextFieldWithCursorPositionEnd(
                 value = text,
                 onValueChange = { text = it },
                 modifier = Modifier.weight(1f).then(modifier)
@@ -172,7 +173,7 @@ private fun RowScope.PluralFields(
             var text by remember(resource) { mutableStateOf(resource[quantity].orEmpty()) }
             if (isExpanded || quantity.isRequired || text.isNotEmpty()) {
                 val isError = isDefaultLocale && quantity.isRequired && text.isEmpty()
-                DoubleTapToEditDenseTextField(
+                DoubleClickToEditTextField(
                     text = {
                         Text(
                             text = "${quantity.label}: ${resource[quantity].orEmpty().ifEmpty { "(empty)" }}",
@@ -184,7 +185,7 @@ private fun RowScope.PluralFields(
                         )
                     },
                     textField = { modifier ->
-                        DenseTextField(
+                        TextFieldWithCursorPositionEnd(
                             value = text,
                             onValueChange = { text = it },
                             modifier = quantityModifier.then(modifier),
@@ -220,7 +221,7 @@ private fun RowScope.ArrayFields(
         items.forEachIndexed { index, item ->
             var text by remember(items) { mutableStateOf(item) }
             val isError = isDefaultLocale && text.isEmpty()
-            DoubleTapToEditDenseTextField(
+            DoubleClickToEditTextField(
                 text = {
                     Text(
                         text.ifEmpty { "(empty)" },
@@ -231,7 +232,7 @@ private fun RowScope.ArrayFields(
                     )
                 },
                 textField = { modifier ->
-                    DenseTextField(
+                    TextFieldWithCursorPositionEnd(
                         value = text,
                         onValueChange = { text = it },
                         modifier = Modifier.padding(vertical = 2.dp).fillMaxWidth().then(modifier)
@@ -247,8 +248,11 @@ private fun RowScope.ArrayFields(
     }
 }
 
+/**
+ * Displays a normal Text, double click to switch to TextField and edit
+ */
 @Composable
-private fun DoubleTapToEditDenseTextField(
+private fun DoubleClickToEditTextField(
     text: @Composable (modifier: Modifier) -> Unit,
     textField: @Composable (modifier: Modifier) -> Unit,
     shouldDropFocus: () -> Boolean,
@@ -291,11 +295,11 @@ private fun RowScope.EditableIdField(
     val idModifier = Modifier.weight(1f).padding(vertical = 4.dp)
     var id by remember { mutableStateOf(resId) }
     var error by remember { mutableStateOf("") }
-    DoubleTapToEditDenseTextField(
+    DoubleClickToEditTextField(
         text = { Text(resId.value, modifier = idModifier.then(it)) },
         textField = { modifier ->
             Column(modifier = idModifier) {
-                DenseTextField(
+                TextFieldWithCursorPositionEnd(
                     value = id.value,
                     onValueChange = {
                         error = ""
@@ -329,6 +333,38 @@ private fun RowScope.EditableIdField(
             error = ""
             id = resId
         })
+}
+
+/**
+ * Inside DoubleClickToEditTextField, since the TextField doesn't initially exist, the cursor ends up positioned at the
+ * beginning of the text rather than the end, where it feels more natural. This overrides that behavior and places the
+ * cursor at the end
+ */
+@Composable
+private fun TextFieldWithCursorPositionEnd(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: @Composable (() -> Unit)? = null,
+    isError: Boolean = false,
+    singleLine: Boolean = false,
+) {
+    var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length))) }
+    val textFieldValue = textFieldValueState.copy(text = value)
+
+    TextField(
+        value = textFieldValue,
+        onValueChange = {
+            textFieldValueState = it
+            if (value != it.text) {
+                onValueChange(it.text)
+            }
+        },
+        modifier = modifier,
+        singleLine = singleLine,
+        label = label,
+        isError = isError
+    )
 }
 
 @Composable
