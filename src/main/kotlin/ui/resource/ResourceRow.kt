@@ -3,7 +3,7 @@ package ui.resource
 import R
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.TextFieldDefaults.BackgroundOpacity
@@ -277,7 +277,7 @@ private fun DoubleTapToEditDenseTextField(
             })
         LaunchedEffect(Unit) { focusRequester.requestFocus() }
     } else {
-        text(Modifier.pointerInput(Unit) { detectTapGestures(onDoubleTap = { editMode = true }) })
+        text(Modifier.height(40.dp).combinedClickable(onDoubleClick = { editMode = true }, onClick = {}).wrapContentHeight(Alignment.CenterVertically))
     }
 }
 
