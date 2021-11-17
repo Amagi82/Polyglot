@@ -1,6 +1,7 @@
 package ui.resource
 
 import R
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -160,7 +161,7 @@ private fun RowScope.PluralFields(
     resId: ResourceId,
     updateResource: (ResourceId, LocaleIsoCode, Plural) -> Unit
 ) {
-    Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
+    Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp).animateContentSize()) {
         val quantityModifier = Modifier.padding(vertical = 2.dp).fillMaxWidth()
         Quantity.values().forEach { quantity ->
             var text by remember(resource) { mutableStateOf(resource[quantity].orEmpty()) }
