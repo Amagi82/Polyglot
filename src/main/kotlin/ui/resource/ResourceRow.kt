@@ -47,6 +47,11 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
             .animateContentSize(),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        EditableGroupField(metadata = metadata, isSelectable = !isMultiSelectEnabled) {
+            vm.selectedRows.value = listOf(resId)
+            vm.putSelectedInGroup(it)
+        }
+        Spacer(Modifier.width(8.dp))
         EditableIdField(resId = resId, isSelectable = !isMultiSelectEnabled, removeResource = vm::removeResource, updateResourceId = vm::updateResourceId)
         var isPluralExpanded by remember { mutableStateOf(false) }
 
@@ -304,6 +309,31 @@ private fun DoubleClickToEditTextField(
                 .wrapContentHeight(Alignment.CenterVertically)
         )
     }
+}
+
+@Composable
+private fun RowScope.EditableGroupField(
+    metadata: Metadata<*>,
+    isSelectable: Boolean,
+    updateGroupId: (GroupId) -> Unit
+) {
+    var group by remember(metadata) { mutableStateOf(metadata.group) }
+    DoubleClickToEditTextField(
+        text = { Text(group.value, modifier = Modifier.weight(0.5f).padding(vertical = 4.dp).then(it)) },
+        textField = { modifier ->
+            TextFieldWithCursorPositionEnd(
+                value = group.value,
+                onValueChange = { group = GroupId(it.filter(Char::isLetterOrDigit)) },
+                modifier = Modifier.weight(0.5f).then(modifier),
+                singleLine = true,
+            )
+        },
+        isSelectable = isSelectable,
+        shouldDropFocus = {
+            if (group != metadata.group) updateGroupId(group)
+            true
+        },
+        cancel = { group = metadata.group })
 }
 
 @Composable
