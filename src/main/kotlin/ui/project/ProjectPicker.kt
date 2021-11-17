@@ -17,6 +17,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import project.Project
 import ui.core.onPressEnter
+import ui.core.onPressEsc
 import java.io.File
 
 @Composable
@@ -82,7 +83,10 @@ private fun ProjectPickerCreateDialog(projects: List<File>, onProjectNameSelecte
                             errorMsg = ""
                         }
                     },
-                    modifier = Modifier.onPressEnter { if (newProjectName.isNotBlank()) onClickCreate() }.focusRequester(requester),
+                    modifier = Modifier
+                        .onPressEnter { if (newProjectName.isNotBlank()) onClickCreate() }
+                        .onPressEsc(onDismiss)
+                        .focusRequester(requester),
                     label = { Text("Name") },
                     isError = errorMsg.isNotEmpty(),
                     singleLine = true

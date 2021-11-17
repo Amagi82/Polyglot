@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import locales.Locale
 import locales.LocaleIsoCode
 import ui.core.onPressEnter
+import ui.core.onPressEsc
 import ui.core.outlinedTextFieldColorsOnPrimary
 import ui.resource.ResourceViewModel
 
@@ -45,7 +46,12 @@ fun AddLocaleDropdown(vm: ResourceViewModel) {
                 newLocaleText = it
                 isDropdownExpanded = it.isNotBlank()
             },
-            modifier = Modifier.padding(top = 16.dp).onPressEnter(::addLocale),
+            modifier = Modifier.padding(top = 16.dp)
+                .onPressEnter(::addLocale)
+                .onPressEsc {
+                    newLocaleText = ""
+                    focusManager.clearFocus()
+                },
             label = { Text("Add locale") },
             singleLine = true,
             colors = TextFieldDefaults.outlinedTextFieldColorsOnPrimary()
