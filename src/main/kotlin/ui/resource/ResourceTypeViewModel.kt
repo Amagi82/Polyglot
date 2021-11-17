@@ -102,6 +102,17 @@ sealed class ResourceTypeViewModel<R : Resource, M : Metadata<M>>(
         saveToDisk()
     }
 
+    fun putSelectedInGroup(group: GroupId) {
+        val selected = selectedRows.value
+        if (selected.isEmpty()) return
+        metadataById.update { it.mapValues { (resId, metadata) -> if (resId in selected) metadata.copyImpl(group = group) else metadata }.toSortedMap() }
+        selected.forEach { resId ->
+            propertyStore[Metadata.groupKey(resId)] = group.value
+            saveToDisk()
+        }
+        selectedRows.value = listOf()
+    }
+
     fun togglePlatform(resId: ResourceId, platform: Platform) {
         val metadata = metadataById.value[resId] ?: Metadata(type)
         val platforms = metadata.platforms.run { if (contains(platform)) minus(platform) else plus(platform) }
