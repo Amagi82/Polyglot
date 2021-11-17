@@ -96,6 +96,7 @@ private fun ResourceTableHeader(
     displayedLocales: List<LocaleIsoCode>
 ) {
     Row(modifier.fillMaxWidth().padding(top = 12.dp, end = 104.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("group", Modifier.weight(0.5f), fontWeight = FontWeight.SemiBold)
         Text("id", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.width(spacer))
         displayedLocales.forEachIndexed { i, it ->
