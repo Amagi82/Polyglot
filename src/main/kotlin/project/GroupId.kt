@@ -8,6 +8,6 @@ import androidx.compose.runtime.Immutable
  */
 @Immutable
 @JvmInline
-value class GroupId(val value: String) : Comparable<GroupId> {
+value class GroupId(val value: String = "") : Comparable<GroupId> {
     override fun compareTo(other: GroupId): Int = value.compareTo(other.value)
 }

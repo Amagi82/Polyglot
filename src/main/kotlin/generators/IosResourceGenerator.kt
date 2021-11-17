@@ -203,8 +203,8 @@ private fun createDocumentWithPlistDictElement(): Element = createDocument().app
 private const val KEY = "key"
 private const val STRING = "string"
 
-private fun <R : Resource> addAll(
-    vm: ResourceTypeViewModel<R>,
+private fun <R : Resource, M : Metadata<M>> addAll(
+    vm: ResourceTypeViewModel<R, M>,
     add: (ResourceId, LocaleIsoCode, R) -> Unit
 ) {
     vm.metadataById.value.forEach { (resId, metadata) ->
@@ -215,8 +215,8 @@ private fun <R : Resource> addAll(
     }
 }
 
-private fun <R : Resource> addAll(
-    vm: ResourceTypeViewModel<R>,
+private fun <R : Resource, M : Metadata<M>> addAll(
+    vm: ResourceTypeViewModel<R, M>,
     xmlDocumentsByLocale: Map<LocaleIsoCode, Element>,
     add: Element.(R) -> Unit
 ) {
@@ -236,7 +236,11 @@ private val generatedFileWarning = """
         
     """.trimIndent()
 
-private fun <R : Resource> Writer.appendReferences(vm: ResourceTypeViewModel<R>, defaultLocale: LocaleIsoCode, formatters: List<StringFormatter>) {
+private fun <R : Resource, M : Metadata<M>> Writer.appendReferences(
+    vm: ResourceTypeViewModel<R, M>,
+    defaultLocale: LocaleIsoCode,
+    formatters: List<StringFormatter>
+) {
     if (vm.metadataById.value.isEmpty()) return
     appendLine("\tstruct ${vm.type.title.dropLast(1)} {")
     vm.metadataById.value.forEach { (resId, _) ->

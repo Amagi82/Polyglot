@@ -15,10 +15,11 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import locales.Locale
 import locales.LocaleIsoCode
+import project.Metadata
 import project.Resource
 
 @Composable
-fun <R : Resource> ResourceTable(vm: ResourceTypeViewModel<R>, displayedLocales: List<LocaleIsoCode>) {
+fun <R : Resource, M : Metadata<M>> ResourceTable(vm: ResourceTypeViewModel<R, M>, displayedLocales: List<LocaleIsoCode>) {
     val metadataById by vm.metadataById.collectAsState()
     if (metadataById.any { it.value.type != vm.type }) return
     Row {
