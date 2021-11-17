@@ -1,7 +1,6 @@
 package ui.resource
 
 import R
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.*
