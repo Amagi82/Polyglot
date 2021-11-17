@@ -277,7 +277,11 @@ private fun DoubleTapToEditDenseTextField(
             })
         LaunchedEffect(Unit) { focusRequester.requestFocus() }
     } else {
-        text(Modifier.height(40.dp).combinedClickable(onDoubleClick = { editMode = true }, onClick = {}).wrapContentHeight(Alignment.CenterVertically))
+        text(
+            Modifier.defaultMinSize(minHeight = 40.dp)
+                .combinedClickable(onDoubleClick = { editMode = true }) {}
+                .wrapContentHeight(Alignment.CenterVertically)
+        )
     }
 }
 
