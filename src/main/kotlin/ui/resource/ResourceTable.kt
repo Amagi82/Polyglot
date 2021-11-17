@@ -1,5 +1,6 @@
 package ui.resource
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.*
@@ -11,6 +12,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import locales.Locale
@@ -20,31 +22,28 @@ import project.Resource
 
 @Composable
 fun <R : Resource, M : Metadata<M>> ResourceTable(vm: ResourceTypeViewModel<R, M>, displayedLocales: List<LocaleIsoCode>) {
-    val metadataById by vm.metadataById.collectAsState()
-    if (metadataById.any { it.value.type != vm.type }) return
     Row {
         val state = rememberLazyListState()
         Column(Modifier.weight(1f)) {
             val modifier = Modifier.padding(start = 16.dp, end = 8.dp)
-            Row(modifier.fillMaxWidth().padding(top = 12.dp, end = 104.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("id", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-                when (vm) {
-                    is StringResourceViewModel -> Unit
-                    is PluralResourceViewModel -> Spacer(Modifier.width(40.dp))
-                    is ArrayResourceViewModel -> Spacer(Modifier.width(64.dp))
-                }
-                displayedLocales.forEachIndexed { i, it ->
-                    Text(Locale[it].displayName(i == 0), Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-                }
-            }
-            Divider()
 
+            val spacer by animateDpAsState(
+                targetValue = when (vm) {
+                    is StringResourceViewModel -> 0.dp
+                    is PluralResourceViewModel -> 40.dp
+                    is ArrayResourceViewModel -> 64.dp
+                }
+            )
+            ResourceTableHeader(modifier, spacer, displayedLocales)
+
+            val metadataById by vm.metadataById.collectAsState()
+            val filteredMetadata = metadataById.filter { it.value.type == vm.type }
             val localizedResourcesById by vm.localizedResourcesById.collectAsState()
             LazyColumn(modifier = modifier, state = state) {
-                items(metadataById.keys.toList(), key = { it.value }) { resId ->
+                items(filteredMetadata.keys.toList(), key = { it.value }) { resId ->
                     ResourceRow(
                         vm = vm,
-                        metadata = metadataById[resId]!!,
+                        metadata = filteredMetadata[resId]!!,
                         displayedLocales = displayedLocales,
                         resources = localizedResourcesById[resId].orEmpty(),
                         resId = resId
@@ -56,7 +55,7 @@ fun <R : Resource, M : Metadata<M>> ResourceTable(vm: ResourceTypeViewModel<R, M
             val scope = rememberCoroutineScope()
             val scrollToItem by vm.scrollToItem.collectAsState()
             if (scrollToItem != null) {
-                val i = metadataById.keys.indexOf(scrollToItem)
+                val i = filteredMetadata.keys.indexOf(scrollToItem)
                 if (i != -1) {
                     scope.launch { state.animateScrollToItem(i) }
                     vm.scrollToItem.value = null
@@ -65,4 +64,20 @@ fun <R : Resource, M : Metadata<M>> ResourceTable(vm: ResourceTypeViewModel<R, M
         }
         VerticalScrollbar(adapter = ScrollbarAdapter(state))
     }
+}
+
+@Composable
+private fun ResourceTableHeader(
+    modifier: Modifier,
+    spacer: Dp,
+    displayedLocales: List<LocaleIsoCode>
+) {
+    Row(modifier.fillMaxWidth().padding(top = 12.dp, end = 104.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("id", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.width(spacer))
+        displayedLocales.forEachIndexed { i, it ->
+            Text(Locale[it].displayName(i == 0), Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+        }
+    }
+    Divider()
 }
