@@ -109,8 +109,9 @@ sealed class ResourceTypeViewModel<R : Resource, M : Metadata<M>>(
         saveToDisk()
     }
 
-    fun findFirstInvalidResource(): ResourceId? =
-        localizedResourcesById.value.entries.find { (_, localeMap) -> localeMap[defaultLocale()]?.isValid != true }?.key
+    fun findFirstInvalidResource(): ResourceId? = metadataById.value.keys.firstOrNull { resId ->
+        localizedResourcesById.value[resId]?.get(defaultLocale())?.isValid != true
+    }
 
     protected open fun M?.copyOrCreate(arraySize: Int): M? = null
     protected abstract fun MutableMap<LocaleIsoCode, R>.addResource(resId: ResourceId, key: String, value: String)
