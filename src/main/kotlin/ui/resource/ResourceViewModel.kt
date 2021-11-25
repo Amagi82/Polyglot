@@ -13,7 +13,7 @@ import project.Platform
 import project.Project
 import project.ResourceId
 import project.ResourceType
-import utils.PropertyStore
+import data.PropertyStore
 import java.io.File
 
 class ResourceViewModel(val project: Project) {

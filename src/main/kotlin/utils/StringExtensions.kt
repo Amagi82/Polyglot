@@ -1,4 +1,4 @@
-package utils.extensions
+package utils
 
 fun String.toLowerCamelCase(): String {
     val sb = StringBuilder(length)

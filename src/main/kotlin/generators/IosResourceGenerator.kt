@@ -7,7 +7,7 @@ import project.Platform.IOS
 import project.ResourceType.*
 import ui.resource.ResourceTypeViewModel
 import ui.resource.ResourceViewModel
-import utils.extensions.toLowerCamelCase
+import utils.toLowerCamelCase
 import java.io.*
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.Transformer

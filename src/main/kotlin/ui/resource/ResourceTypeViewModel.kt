@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import locales.LocaleIsoCode
 import project.*
-import utils.PropertyStore
+import data.PropertyStore
 import java.io.File
 import java.util.*
 

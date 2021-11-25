@@ -8,7 +8,7 @@ import project.*
 import project.Platform.IOS
 import project.ResourceType.*
 import ui.resource.ResourceViewModel
-import utils.extensions.toLowerCamelCase
+import utils.toLowerCamelCase
 import java.io.File
 
 suspend fun importIosResources(vm: ResourceViewModel, file: File, overwrite: Boolean): List<File> =

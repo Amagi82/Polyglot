@@ -6,7 +6,7 @@ import project.*
 import project.Platform.ANDROID
 import ui.resource.ResourceTypeViewModel
 import ui.resource.ResourceViewModel
-import utils.extensions.toSnakeCase
+import utils.toSnakeCase
 import java.io.File
 
 /**

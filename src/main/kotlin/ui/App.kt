@@ -6,7 +6,7 @@ import ui.project.ProjectPicker
 import ui.resource.ResourceManager
 import ui.resource.ResourceViewModel
 import ui.core.theme.PolyglotTheme
-import utils.Settings
+import data.Settings
 
 @Composable
 fun App() {
