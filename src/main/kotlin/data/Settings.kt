@@ -1,4 +1,4 @@
-package utils
+package data
 
 import project.Project
 import java.io.File
@@ -13,6 +13,6 @@ object Settings {
         }
     }
 
-    var isDarkTheme: Boolean by props.prop(::save) { toBoolean() }
-    var currentProject: String? by props.prop(::save) { this }
+    var isDarkTheme: Boolean by props.prop(Settings::save) { toBoolean() }
+    var currentProject: String? by props.prop(Settings::save) { this }
 }

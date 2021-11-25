@@ -7,7 +7,7 @@ import org.w3c.dom.Element
 import project.*
 import project.Platform.ANDROID
 import ui.resource.ResourceViewModel
-import utils.extensions.toLowerCamelCase
+import utils.toLowerCamelCase
 import java.io.File
 
 suspend fun importAndroidResources(vm: ResourceViewModel, file: File, overwrite: Boolean): List<File> =

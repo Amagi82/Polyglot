@@ -1,7 +1,6 @@
-package utils
+package data
 
 import java.io.File
-import java.io.InputStream
 import java.util.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
