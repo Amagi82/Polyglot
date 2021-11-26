@@ -39,7 +39,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(vm.project.name, modifier = Modifier.weight(1f))
+                        Text(vm.projectName, modifier = Modifier.weight(1f))
                         TabRow(selectedTab.ordinal, modifier = Modifier.weight(1f), backgroundColor = MaterialTheme.colors.primary) {
                             ResourceType.values().forEach { type ->
                                 Tab(
