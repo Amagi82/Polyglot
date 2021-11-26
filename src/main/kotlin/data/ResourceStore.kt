@@ -34,18 +34,17 @@ abstract class ResourceStore<R : Resource, M : Metadata<M>> protected constructo
     }
 
     val localizedResourcesById by lazy {
-        MutableStateFlow<Map<ResourceId, Map<LocaleIsoCode, R>>>(
-            buildMap<ResourceId, MutableMap<LocaleIsoCode, R>> {
-                for ((k, v) in this@ResourceStore) {
-                    when (val key = k.substringAfter('.')) {
-                        Metadata.PROP_GROUP, Metadata.PROP_PLATFORMS, ArrayMetadata.PROP_SIZE -> Unit
-                        else -> {
-                            val resId = ResourceId(k.substringBefore('.'))
-                            getOrPut(resId) { mutableMapOf() }.putResource(resId, key, v)
-                        }
-                    }
+        MutableStateFlow(
+            entries.groupBy(
+                keySelector = { ResourceId(it.key.substringBefore('.')) },
+                valueTransform = { it.key.substringAfter('.') to it.value })
+                .mapValues { (resId, v) ->
+                    v.filterNot { (k, _) -> k.startsWith(Metadata.PROP_GROUP) || k.startsWith(Metadata.PROP_PLATFORMS) || k.startsWith(ArrayMetadata.PROP_SIZE) }
+                        .groupBy(
+                            keySelector = { (k, _) -> LocaleIsoCode(k.substringBefore('.')) },
+                            valueTransform = { (resKey, resValue) -> resKey.substringAfter('.') to resValue })
+                        .mapValues { createResource(it.value.toMap(), arraySize = get(ArrayMetadata.sizeKey(resId))?.toInt()) }
                 }
-            }
         )
     }
 
@@ -111,7 +110,7 @@ abstract class ResourceStore<R : Resource, M : Metadata<M>> protected constructo
     }
 
     protected abstract fun createMetadata(group: GroupId = GroupId(), platforms: List<Platform> = Platform.ALL, arraySize: Int? = null): M
-    protected abstract fun MutableMap<LocaleIsoCode, R>.putResource(resId: ResourceId, key: String, value: String)
+    protected abstract fun createResource(values: Map<String, String>, arraySize: Int?): R
     protected abstract fun putResource(baseKey: String, res: R)
 
     override fun save() {
