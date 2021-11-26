@@ -1,10 +1,10 @@
 package project
 
 import androidx.compose.runtime.Immutable
-import exporters.exportAndroidResources
-import exporters.exportIOSResources
-import importers.importAndroidResources
-import importers.importIosResources
+import data.exporters.exportAndroidResources
+import data.exporters.exportIOSResources
+import data.importers.importAndroidResources
+import data.importers.importIosResources
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ui.resource.ResourceViewModel
