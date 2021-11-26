@@ -1,7 +1,7 @@
 package locales
 
 import androidx.compose.runtime.Immutable
-import utils.extensions.loadResource
+import utils.loadResource
 
 /**
  * Region
