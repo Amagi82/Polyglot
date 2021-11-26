@@ -16,9 +16,9 @@ import java.io.File
  * @property exportUrls: Set this to your project folders and Polyglot will generate files directly to that folder
  * */
 class ProjectStore(val name: String) : PropertyStore(File(Project.projectFolder(name), "project.properties")) {
-    val defaultLocale: MutableStateFlow<LocaleIsoCode> = mutableStateFlowOf(PROP_DEFAULT_LOCALE, getter = { LocaleIsoCode(it ?: "en") }) { it.value }
+    val defaultLocale: MutableStateFlow<LocaleIsoCode> = mutableStateFlowOf("defaultLocale", getter = { LocaleIsoCode(it ?: "en") }) { it.value }
 
-    var locales: MutableStateFlow<List<LocaleIsoCode>> = mutableStateFlowOf(PROP_LOCALES,
+    var locales: MutableStateFlow<List<LocaleIsoCode>> = mutableStateFlowOf("locales",
         getter = { value -> value?.split(",")?.map(::LocaleIsoCode) ?: listOf(defaultLocale.value) },
         setter = { value -> value.sortedBy { Locale[it].displayName() }.joinToString(",", transform = LocaleIsoCode::value) })
 
@@ -34,8 +34,6 @@ class ProjectStore(val name: String) : PropertyStore(File(Project.projectFolder(
     }
 
     companion object {
-        private const val PROP_DEFAULT_LOCALE = "defaultLocale"
-        private const val PROP_LOCALES = "locales"
         private const val PROP_EXPORT_URLS = "exportUrls"
     }
 }
