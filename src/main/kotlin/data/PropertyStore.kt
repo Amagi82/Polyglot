@@ -84,13 +84,19 @@ open class PropertyStore(private val file: File) : MutableMap<String, String> {
     protected fun <T> mutableStateFlowOf(propName: String, getter: (String?) -> T, setter: (T) -> String) =
         MutableStateFlow(getter(get(propName))).also { stateFlow ->
             GlobalScope.launch {
-                stateFlow.collectLatest { put(propName, setter(it)) }
+                stateFlow.collectLatest {
+                    put(propName, setter(it))
+                    save()
+                }
             }
         }
 
     protected fun <T> mutableStateFlowOf(value: T, update: (T) -> Unit) = MutableStateFlow(value).also { stateFlow ->
         GlobalScope.launch {
-            stateFlow.collectLatest { update(it) }
+            stateFlow.collectLatest {
+                update(it)
+                save()
+            }
         }
     }
 
