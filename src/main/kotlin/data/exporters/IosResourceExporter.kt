@@ -235,7 +235,6 @@ private fun <R : Resource, M : Metadata<M>> Writer.appendReferences(
 
 private fun Writer.appendReferenceComment(exampleText: String) {
     appendLine()
-    appendLine()
     if (exampleText.isNotEmpty()) appendLine("\t\t// en: $exampleText")
 }
 
