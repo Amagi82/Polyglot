@@ -138,7 +138,8 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                     icon = { Icon(Icons.Default.Add, contentDescription = "Add new resource") })
             }
         },
-        scaffoldState = scaffoldState
+        scaffoldState = scaffoldState,
+        snackbarHost = { SnackbarHost(scaffoldState.snackbarHostState, Modifier.width(344.dp)) }
     )
 }
 
