@@ -1,6 +1,7 @@
 package ui.resource
 
 import data.*
+import generators.ResourceData
 import kotlinx.coroutines.flow.*
 import locales.LocaleIsoCode
 import project.*
@@ -53,6 +54,12 @@ sealed class ResourceTypeViewModel<R : Resource, M : Metadata<M>>(projectStore: 
     fun findFirstInvalidResource(): ResourceId? = metadataById.value.keys.firstOrNull { resId ->
         localizedResourcesById.value[resId]?.get(defaultLocale())?.isValid != true
     }
+
+    fun resourceData(): ResourceData<R, M> = ResourceData(
+        type = type,
+        metadataById = metadataById.value,
+        localizedResourcesById = localizedResourcesById.value
+    )
 }
 
 class StringResourceViewModel(projectStore: ProjectStore) : ResourceTypeViewModel<Str, StringMetadata>(projectStore, StringStore(projectStore.name))

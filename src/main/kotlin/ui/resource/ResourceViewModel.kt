@@ -1,6 +1,7 @@
 package ui.resource
 
 import data.ProjectStore
+import generators.ProjectData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -71,4 +72,13 @@ class ResourceViewModel(projectStore: ProjectStore) {
             ResourceType.values().forEach { type -> resourceViewModel(type).deleteLocale(locale) }
         }
     }
+
+    fun projectData(platform: Platform): ProjectData = ProjectData(
+        defaultLocale = defaultLocale.value,
+        locales = locales.value,
+        exportUrl = exportUrl(platform),
+        strings = strings.resourceData(),
+        plurals = plurals.resourceData(),
+        arrays = arrays.resourceData()
+    )
 }
