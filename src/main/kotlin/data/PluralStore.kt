@@ -6,7 +6,7 @@ import project.*
 class PluralStore(projectName: String) : ResourceStore<Plural, PluralMetadata>(projectName, ResourceType.PLURALS) {
     override fun createMetadata(group: GroupId, platforms: List<Platform>, arraySize: Int?) = PluralMetadata(group = group, platforms = platforms)
 
-    override fun MutableMap<LocaleIsoCode, Plural>.addResource(resId: ResourceId, key: String, value: String) {
+    override fun MutableMap<LocaleIsoCode, Plural>.putResource(resId: ResourceId, key: String, value: String) {
         val locale = LocaleIsoCode(key.substringBefore('.'))
         val quantity = key.substringAfter('.').uppercase().let(Quantity::valueOf)
         put(locale, Plural(get(locale)?.items?.plus(quantity to value) ?: mapOf(quantity to value)))

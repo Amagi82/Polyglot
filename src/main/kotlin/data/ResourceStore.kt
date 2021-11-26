@@ -41,7 +41,7 @@ abstract class ResourceStore<R : Resource, M : Metadata<M>> protected constructo
                         Metadata.PROP_GROUP, Metadata.PROP_PLATFORMS, ArrayMetadata.PROP_SIZE -> Unit
                         else -> {
                             val resId = ResourceId(k.substringBefore('.'))
-                            getOrPut(resId) { mutableMapOf() }.addResource(resId, key, v)
+                            getOrPut(resId) { mutableMapOf() }.putResource(resId, key, v)
                         }
                     }
                 }
@@ -111,7 +111,7 @@ abstract class ResourceStore<R : Resource, M : Metadata<M>> protected constructo
     }
 
     protected abstract fun createMetadata(group: GroupId = GroupId(), platforms: List<Platform> = Platform.ALL, arraySize: Int? = null): M
-    protected abstract fun MutableMap<LocaleIsoCode, R>.addResource(resId: ResourceId, key: String, value: String)
+    protected abstract fun MutableMap<LocaleIsoCode, R>.putResource(resId: ResourceId, key: String, value: String)
     protected abstract fun putResource(baseKey: String, res: R)
 
     override fun save() {

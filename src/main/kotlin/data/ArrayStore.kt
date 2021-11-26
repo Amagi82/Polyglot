@@ -11,7 +11,7 @@ class ArrayStore(projectName: String) : ResourceStore<StringArray, ArrayMetadata
         size = arraySize ?: 0
     )
 
-    override fun MutableMap<LocaleIsoCode, StringArray>.addResource(resId: ResourceId, key: String, value: String) {
+    override fun MutableMap<LocaleIsoCode, StringArray>.putResource(resId: ResourceId, key: String, value: String) {
         if (key == ArrayMetadata.PROP_SIZE) return
         val locale = LocaleIsoCode(key.substringBefore('.'))
         val index = key.substringAfter('.').toInt()
