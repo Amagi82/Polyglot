@@ -1,4 +1,4 @@
-package importers
+package data.importers
 
 import locales.LocaleIsoCode
 import org.w3c.dom.Document

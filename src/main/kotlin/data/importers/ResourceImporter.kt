@@ -1,4 +1,4 @@
-package importers
+package data.importers
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
