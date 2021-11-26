@@ -18,11 +18,11 @@ import java.io.File
 class ProjectStore(val name: String) : PropertyStore(File(Project.projectFolder(name), "project.properties")) {
     val defaultLocale: MutableStateFlow<LocaleIsoCode> = mutableStateFlowOf("defaultLocale", getter = { LocaleIsoCode(it ?: "en") }) { it.value }
 
-    var locales: MutableStateFlow<List<LocaleIsoCode>> = mutableStateFlowOf("locales",
+    val locales: MutableStateFlow<List<LocaleIsoCode>> = mutableStateFlowOf("locales",
         getter = { value -> value?.split(",")?.map(::LocaleIsoCode) ?: listOf(defaultLocale.value) },
         setter = { value -> value.sortedBy { Locale[it].displayName() }.joinToString(",", transform = LocaleIsoCode::value) })
 
-    var exportUrls: MutableStateFlow<Map<Platform, String>> =
+    val exportUrls: MutableStateFlow<Map<Platform, String>> =
         mutableStateFlowOf(Platform.values().associateWith { this["$PROP_EXPORT_URLS.${it.lowercase}"] ?: it.defaultOutputUrl }) {
             it.forEach { (platform, url) ->
                 put("$PROP_EXPORT_URLS.${platform.lowercase}", url)
