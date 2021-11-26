@@ -1,7 +1,7 @@
 package locales
 
 import androidx.compose.runtime.Immutable
-import utils.loadResource
+import data.loadResource
 
 /**
  * @param isoCode ISO 639 language codes, e.g. fr, ru, sv
