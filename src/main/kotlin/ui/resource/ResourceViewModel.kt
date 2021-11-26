@@ -25,8 +25,6 @@ class ResourceViewModel(projectStore: ProjectStore) {
     val plurals = PluralResourceViewModel(projectStore)
     val arrays = ArrayResourceViewModel(projectStore)
 
-    fun exportUrl(platform: Platform) = exportUrls.value[platform] ?: platform.defaultOutputUrl
-
     fun resourceViewModel(type: ResourceType) = when (type) {
         ResourceType.STRINGS -> strings
         ResourceType.PLURALS -> plurals
@@ -76,7 +74,7 @@ class ResourceViewModel(projectStore: ProjectStore) {
     fun projectData(platform: Platform): ProjectData = ProjectData(
         defaultLocale = defaultLocale.value,
         locales = locales.value,
-        exportUrl = exportUrl(platform),
+        exportUrl = exportUrls.value[platform] ?: platform.defaultOutputUrl,
         strings = strings.resourceData(),
         plurals = plurals.resourceData(),
         arrays = arrays.resourceData()
