@@ -55,7 +55,7 @@ fun generateAndroidResources(vm: ResourceViewModel) {
     }
 
     val transformer = createTransformer()
-    val exportUrl = vm.exportUrls.value[ANDROID] ?: ANDROID.defaultOutputUrl
+    val exportUrl = vm.exportUrl(ANDROID)
     val defaultLocale = vm.defaultLocale.value
     xmlByLocale.forEach { (locale, xml) ->
         val valuesFolder = File(exportUrl, "values${if (locale == defaultLocale) "" else "-${locale.value}"}").also(File::mkdirs)
