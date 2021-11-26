@@ -57,7 +57,10 @@ sealed class ResourceTypeViewModel<R : Resource, M : Metadata<M>>(projectStore: 
 
     fun exportResourceData(): ExportResourceData<R, M> = ExportResourceData(
         type = type,
-        metadataById = metadataById.value,
+        metadataByIdByGroup = metadataById.value.entries
+            .groupBy { it.value.group }
+            .mapValues { (_, v) -> v.associate { it.key to it.value }.toSortedMap() }
+            .toSortedMap(),
         localizedResourcesById = localizedResourcesById.value
     )
 }

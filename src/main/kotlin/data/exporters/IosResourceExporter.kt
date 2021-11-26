@@ -171,10 +171,12 @@ private fun <R : Resource, M : Metadata<M>> addAll(
     data: ExportResourceData<R, M>,
     add: (ResourceId, LocaleIsoCode, R) -> Unit
 ) {
-    data.metadataById.forEach { (resId, metadata) ->
-        if (IOS !in metadata.platforms) return@forEach
-        data.localizedResourcesById[resId]?.forEach { (locale, resource) ->
-            add(resId, locale, resource)
+    for ((_, metadataById) in data.metadataByIdByGroup) {
+        for ((resId, metadata) in metadataById) {
+            if (IOS !in metadata.platforms) continue
+            data.localizedResourcesById[resId]?.forEach { (locale, resource) ->
+                add(resId, locale, resource)
+            }
         }
     }
 }
@@ -205,17 +207,28 @@ private fun <R : Resource, M : Metadata<M>> Writer.appendReferences(
     defaultLocale: LocaleIsoCode,
     formatters: List<StringFormatter>
 ) {
-    if (data.metadataById.isEmpty()) return
+    if (data.metadataByIdByGroup.isEmpty()) return
+    appendLine()
     appendLine("\tstruct ${data.type.title.dropLast(1)} {")
-    data.metadataById.forEach { (resId, _) ->
-        val text = when (val res = data.localizedResourcesById[resId]!![defaultLocale]!!) {
-            is Str -> res.text.sanitized(formatters, isXml = false)
-            is Plural -> res[Quantity.OTHER]!!.sanitized(formatters, isXml = false)
-            is StringArray -> res.items.joinToString { it.sanitized(formatters, isXml = false) }
-            else -> ""
+
+    for ((group, metadataById) in data.metadataByIdByGroup) {
+        if (group.value.isNotEmpty()) {
+            appendLine()
+            appendLine()
+            appendLine("\t\t/**")
+            appendLine("\t\t * ${group.value}")
+            appendLine("\t\t */")
         }
-        appendReferenceComment(text)
-        appendReferenceFormattingArgs(resId, text, data.type)
+        for ((resId, _) in metadataById) {
+            val text = when (val res = data.localizedResourcesById[resId]!![defaultLocale]!!) {
+                is Str -> res.text.sanitized(formatters, isXml = false)
+                is Plural -> res[Quantity.OTHER]!!.sanitized(formatters, isXml = false)
+                is StringArray -> res.items.joinToString { it.sanitized(formatters, isXml = false) }
+                else -> ""
+            }
+            appendReferenceComment(text)
+            appendReferenceFormattingArgs(resId, text, data.type)
+        }
     }
     appendLine("\t}")
 }

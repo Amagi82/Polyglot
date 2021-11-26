@@ -64,12 +64,28 @@ private fun <R : Resource, M : Metadata<M>> addAll(
     xmlByLocale: Map<LocaleIsoCode, Element>,
     add: Element.(R) -> Unit
 ) {
-    data.metadataById.forEach { (resId, metadata) ->
-        if (ANDROID !in metadata.platforms) return@forEach
-        data.localizedResourcesById[resId]?.forEach { (locale, res) ->
-            xmlByLocale[locale]!!.appendElement(data.type.androidRootElementTag) {
-                setAttribute("name", resId.value.toSnakeCase())
-                add(res)
+    xmlByLocale.values.forEach { xml ->
+        xml.appendTextNode("\n")
+    }
+
+    for ((group, metadataById) in data.metadataByIdByGroup) {
+        val localesCommented = mutableMapOf<LocaleIsoCode, Boolean>()
+
+        for ((resId, metadata) in metadataById) {
+            if (ANDROID !in metadata.platforms) continue
+            data.localizedResourcesById[resId]?.forEach { (locale, res) ->
+                val xml = xmlByLocale[locale]!!
+
+                if (group.value.isNotEmpty() && localesCommented[locale] != true) {
+                    xml.appendTextNode("\n")
+                    xml.appendComment(group.value)
+                    localesCommented[locale] = true
+                }
+
+                xml.appendElement(data.type.androidRootElementTag) {
+                    setAttribute("name", resId.value.toSnakeCase())
+                    add(res)
+                }
             }
         }
     }
