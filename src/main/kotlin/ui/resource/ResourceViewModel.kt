@@ -1,7 +1,7 @@
 package ui.resource
 
 import data.ProjectStore
-import data.exporters.ProjectData
+import data.exporters.ExportProjectData
 import kotlinx.coroutines.flow.*
 import locales.Locale
 import locales.LocaleIsoCode
@@ -79,12 +79,12 @@ class ResourceViewModel(projectStore: ProjectStore) {
         }
     }
 
-    fun projectData(platform: Platform): ProjectData = ProjectData(
+    fun exportProjectData(platform: Platform): ExportProjectData = ExportProjectData(
         defaultLocale = defaultLocale.value,
         locales = locales.value,
         exportUrl = exportUrls.value[platform] ?: platform.defaultOutputUrl,
-        strings = strings.resourceData(),
-        plurals = plurals.resourceData(),
-        arrays = arrays.resourceData()
+        strings = strings.exportResourceData(),
+        plurals = plurals.exportResourceData(),
+        arrays = arrays.exportResourceData()
     )
 }

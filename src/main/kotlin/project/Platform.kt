@@ -36,7 +36,7 @@ enum class Platform(val iconId: String, val displayName: String) {
     }
 
     suspend fun exportResources(vm: ResourceViewModel) = withContext(Dispatchers.IO) {
-        val data = vm.projectData(this@Platform)
+        val data = vm.exportProjectData(this@Platform)
         when (this@Platform) {
             ANDROID -> exportAndroidResources(data)
             IOS -> exportIOSResources(data)

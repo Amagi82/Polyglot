@@ -1,7 +1,7 @@
 package ui.resource
 
 import data.*
-import data.exporters.ResourceData
+import data.exporters.ExportResourceData
 import kotlinx.coroutines.flow.*
 import locales.LocaleIsoCode
 import project.*
@@ -55,7 +55,7 @@ sealed class ResourceTypeViewModel<R : Resource, M : Metadata<M>>(projectStore: 
         localizedResourcesById.value[resId]?.get(defaultLocale())?.isValid != true
     }
 
-    fun resourceData(): ResourceData<R, M> = ResourceData(
+    fun exportResourceData(): ExportResourceData<R, M> = ExportResourceData(
         type = type,
         metadataById = metadataById.value,
         localizedResourcesById = localizedResourcesById.value

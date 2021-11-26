@@ -10,7 +10,7 @@ import java.io.File
 /**
  * Exports Android resources for a given language in the specified folder
  */
-fun exportAndroidResources(data: ProjectData) {
+fun exportAndroidResources(data: ExportProjectData) {
     val formatters = StringFormatter.defaultFormatters.filter { ANDROID in it.platforms }
 
     val xmlByLocale: Map<LocaleIsoCode, Element> = data.locales.associateWith {
@@ -60,7 +60,7 @@ fun exportAndroidResources(data: ProjectData) {
 }
 
 private fun <R : Resource, M : Metadata<M>> addAll(
-    data: ResourceData<R, M>,
+    data: ExportResourceData<R, M>,
     xmlByLocale: Map<LocaleIsoCode, Element>,
     add: Element.(R) -> Unit
 ) {
