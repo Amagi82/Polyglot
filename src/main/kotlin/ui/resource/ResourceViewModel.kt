@@ -2,11 +2,10 @@ package ui.resource
 
 import data.ProjectStore
 import generators.ProjectData
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import locales.Locale
 import locales.LocaleIsoCode
+import project.GroupId
 import project.Platform
 import project.ResourceId
 import project.ResourceType
@@ -15,6 +14,7 @@ class ResourceViewModel(projectStore: ProjectStore) {
     val excludedLocales = MutableStateFlow(setOf<LocaleIsoCode>())
     val selectedTab = MutableStateFlow(ResourceType.STRINGS)
     val isMultiSelectEnabled = MutableStateFlow(false)
+    val excludedGroups = MutableStateFlow(setOf<GroupId>())
 
     val projectName = projectStore.name
     val defaultLocale = projectStore.defaultLocale
@@ -24,6 +24,14 @@ class ResourceViewModel(projectStore: ProjectStore) {
     val strings = StringResourceViewModel(projectStore)
     val plurals = PluralResourceViewModel(projectStore)
     val arrays = ArrayResourceViewModel(projectStore)
+
+    val groups: Flow<Set<GroupId>> = combine(strings.metadataById, plurals.metadataById, arrays.metadataById) { strings, plurals, arrays ->
+        buildSet {
+            strings.values.forEach { add(it.group) }
+            plurals.values.forEach { add(it.group) }
+            arrays.values.forEach { add(it.group) }
+        }.toSortedSet()
+    }
 
     fun resourceViewModel(type: ResourceType) = when (type) {
         ResourceType.STRINGS -> strings
