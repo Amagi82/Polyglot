@@ -151,11 +151,12 @@ private fun RowScope.StringField(
 ) {
     var text by remember(resource) { mutableStateOf(resource.text) }
     val isError = isDefaultLocale && !resource.isValid
+    val rowModifier = Modifier.weight(1f).padding(vertical = 2.dp)
     DoubleClickToEditTextField(
         text = {
             Text(
                 resource.text.ifEmpty { "(empty)" },
-                modifier = Modifier.weight(1f)
+                modifier = rowModifier
                     .alpha(if (resource.text.isEmpty()) ContentAlpha.disabled else ContentAlpha.high)
                     .background(color = if (isError) MaterialTheme.colors.error else Color.Unspecified)
                     .padding(2.dp).then(it),
@@ -166,7 +167,7 @@ private fun RowScope.StringField(
             TextFieldWithCursorPositionEnd(
                 value = text,
                 onValueChange = { text = it },
-                modifier = Modifier.weight(1f).then(modifier)
+                modifier = rowModifier.then(modifier)
             )
         },
         isSelectable = isSelectable,
@@ -189,7 +190,7 @@ private fun RowScope.PluralFields(
     updateResource: (ResourceId, LocaleIsoCode, Plural) -> Unit
 ) {
     Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
-        val quantityModifier = Modifier.padding(vertical = 2.dp).fillMaxWidth()
+        val rowModifier = Modifier.fillMaxWidth()
         Quantity.values().forEach { quantity ->
             var text by remember(resource) { mutableStateOf(resource[quantity].orEmpty()) }
             if (isExpanded || quantity.isRequired || text.isNotEmpty()) {
@@ -198,7 +199,7 @@ private fun RowScope.PluralFields(
                     text = {
                         Text(
                             text = "${quantity.label}: ${resource[quantity].orEmpty().ifEmpty { "(empty)" }}",
-                            modifier = quantityModifier
+                            modifier = rowModifier
                                 .alpha(if (text.isEmpty() && (!quantity.isRequired || !isExpanded)) ContentAlpha.disabled else ContentAlpha.high)
                                 .background(color = if (isError) MaterialTheme.colors.error else Color.Unspecified)
                                 .padding(2.dp).then(it),
@@ -209,7 +210,7 @@ private fun RowScope.PluralFields(
                         TextFieldWithCursorPositionEnd(
                             value = text,
                             onValueChange = { text = it },
-                            modifier = quantityModifier.then(modifier),
+                            modifier = rowModifier.then(modifier),
                             label = { Text(quantity.label) }
                         )
                     },
@@ -239,8 +240,8 @@ private fun RowScope.ArrayFields(
     updateResource: (ResourceId, LocaleIsoCode, StringArray) -> Unit
 ) {
     val items = remember(resource, size) { List(size) { resource.items.getOrNull(it) ?: "" } }
-
     Column(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
+        val rowModifier = Modifier.fillMaxWidth()
         items.forEachIndexed { index, item ->
             var text by remember(items) { mutableStateOf(item) }
             val isError = isDefaultLocale && text.isEmpty()
@@ -248,7 +249,7 @@ private fun RowScope.ArrayFields(
                 text = {
                     Text(
                         text.ifEmpty { "(empty)" },
-                        modifier = Modifier.alpha(if (text.isEmpty()) ContentAlpha.disabled else ContentAlpha.high)
+                        modifier = rowModifier.alpha(if (text.isEmpty()) ContentAlpha.disabled else ContentAlpha.high)
                             .background(color = if (isError) MaterialTheme.colors.error else Color.Unspecified)
                             .padding(2.dp).then(it),
                         color = if (isError) MaterialTheme.colors.onError else Color.Unspecified
@@ -258,7 +259,7 @@ private fun RowScope.ArrayFields(
                     TextFieldWithCursorPositionEnd(
                         value = text,
                         onValueChange = { text = it },
-                        modifier = Modifier.padding(vertical = 2.dp).fillMaxWidth().then(modifier)
+                        modifier = rowModifier.then(modifier)
                     )
                 },
                 isSelectable = isSelectable,
