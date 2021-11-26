@@ -22,6 +22,7 @@ import ui.core.onPressEsc
 import ui.resource.backdrop.ImportSettings
 import ui.resource.backdrop.LocaleSettings
 import ui.resource.backdrop.ExportSettings
+import ui.resource.backdrop.GroupSettings
 import java.awt.Desktop
 import java.io.File
 
@@ -110,15 +111,22 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                 Modifier.fillMaxWidth().padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+                GroupSettings(vm)
+                LocaleSettings(vm)
                 ImportSettings(vm)
                 ExportSettings(vm)
-                LocaleSettings(vm)
             }
         },
         frontLayerContent = {
+            val excludedGroups by vm.excludedGroups.collectAsState()
             val displayedLocales by vm.displayedLocales.collectAsState(null)
             displayedLocales?.let {
-                ResourceTable(vm.resourceViewModel(selectedTab), displayedLocales = it, isMultiSelectEnabled = isMultiSelectEnabled)
+                ResourceTable(
+                    vm.resourceViewModel(selectedTab),
+                    excludedGroups = excludedGroups,
+                    displayedLocales = it,
+                    isMultiSelectEnabled = isMultiSelectEnabled
+                )
             }
 
             if (isLabelDialogShown) {

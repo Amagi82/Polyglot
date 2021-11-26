@@ -17,12 +17,18 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import locales.Locale
 import locales.LocaleIsoCode
+import project.GroupId
 import project.Metadata
 import project.Resource
 import project.ResourceId
 
 @Composable
-fun <R : Resource, M : Metadata<M>> ResourceTable(vm: ResourceTypeViewModel<R, M>, displayedLocales: List<LocaleIsoCode>, isMultiSelectEnabled: Boolean) {
+fun <R : Resource, M : Metadata<M>> ResourceTable(
+    vm: ResourceTypeViewModel<R, M>,
+    excludedGroups: Set<GroupId>,
+    displayedLocales: List<LocaleIsoCode>,
+    isMultiSelectEnabled: Boolean
+) {
     Row {
         val state = rememberLazyListState()
         Column(Modifier.weight(1f)) {
@@ -38,7 +44,7 @@ fun <R : Resource, M : Metadata<M>> ResourceTable(vm: ResourceTypeViewModel<R, M
             ResourceTableHeader(modifier, spacer, displayedLocales)
 
             val metadataById by vm.metadataById.collectAsState()
-            val filteredMetadata = metadataById.filter { it.value.type == vm.type }
+            val filteredMetadata = metadataById.filter { it.value.type == vm.type && it.value.group !in excludedGroups }
             val keys = filteredMetadata.keys.toList()
             val localizedResourcesById by vm.localizedResourcesById.collectAsState()
 
