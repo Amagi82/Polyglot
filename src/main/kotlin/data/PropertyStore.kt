@@ -15,7 +15,7 @@ import kotlin.reflect.KProperty
  */
 @Suppress("UNCHECKED_CAST")
 open class PropertyStore(private val file: File) : MutableMap<String, String> {
-    protected val props = OrderedProperties()
+    private val props = OrderedProperties()
 
     init {
         props.load(file.apply(File::createNewFile).inputStream())
