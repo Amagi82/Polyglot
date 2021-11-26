@@ -24,7 +24,7 @@ fun generateIOSResources(vm: ResourceViewModel) {
     val defaultLocale = vm.defaultLocale.value
     val locales = vm.locales.value
     val formatters = StringFormatter.defaultFormatters.filter { IOS in it.platforms }
-    val outputFolder = File(vm.exportUrls.value[IOS] ?: IOS.defaultOutputUrl)
+    val outputFolder = File(vm.exportUrl(IOS))
 
     val outputFolders = locales.associateWith { locale ->
         File(outputFolder, "${locale.value}.lproj").also(File::mkdirs)
