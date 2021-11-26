@@ -172,6 +172,7 @@ private fun RowScope.StringField(
         },
         isSelectable = isSelectable,
         shouldDropFocus = {
+            text = text.trim()
             if (resource.text != text) updateResource(resId, localeIsoCode, Str(text))
             true
         },
@@ -216,6 +217,7 @@ private fun RowScope.PluralFields(
                     },
                     isSelectable = isSelectable,
                     shouldDropFocus = {
+                        text = text.trim()
                         if (resource[quantity].orEmpty() != text) {
                             updateResource(resId, localeIsoCode, Plural(resource.items.plus(quantity to text)))
                         }
@@ -264,6 +266,7 @@ private fun RowScope.ArrayFields(
                 },
                 isSelectable = isSelectable,
                 shouldDropFocus = {
+                    text = text.trim()
                     if (item != text) updateResource(resId, localeIsoCode, StringArray(items.mapIndexed { i, item -> if (i == index) text else item }))
                     true
                 },
