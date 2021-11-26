@@ -18,7 +18,7 @@ import javax.xml.transform.Transformer
  * R.array.some_array_id, similar to Android, but providing the actual resource, not an integer.
  * Swift extension functions are generated for convenience.
  */
-fun exportIOSResources(data: ProjectData) {
+fun exportIOSResources(data: ExportProjectData) {
     val formatters = StringFormatter.defaultFormatters.filter { IOS in it.platforms }
     val outputFolder = File(data.exportUrl)
     val outputFolders = data.locales.associateWith { locale ->
@@ -168,7 +168,7 @@ private const val KEY = "key"
 private const val STRING = "string"
 
 private fun <R : Resource, M : Metadata<M>> addAll(
-    data: ResourceData<R, M>,
+    data: ExportResourceData<R, M>,
     add: (ResourceId, LocaleIsoCode, R) -> Unit
 ) {
     data.metadataById.forEach { (resId, metadata) ->
@@ -180,7 +180,7 @@ private fun <R : Resource, M : Metadata<M>> addAll(
 }
 
 private fun <R : Resource, M : Metadata<M>> addAll(
-    data: ResourceData<R, M>,
+    data: ExportResourceData<R, M>,
     xmlDocumentsByLocale: Map<LocaleIsoCode, Element>,
     add: Element.(R) -> Unit
 ) {
@@ -201,7 +201,7 @@ private val generatedFileWarning = """
     """.trimIndent()
 
 private fun <R : Resource, M : Metadata<M>> Writer.appendReferences(
-    data: ResourceData<R, M>,
+    data: ExportResourceData<R, M>,
     defaultLocale: LocaleIsoCode,
     formatters: List<StringFormatter>
 ) {
