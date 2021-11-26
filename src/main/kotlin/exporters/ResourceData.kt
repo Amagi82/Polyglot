@@ -1,4 +1,4 @@
-package generators
+package exporters
 
 import locales.LocaleIsoCode
 import project.Metadata

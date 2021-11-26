@@ -1,7 +1,7 @@
 package ui.resource
 
 import data.ProjectStore
-import generators.ProjectData
+import exporters.ProjectData
 import kotlinx.coroutines.flow.*
 import locales.Locale
 import locales.LocaleIsoCode

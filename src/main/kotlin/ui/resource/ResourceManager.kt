@@ -84,7 +84,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                     IconButton(Icons.Default.Send) {
                         val firstInvalid = vm.findFirstInvalidResource()
                         if (firstInvalid == null) {
-                            scope.launch { generateFiles(vm, scaffoldState.snackbarHostState) }
+                            scope.launch { exportFiles(vm, scaffoldState.snackbarHostState) }
                         } else {
                             val (tab, resId) = firstInvalid
                             if (tab != selectedTab) {
@@ -191,10 +191,10 @@ private val BackdropScaffoldState.showConcealed
         else -> isConcealed
     }
 
-private suspend fun generateFiles(vm: ResourceViewModel, snackbarHostState: SnackbarHostState) = withContext(Dispatchers.Main) {
-    val generateFiles = Platform.values().map { async(Dispatchers.IO) { it.exportResources(vm) } }
+private suspend fun exportFiles(vm: ResourceViewModel, snackbarHostState: SnackbarHostState) = withContext(Dispatchers.Main) {
+    val exportFiles = Platform.values().map { async(Dispatchers.IO) { it.exportResources(vm) } }
     val result = snackbarHostState.showSnackbar(message = "Generating outputs", actionLabel = "Show")
-    generateFiles.awaitAll()
+    exportFiles.awaitAll()
     if (result == SnackbarResult.ActionPerformed) {
         vm.exportUrls.value.forEach { openUrl(it.value, snackbarHostState) }
     }

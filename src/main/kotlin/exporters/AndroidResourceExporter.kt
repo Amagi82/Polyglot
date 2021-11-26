@@ -1,4 +1,4 @@
-package generators
+package exporters
 
 import locales.LocaleIsoCode
 import org.w3c.dom.Element
@@ -8,9 +8,9 @@ import utils.toSnakeCase
 import java.io.File
 
 /**
- * Generates Android resources for a given language in the specified folder
+ * Exports Android resources for a given language in the specified folder
  */
-fun generateAndroidResources(data: ProjectData) {
+fun exportAndroidResources(data: ProjectData) {
     val formatters = StringFormatter.defaultFormatters.filter { ANDROID in it.platforms }
 
     val xmlByLocale: Map<LocaleIsoCode, Element> = data.locales.associateWith {
