@@ -1,7 +1,6 @@
-package utils
+package data
 
 import R
-import data.PropertyStore
 import java.io.File
 
 inline fun <reified K, V> loadResource(resource: String, transformer: (Map.Entry<String, String>) -> Pair<K, V>): Map<K, V> =
