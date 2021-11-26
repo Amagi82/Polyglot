@@ -10,23 +10,20 @@ import ui.core.theme.PolyglotTheme
 
 @Composable
 fun App() {
-    var darkTheme by remember { mutableStateOf(SettingsStore.isDarkTheme) }
+    val darkTheme by SettingsStore.isDarkTheme.collectAsState()
     PolyglotTheme(darkTheme = darkTheme) {
-        var savedProject by remember { mutableStateOf(SettingsStore.currentProject) }
-        val currentProject = savedProject
-        SettingsStore.currentProject = currentProject
-        if (currentProject == null) {
-            ProjectPicker { savedProject = it }
-        } else {
-            val vm by remember { mutableStateOf(ResourceViewModel(ProjectStore(currentProject))) }
-            ResourceManager(
-                vm,
-                toggleDarkTheme = {
-                    SettingsStore.isDarkTheme = !darkTheme
-                    darkTheme = !darkTheme
-                },
-                closeProject = { savedProject = null }
-            )
+        val savedProject by SettingsStore.currentProject.collectAsState()
+        savedProject.let { currentProject ->
+            if (currentProject == null) {
+                ProjectPicker { SettingsStore.currentProject.value = it }
+            } else {
+                val vm by remember { mutableStateOf(ResourceViewModel(ProjectStore(currentProject))) }
+                ResourceManager(
+                    vm,
+                    toggleDarkTheme = { SettingsStore.isDarkTheme.value = !darkTheme },
+                    closeProject = { SettingsStore.currentProject.value = null }
+                )
+            }
         }
     }
 }

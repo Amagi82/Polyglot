@@ -49,39 +49,7 @@ open class PropertyStore(private val file: File) : MutableMap<String, String> {
         store() { println("Error saving: $it") }
     }
 
-    protected fun <T> prop(
-        getValue: (String?) -> T,
-        putValue: (T) -> String = { "$it" }
-    ): ReadWriteProperty<Any, T> =
-        object : ReadWriteProperty<Any, T> {
-            private var cached: T? = null
-
-            override fun getValue(thisRef: Any, property: KProperty<*>): T = cached ?: getValue(props.getProperty(property.name)).also { cached = it }
-            override fun setValue(thisRef: Any, property: KProperty<*>, value: T) {
-                cached = value
-                put(property.name, putValue(value))
-                save()
-            }
-        }
-
-    protected fun <K, V> map(
-        getValues: Map<String, String>.(propertyName: String) -> Map<K, V>,
-        putValues: (propertyName: String, K, V) -> Unit
-    ): ReadWriteProperty<Any, Map<K, V>> =
-        object : ReadWriteProperty<Any, Map<K, V>> {
-            private var cached: Map<K, V>? = null
-
-            override fun getValue(thisRef: Any, property: KProperty<*>): Map<K, V> = cached ?: getValues(property.name).also { cached = it }
-            override fun setValue(thisRef: Any, property: KProperty<*>, value: Map<K, V>) {
-                cached = value
-                value.forEach { (k, v) ->
-                    putValues(property.name, k, v)
-                }
-                save()
-            }
-        }
-
-    protected fun <T> mutableStateFlowOf(propName: String, getter: (String?) -> T, setter: (T) -> String) =
+    protected fun <T> mutableStateFlowOf(propName: String, getter: (String?) -> T, setter: (T) -> String = { "$it" }) =
         MutableStateFlow(getter(get(propName))).also { stateFlow ->
             GlobalScope.launch {
                 stateFlow.collectLatest {
