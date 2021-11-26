@@ -6,7 +6,7 @@ import project.*
 class StringStore(projectName: String) : ResourceStore<Str, StringMetadata>(projectName, ResourceType.STRINGS) {
     override fun createMetadata(group: GroupId, platforms: List<Platform>, arraySize: Int?) = StringMetadata(group = group, platforms = platforms)
 
-    override fun MutableMap<LocaleIsoCode, Str>.addResource(resId: ResourceId, key: String, value: String) {
+    override fun MutableMap<LocaleIsoCode, Str>.putResource(resId: ResourceId, key: String, value: String) {
         put(LocaleIsoCode(key), Str(value))
     }
 
