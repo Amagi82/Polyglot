@@ -1,6 +1,6 @@
 package importers
 
-import generators.androidRootElementTag
+import exporters.androidRootElementTag
 import locales.LocaleIsoCode
 import org.w3c.dom.Document
 import org.w3c.dom.Element

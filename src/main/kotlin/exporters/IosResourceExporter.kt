@@ -1,4 +1,4 @@
-package generators
+package exporters
 
 import locales.LocaleIsoCode
 import org.w3c.dom.Element
@@ -11,14 +11,14 @@ import javax.xml.transform.OutputKeys
 import javax.xml.transform.Transformer
 
 /**
- * Generates iOS resources for a given language in the specified folder
+ * Exports iOS resources for a given language in the specified folder
  * This creates separate files for String resources, Plurals, and Arrays, which each use different
  * file types and formatting. It also generates an R file for type-safe resource access, e.g.
  * R.string.some_resource_id or R.plural.some_plural_id(quantity: 3, arg0: 3, arg1: "Mice") or
  * R.array.some_array_id, similar to Android, but providing the actual resource, not an integer.
  * Swift extension functions are generated for convenience.
  */
-fun generateIOSResources(data: ProjectData) {
+fun exportIOSResources(data: ProjectData) {
     val formatters = StringFormatter.defaultFormatters.filter { IOS in it.platforms }
     val outputFolder = File(data.exportUrl)
     val outputFolders = data.locales.associateWith { locale ->

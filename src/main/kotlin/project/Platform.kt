@@ -1,8 +1,8 @@
 package project
 
 import androidx.compose.runtime.Immutable
-import generators.generateAndroidResources
-import generators.generateIOSResources
+import exporters.exportAndroidResources
+import exporters.exportIOSResources
 import importers.importAndroidResources
 import importers.importIosResources
 import kotlinx.coroutines.Dispatchers
@@ -38,8 +38,8 @@ enum class Platform(val iconId: String, val displayName: String) {
     suspend fun exportResources(vm: ResourceViewModel) = withContext(Dispatchers.IO) {
         val data = vm.projectData(this@Platform)
         when (this@Platform) {
-            ANDROID -> generateAndroidResources(data)
-            IOS -> generateIOSResources(data)
+            ANDROID -> exportAndroidResources(data)
+            IOS -> exportIOSResources(data)
         }
     }
 
