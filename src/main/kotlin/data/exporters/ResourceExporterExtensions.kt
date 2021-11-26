@@ -38,6 +38,10 @@ fun String.sanitized(formatters: List<StringFormatter>, isXml: Boolean = true): 
     return out.toString()
 }
 
+fun Element.appendComment(comment: String) {
+    ownerDocument.createComment(comment).also(::appendChild)
+}
+
 fun Element.appendElement(tagName: String, apply: Element.() -> Unit) {
     appendElement(tagName).apply(apply)
 }
