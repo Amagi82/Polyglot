@@ -4,25 +4,23 @@ import locales.LocaleIsoCode
 import org.w3c.dom.Element
 import project.*
 import project.Platform.ANDROID
-import ui.resource.ResourceTypeViewModel
-import ui.resource.ResourceViewModel
 import utils.toSnakeCase
 import java.io.File
 
 /**
  * Generates Android resources for a given language in the specified folder
  */
-fun generateAndroidResources(vm: ResourceViewModel) {
+fun generateAndroidResources(data: ProjectData) {
     val formatters = StringFormatter.defaultFormatters.filter { ANDROID in it.platforms }
 
-    val xmlByLocale: Map<LocaleIsoCode, Element> = vm.locales.value.associateWith {
+    val xmlByLocale: Map<LocaleIsoCode, Element> = data.locales.associateWith {
         createDocument().appendElement("resources")
     }
 
     /**
      * <string name="dragon">Trogdor the Burninator</string>
      * */
-    addAll(vm.strings, xmlByLocale) { res ->
+    addAll(data.strings, xmlByLocale) { res ->
         appendTextNode(res.text.sanitized(formatters))
     }
 
@@ -33,7 +31,7 @@ fun generateAndroidResources(vm: ResourceViewModel) {
      *     <item quantity="other">Znaleziono %d piosenek.</item>
      * </plurals>
      */
-    addAll(vm.plurals, xmlByLocale) { res ->
+    addAll(data.plurals, xmlByLocale) { res ->
         res.items.forEach { (quantity, text) ->
             appendElement("item") {
                 setAttribute("quantity", quantity.label)
@@ -48,30 +46,28 @@ fun generateAndroidResources(vm: ResourceViewModel) {
      *      <item>Germany</item>
      * </string-array>
      */
-    addAll(vm.arrays, xmlByLocale) { res ->
+    addAll(data.arrays, xmlByLocale) { res ->
         for (text in res.items) {
             appendElement("item") { appendTextNode(text.sanitized(formatters)) }
         }
     }
 
     val transformer = createTransformer()
-    val exportUrl = vm.exportUrl(ANDROID)
-    val defaultLocale = vm.defaultLocale.value
     xmlByLocale.forEach { (locale, xml) ->
-        val valuesFolder = File(exportUrl, "values${if (locale == defaultLocale) "" else "-${locale.value}"}").also(File::mkdirs)
+        val valuesFolder = File(data.exportUrl, "values${if (locale == data.defaultLocale) "" else "-${locale.value}"}").also(File::mkdirs)
         transformer.transform(xml.ownerDocument, valuesFolder.createChildFile(ANDROID.fileName(ResourceType.STRINGS)))
     }
 }
 
 private fun <R : Resource, M : Metadata<M>> addAll(
-    vm: ResourceTypeViewModel<R, M>,
+    data: ResourceData<R, M>,
     xmlByLocale: Map<LocaleIsoCode, Element>,
     add: Element.(R) -> Unit
 ) {
-    vm.metadataById.value.forEach { (resId, metadata) ->
+    data.metadataById.forEach { (resId, metadata) ->
         if (ANDROID !in metadata.platforms) return@forEach
-        vm.localizedResourcesById.value[resId]?.forEach { (locale, res) ->
-            xmlByLocale[locale]!!.appendElement(vm.type.androidRootElementTag) {
+        data.localizedResourcesById[resId]?.forEach { (locale, res) ->
+            xmlByLocale[locale]!!.appendElement(data.type.androidRootElementTag) {
                 setAttribute("name", resId.value.toSnakeCase())
                 add(res)
             }

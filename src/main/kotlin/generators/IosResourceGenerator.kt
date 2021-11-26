@@ -5,8 +5,6 @@ import org.w3c.dom.Element
 import project.*
 import project.Platform.IOS
 import project.ResourceType.*
-import ui.resource.ResourceTypeViewModel
-import ui.resource.ResourceViewModel
 import utils.toLowerCamelCase
 import java.io.*
 import javax.xml.transform.OutputKeys
@@ -20,29 +18,26 @@ import javax.xml.transform.Transformer
  * R.array.some_array_id, similar to Android, but providing the actual resource, not an integer.
  * Swift extension functions are generated for convenience.
  */
-fun generateIOSResources(vm: ResourceViewModel) {
-    val defaultLocale = vm.defaultLocale.value
-    val locales = vm.locales.value
+fun generateIOSResources(data: ProjectData) {
     val formatters = StringFormatter.defaultFormatters.filter { IOS in it.platforms }
-    val outputFolder = File(vm.exportUrl(IOS))
-
-    val outputFolders = locales.associateWith { locale ->
+    val outputFolder = File(data.exportUrl)
+    val outputFolders = data.locales.associateWith { locale ->
         File(outputFolder, "${locale.value}.lproj").also(File::mkdirs)
     }
 
     val stringWritersByLocale = outputFolders.mapValues { it.value.createChildFile(IOS.fileName(STRINGS)).bufferedWriter() }
 
-    val pluralRootXmlElementsByLocale: Map<LocaleIsoCode, Element> = vm.plurals.localizedResourcesById.value.flatMapTo(mutableSetOf()) { it.value.keys }
-        .filter { it in locales }
+    val pluralRootXmlElementsByLocale: Map<LocaleIsoCode, Element> = data.plurals.localizedResourcesById.flatMapTo(mutableSetOf()) { it.value.keys }
+        .filter { it in data.locales }
         .associateWith { createDocumentWithPlistDictElement() }
-    val arrayRootXmlElementsByLocale: Map<LocaleIsoCode, Element> = vm.arrays.localizedResourcesById.value.flatMapTo(mutableSetOf()) { it.value.keys }
-        .filter { it in locales }
+    val arrayRootXmlElementsByLocale: Map<LocaleIsoCode, Element> = data.arrays.localizedResourcesById.flatMapTo(mutableSetOf()) { it.value.keys }
+        .filter { it in data.locales }
         .associateWith { createDocumentWithPlistDictElement() }
 
     /**
      * "identifier" = "Localized text";
      */
-    addAll(vm.strings) { id, locale, res ->
+    addAll(data.strings) { id, locale, res ->
         val txt = res.text.sanitized(formatters, isXml = false)
         stringWritersByLocale[locale]!!.appendLine("\"${id.value.toLowerCamelCase()}\" = \"$txt\";")
     }
@@ -65,7 +60,7 @@ fun generateIOSResources(vm: ResourceViewModel) {
      *   </dict>
      * </dict>
      */
-    addAll(vm.plurals, pluralRootXmlElementsByLocale) { res ->
+    addAll(data.plurals, pluralRootXmlElementsByLocale) { res ->
         appendElement("dict") {
             appendElement(KEY) { appendTextNode("NSStringLocalizedFormatKey") }
             appendElement(STRING) { appendTextNode("%#@value@") }
@@ -90,7 +85,7 @@ fun generateIOSResources(vm: ResourceViewModel) {
      *   <string>Wage</string>
      * </array>
      */
-    addAll(vm.arrays, arrayRootXmlElementsByLocale) { res ->
+    addAll(data.arrays, arrayRootXmlElementsByLocale) { res ->
         appendElement("array") {
             for (text in res.items) {
                 appendElement(STRING) { appendTextNode(text.sanitized(formatters)) }
@@ -114,9 +109,9 @@ fun generateIOSResources(vm: ResourceViewModel) {
     outputFolder.createChildFile("R.swift").bufferedWriter().use { writer ->
         writer.appendLine(generatedFileWarning)
         writer.appendLine("struct R {")
-        writer.appendReferences(vm.strings, defaultLocale, formatters)
-        writer.appendReferences(vm.plurals, defaultLocale, formatters)
-        writer.appendReferences(vm.arrays, defaultLocale, formatters)
+        writer.appendReferences(data.strings, data.defaultLocale, formatters)
+        writer.appendReferences(data.plurals, data.defaultLocale, formatters)
+        writer.appendReferences(data.arrays, data.defaultLocale, formatters)
         writer.appendLine('}')
     }
     outputFolder.createChildFile("String+Localization.swift").bufferedWriter().use {
@@ -173,23 +168,23 @@ private const val KEY = "key"
 private const val STRING = "string"
 
 private fun <R : Resource, M : Metadata<M>> addAll(
-    vm: ResourceTypeViewModel<R, M>,
+    data: ResourceData<R, M>,
     add: (ResourceId, LocaleIsoCode, R) -> Unit
 ) {
-    vm.metadataById.value.forEach { (resId, metadata) ->
+    data.metadataById.forEach { (resId, metadata) ->
         if (IOS !in metadata.platforms) return@forEach
-        vm.localizedResourcesById.value[resId]?.forEach { (locale, resource) ->
+        data.localizedResourcesById[resId]?.forEach { (locale, resource) ->
             add(resId, locale, resource)
         }
     }
 }
 
 private fun <R : Resource, M : Metadata<M>> addAll(
-    vm: ResourceTypeViewModel<R, M>,
+    data: ResourceData<R, M>,
     xmlDocumentsByLocale: Map<LocaleIsoCode, Element>,
     add: Element.(R) -> Unit
 ) {
-    addAll(vm) { id, locale, resource ->
+    addAll(data) { id, locale, resource ->
         xmlDocumentsByLocale[locale]!!.apply {
             appendElement(KEY) { appendTextNode(id.value.toLowerCamelCase()) }
             add(resource)
@@ -206,21 +201,21 @@ private val generatedFileWarning = """
     """.trimIndent()
 
 private fun <R : Resource, M : Metadata<M>> Writer.appendReferences(
-    vm: ResourceTypeViewModel<R, M>,
+    data: ResourceData<R, M>,
     defaultLocale: LocaleIsoCode,
     formatters: List<StringFormatter>
 ) {
-    if (vm.metadataById.value.isEmpty()) return
-    appendLine("\tstruct ${vm.type.title.dropLast(1)} {")
-    vm.metadataById.value.forEach { (resId, _) ->
-        val text = when (val res = vm.localizedResourcesById.value[resId]!![defaultLocale]!!) {
+    if (data.metadataById.isEmpty()) return
+    appendLine("\tstruct ${data.type.title.dropLast(1)} {")
+    data.metadataById.forEach { (resId, _) ->
+        val text = when (val res = data.localizedResourcesById[resId]!![defaultLocale]!!) {
             is Str -> res.text.sanitized(formatters, isXml = false)
             is Plural -> res[Quantity.OTHER]!!.sanitized(formatters, isXml = false)
             is StringArray -> res.items.joinToString { it.sanitized(formatters, isXml = false) }
             else -> ""
         }
         appendReferenceComment(text)
-        appendReferenceFormattingArgs(resId, text, vm.type)
+        appendReferenceFormattingArgs(resId, text, data.type)
     }
     appendLine("\t}")
 }
