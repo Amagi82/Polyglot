@@ -15,7 +15,7 @@ import java.io.File
  * resId.size (arrays)
  */
 abstract class ResourceStore<R : Resource, M : Metadata<M>> protected constructor(projectName: String, val type: ResourceType) :
-    PropertyStore(File(Project.projectFolder(projectName), "${type.title}.properties")) {
+    FilePropertyStore(File(Project.projectFolder(projectName), "${type.title}.properties")) {
 
     val metadataById by lazy {
         MutableStateFlow<Map<ResourceId, M>>(
