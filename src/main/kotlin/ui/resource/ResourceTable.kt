@@ -1,6 +1,7 @@
 package ui.resource
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
@@ -92,7 +93,8 @@ private fun ResourceTableHeader(type: ResourceType, displayedLocales: List<Local
             ResourceType.STRINGS -> 0.dp
             ResourceType.PLURALS -> 40.dp
             ResourceType.ARRAYS -> 64.dp
-        }
+        },
+        animationSpec = tween()
     )
     Row(
         Modifier.fillMaxWidth().background(MaterialTheme.colors.surface).padding(start = 16.dp, top = 12.dp, end = 112.dp, bottom = 12.dp),
