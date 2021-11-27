@@ -137,7 +137,6 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
         Spacer(Modifier.width(8.dp))
         PlatformEditor(resId = resId, platforms = metadata.platforms, togglePlatform = vm::togglePlatform)
     }
-    Divider()
 }
 
 @Composable
