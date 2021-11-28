@@ -1,8 +1,9 @@
 # Polyglot
 
 ![](docs/lightMode.png)
-Polyglot manages localized strings for Android and iOS, making it simple to export shared strings. It'll automatically format localized strings, plurals, and
-string arrays, as well as generating type-safe R files for Swift, similar to Android, e.g.
+Polyglot is a desktop app for Windows, MacOS, and Linux built in [Compose](https://github.com/JetBrains/compose-jb), written in
+100% [Kotlin](https://kotlinlang.org). It manages localized strings for Android and iOS, making it simple to export shared strings. It'll automatically format
+localized strings, plurals, and string arrays, as well as generating type-safe R files for Swift, similar to Android, e.g.
 
     R.string.yourString
     R.plural.yourPlural(quantity: 2, arg0: 2) 
@@ -13,6 +14,9 @@ String formatting can be customized, but by default escapes unacceptable charact
 %f.
 
 ## Getting started
+
+Clone the repo, sync Gradle, and run the app. You can generate a .jar, .msi, .dmg, or .deb file if you wish. Detailed instructions are available in
+the [compose-jb](https://github.com/JetBrains/compose-jb)) repo.
 
 Open the app and create a project. You can go back to this menu later by clicking on the dropdown menu on the top right.
 
