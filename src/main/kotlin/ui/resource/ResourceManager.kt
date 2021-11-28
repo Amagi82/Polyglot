@@ -146,7 +146,10 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
 
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
                 ExtendedFloatingActionButton(text = { Text("Add") },
-                    onClick = vm.resourceViewModel(selectedTab)::createResource,
+                    onClick = {
+                        vm.isMultiSelectEnabled.value = false
+                        vm.resourceViewModel(selectedTab).createResource()
+                    },
                     modifier = Modifier.padding(16.dp),
                     icon = { Icon(Icons.Default.Add, contentDescription = "Add new resource") })
             }
