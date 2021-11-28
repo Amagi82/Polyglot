@@ -12,14 +12,14 @@ import java.io.File
  * Android and iOS handle this differently:
  * With Android, the base values folder gets the default strings, and values-en, values-de, etc get the localized translations
  * With iOS, there is no base folder, all localizations are placed in their respective folders, e.g. en.proj, es.proj, de.proj
- * @property locales: List of locales this project supports
+ * @property locales: Set of locales this project supports
  * @property exportUrls: Set this to your project folders and Polyglot will generate files directly to that folder
  * */
 class ProjectStore(val name: String) : FilePropertyStore(File(Project.projectFolder(name), "project.properties")) {
     val defaultLocale: MutableStateFlow<LocaleIsoCode> = mutableStateFlowOf("defaultLocale", getter = { LocaleIsoCode(it ?: "en") }) { it.value }
 
-    val locales: MutableStateFlow<List<LocaleIsoCode>> = mutableStateFlowOf("locales",
-        getter = { value -> value?.split(",")?.map(::LocaleIsoCode) ?: listOf(defaultLocale.value) },
+    val locales: MutableStateFlow<Set<LocaleIsoCode>> = mutableStateFlowOf("locales",
+        getter = { value -> value?.split(",")?.map(::LocaleIsoCode)?.toSet() ?: setOf(defaultLocale.value) },
         setter = { value -> value.sortedBy { Locale[it].displayName() }.joinToString(",", transform = LocaleIsoCode::value) })
 
     val exportUrls: MutableStateFlow<Map<Platform, String>> =

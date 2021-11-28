@@ -5,7 +5,7 @@ import project.*
 
 data class ExportProjectData(
     val defaultLocale: LocaleIsoCode,
-    val locales: List<LocaleIsoCode>,
+    val locales: Set<LocaleIsoCode>,
     val exportUrl: String,
     val strings: ExportResourceData<Str>,
     val plurals: ExportResourceData<Plural>,
