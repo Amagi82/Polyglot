@@ -8,11 +8,13 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import ui.core.Chip
 import ui.resource.ResourceViewModel
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun GroupSettings(vm: ResourceViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
