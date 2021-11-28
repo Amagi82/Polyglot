@@ -43,7 +43,7 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
         modifier = Modifier.background(if (isSelected) MaterialTheme.colors.onSurface.copy(alpha = 0.12f) else Color.Unspecified)
             .mouseClickable(enabled = isMultiSelectEnabled) { onClick(keyboardModifiers.isCtrlPressed, keyboardModifiers.isShiftPressed) }
             .animateContentSize()
-            .padding(start = 16.dp, end = 16.dp),
+            .padding(start = 16.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         EditableGroupField(metadata = metadata, isSelectable = !isMultiSelectEnabled) {
