@@ -2,13 +2,12 @@ package ui.resource
 
 import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.VerticalScrollbar
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,7 +17,10 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import locales.Locale
 import locales.LocaleIsoCode
-import project.*
+import project.GroupId
+import project.Metadata
+import project.Resource
+import project.ResourceId
 
 @Composable
 fun <R : Resource, M : Metadata<M>> ResourceTable(
@@ -86,14 +88,16 @@ fun <R : Resource, M : Metadata<M>> ResourceTable(
 
 @Composable
 private fun ResourceTableHeader(displayedLocales: List<LocaleIsoCode>) {
-    Row(
-        Modifier.fillMaxWidth().background(MaterialTheme.colors.surface).padding(start = 16.dp, top = 12.dp, end = 112.dp, bottom = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text("group", Modifier.weight(0.5f), fontWeight = FontWeight.SemiBold)
-        Text("id", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-        displayedLocales.forEachIndexed { i, it ->
-            Text(Locale[it].displayName(i == 0), Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+    Surface {
+        Row(
+            Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 112.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("group", Modifier.weight(0.5f), fontWeight = FontWeight.SemiBold)
+            Text("id", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+            displayedLocales.forEachIndexed { i, it ->
+                Text(Locale[it].displayName(i == 0), Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+            }
         }
     }
     Divider()
