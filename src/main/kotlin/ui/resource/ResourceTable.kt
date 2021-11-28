@@ -37,7 +37,7 @@ fun <R : Resource, M : Metadata<M>> ResourceTable(
     val selectedRows by vm.selectedRows.collectAsState()
     var firstClickIndex by remember(metadataById) { mutableStateOf<Int?>(null) }
 
-    LazyColumn(Modifier.fillMaxWidth(), state = state) {
+    LazyColumn(Modifier.fillMaxSize(), state = state) {
         stickyHeader {
             ResourceTableHeader(displayedLocales)
         }
