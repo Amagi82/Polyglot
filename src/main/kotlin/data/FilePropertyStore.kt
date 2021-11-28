@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 
-abstract class FilePropertyStore(private val file: File) : PropertyStore(file.inputStream()) {
+abstract class FilePropertyStore(private val file: File) : PropertyStore(file.apply(File::createNewFile).inputStream()) {
     protected fun store(comment: String = "", onFailure: (Exception) -> Unit) {
         GlobalScope.launch(Dispatchers.IO) {
             try {
