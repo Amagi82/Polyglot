@@ -93,8 +93,8 @@ private fun ResourceTableHeader(displayedLocales: List<LocaleIsoCode>) {
             Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 112.dp, bottom = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("group", Modifier.weight(0.5f), fontWeight = FontWeight.SemiBold)
-            Text("id", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+            Text("Group", Modifier.weight(0.5f), fontWeight = FontWeight.SemiBold)
+            Text("ID", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
             displayedLocales.forEachIndexed { i, it ->
                 Text(Locale[it].displayName(i == 0), Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
             }
