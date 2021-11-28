@@ -20,7 +20,6 @@ import locales.LocaleIsoCode
 import project.ResourceGroup
 import project.Resource
 import project.ResourceId
-import project.type
 
 @Composable
 fun <R : Resource> ResourceTable(
@@ -31,10 +30,10 @@ fun <R : Resource> ResourceTable(
 ) {
     val state = rememberLazyListState()
 
-    val resourceGroups by vm.resourceGroups.collectAsState()
+    val resourceGroups by key(vm.type) { vm.resourceGroups.collectAsState() }
+    val localizedResourcesById by key(vm.type) { vm.localizedResourcesById.collectAsState() }
     val filteredGroups = resourceGroups.filter { it.key !in excludedGroups }
     val keys = filteredGroups.flatMap { it.value.toSortedSet() }
-    val localizedResourcesById by vm.localizedResourcesById.collectAsState()
 
     val selectedRows by vm.selectedRows.collectAsState()
     var firstClickIndex by remember(keys) { mutableStateOf<Int?>(null) }
@@ -44,12 +43,10 @@ fun <R : Resource> ResourceTable(
             ResourceTableHeader(displayedLocales)
         }
         items(keys, key = { it.value }) { resId ->
-            val resources = localizedResourcesById[resId].orEmpty()
-            if (resources.any { it.value::class.type != vm.type }) return@items
             ResourceRow(
                 vm = vm,
                 displayedLocales = displayedLocales,
-                resources = resources,
+                resources = localizedResourcesById[resId].orEmpty(),
                 resId = resId,
                 isMultiSelectEnabled = isMultiSelectEnabled,
                 isSelected = resId in selectedRows,
