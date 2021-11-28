@@ -175,13 +175,15 @@ private fun GroupSelectionDialog(groups: Set<ResourceGroup>, dismiss: () -> Unit
             },
             text = {
                 Column(Modifier.padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    val focusRequester = remember { FocusRequester() }
                     Text("Add selected rows to group", style = MaterialTheme.typography.subtitle1)
                     TextField(
                         value = group.name,
                         onValueChange = { group = ResourceGroup(it.filter(Char::isLetterOrDigit)) },
                         modifier = Modifier
                             .onPressEnter { putSelectedInGroup(group) }
-                            .onPressEsc(dismiss),
+                            .onPressEsc(dismiss)
+                            .focusRequester(focusRequester),
                         singleLine = true
                     )
                     Box {
@@ -192,6 +194,10 @@ private fun GroupSelectionDialog(groups: Set<ResourceGroup>, dismiss: () -> Unit
                                 }
                             }
                         }
+                    }
+                    // TextField doesn't get focus automatically
+                    LaunchedEffect(Unit) {
+                        focusRequester.requestFocus()
                     }
                 }
             }
