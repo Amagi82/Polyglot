@@ -132,7 +132,10 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
             }
 
             if (isLabelDialogShown) {
+                val groups by vm.groups.collectAsState(setOf())
+
                 GroupSelectionDialog(
+                    groups = groups,
                     dismiss = { isLabelDialogShown = false },
                     putSelectedInGroup = {
                         vm.resourceViewModel(selectedTab).putSelectedInGroup(it)
@@ -155,7 +158,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun GroupSelectionDialog(dismiss: () -> Unit, putSelectedInGroup: (ResourceGroup) -> Unit) {
+private fun GroupSelectionDialog(groups: Set<ResourceGroup>, dismiss: () -> Unit, putSelectedInGroup: (ResourceGroup) -> Unit) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         var group by remember { mutableStateOf(ResourceGroup()) }
         AlertDialog(
@@ -165,7 +168,6 @@ private fun GroupSelectionDialog(dismiss: () -> Unit, putSelectedInGroup: (Resou
                     Text("Add")
                 }
             },
-            modifier = Modifier.onPressEnter { putSelectedInGroup(group) }.onPressEsc(dismiss),
             dismissButton = {
                 TextButton(onClick = dismiss) {
                     Text("Cancel")
@@ -175,10 +177,22 @@ private fun GroupSelectionDialog(dismiss: () -> Unit, putSelectedInGroup: (Resou
                 Column(Modifier.padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Text("Add selected rows to group", style = MaterialTheme.typography.subtitle1)
                     TextField(
-                        value = group.value,
-                        onValueChange = { group = GroupId(it.filter(Char::isLetterOrDigit)) },
+                        value = group.name,
+                        onValueChange = { group = ResourceGroup(it.filter(Char::isLetterOrDigit)) },
+                        modifier = Modifier
+                            .onPressEnter { putSelectedInGroup(group) }
+                            .onPressEsc(dismiss),
                         singleLine = true
                     )
+                    Box {
+                        DropdownMenu(group.name.isNotEmpty(), onDismissRequest = {}, focusable = false) {
+                            groups.filter { it.name.lowercase().startsWith(group.name.lowercase()) }.take(15).forEach {
+                                DropdownMenuItem(onClick = { putSelectedInGroup(it) }) {
+                                    Text(it.name)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         )
