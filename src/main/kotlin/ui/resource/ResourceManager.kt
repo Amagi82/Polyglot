@@ -132,7 +132,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
             }
 
             if (isLabelDialogShown) {
-                GroupIdSelectionDialog(
+                GroupSelectionDialog(
                     dismiss = { isLabelDialogShown = false },
                     putSelectedInGroup = {
                         vm.resourceViewModel(selectedTab).putSelectedInGroup(it)
@@ -155,7 +155,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun GroupIdSelectionDialog(dismiss: () -> Unit, putSelectedInGroup: (ResourceGroup) -> Unit) {
+private fun GroupSelectionDialog(dismiss: () -> Unit, putSelectedInGroup: (ResourceGroup) -> Unit) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         var group by remember { mutableStateOf(ResourceGroup()) }
         AlertDialog(
