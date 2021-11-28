@@ -22,7 +22,7 @@ Open the app and create a project. You can go back to this menu later by clickin
 
 ![](docs/closeProject.png)
 
-Double click to edit a field. Press enter or click somewhere else to save. Escape to cancel.
+Double click to edit a field. Press enter or click somewhere else to save. Escape to cancel. To remove a row, simply delete the id.
 
 ![](docs/editField.png)
 
