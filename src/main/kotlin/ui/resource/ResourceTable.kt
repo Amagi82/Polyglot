@@ -32,8 +32,11 @@ fun <R : Resource> ResourceTable(
 
     val resourceGroups by key(vm.type) { vm.resourceGroups.collectAsState() }
     val localizedResourcesById by key(vm.type) { vm.localizedResourcesById.collectAsState() }
-    val filteredGroups = resourceGroups.filter { it.key !in excludedGroups }
-    val keys = filteredGroups.flatMap { it.value.toSortedSet() }
+    val keys by remember(vm, resourceGroups, excludedGroups) {
+        derivedStateOf {
+            resourceGroups.filter { it.key !in excludedGroups }.toSortedMap().flatMap { it.value.toSortedSet() }
+        }
+    }
 
     val selectedRows by vm.selectedRows.collectAsState()
     var firstClickIndex by remember(keys) { mutableStateOf<Int?>(null) }
