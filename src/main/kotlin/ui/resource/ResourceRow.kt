@@ -11,7 +11,6 @@ import androidx.compose.material.TextFieldDefaults.BackgroundOpacity
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -28,7 +27,6 @@ import project.*
 import ui.core.IconButton
 import ui.core.onPressEnter
 import ui.core.onPressEsc
-
 
 @Composable
 fun <T : Resource, M : Metadata<M>> ResourceRow(
@@ -69,19 +67,17 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
                     }
                 }
                 vm is ArrayResourceViewModel && metadata is ArrayMetadata -> {
+                    val focusManager = LocalFocusManager.current
                     var size by remember(metadata) { mutableStateOf(metadata.size) }
                     var sizeFieldHasFocus by remember { mutableStateOf(false) }
                     TextField(
                         value = size.toString(),
                         onValueChange = { size = it.filter(Char::isDigit).toIntOrNull()?.coerceAtLeast(1) ?: 1 },
                         modifier = Modifier.padding(start = 8.dp).width(64.dp)
-                            .composed {
-                                val focusManager = LocalFocusManager.current
-                                onPressEnter(focusManager::clearFocus)
-                                onPressEsc {
-                                    size = metadata.size
-                                    focusManager.clearFocus()
-                                }
+                            .onPressEnter(focusManager::clearFocus)
+                            .onPressEsc {
+                                size = metadata.size
+                                focusManager.clearFocus()
                             }
                             .onFocusChanged {
                                 if (!it.hasFocus && metadata.size != size) {
