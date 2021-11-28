@@ -7,12 +7,11 @@ import project.*
 import java.io.File
 
 /**
- * resId.platforms
- * resId.group
+ * _group_.name=resId,resId...
+ * _platform_.platform=resId,resId...
  * resId.localeIsoCode (strings)
  * resId.localeIsoCode.quantity (plurals)
  * resId.localeIsoCode.index (arrays)
- * resId.size (arrays)
  */
 abstract class ResourceStore<R : Resource> protected constructor(projectName: String, val type: ResourceType) :
     FilePropertyStore(File(Project.projectFolder(projectName), "${type.title}.properties")) {
