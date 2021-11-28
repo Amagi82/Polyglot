@@ -179,7 +179,7 @@ private fun GroupSelectionDialog(groups: Set<ResourceGroup>, dismiss: () -> Unit
                     Text("Add selected rows to group", style = MaterialTheme.typography.subtitle1)
                     TextField(
                         value = group.name,
-                        onValueChange = { group = ResourceGroup(it.filter(Char::isLetterOrDigit)) },
+                        onValueChange = { group = ResourceGroup(it) },
                         modifier = Modifier
                             .onPressEnter { putSelectedInGroup(group) }
                             .onPressEsc(dismiss)

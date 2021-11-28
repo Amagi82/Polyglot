@@ -332,7 +332,7 @@ private fun RowScope.EditableGroupField(
         textField = { modifier ->
             TextFieldWithCursorPositionEnd(
                 value = newGroup.name,
-                onValueChange = { newGroup = ResourceGroup(it.filter(Char::isLetterOrDigit)) },
+                onValueChange = { newGroup = ResourceGroup(it) },
                 modifier = Modifier.weight(0.5f).then(modifier),
                 singleLine = true,
             )
