@@ -114,7 +114,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 GroupSettings(vm)
-                LocaleSettings(vm)
+                LocaleSettings(vm) { scope.launch { scaffoldState.snackbarHostState.showSnackbar(it, duration = SnackbarDuration.Long) } }
                 ImportSettings(vm)
                 ExportSettings(vm)
             }

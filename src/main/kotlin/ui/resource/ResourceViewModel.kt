@@ -2,11 +2,14 @@ package ui.resource
 
 import data.ProjectStore
 import data.exporters.ExportProjectData
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import locales.Locale
 import locales.LocaleIsoCode
-import project.ResourceGroup
 import project.Platform
+import project.ResourceGroup
 import project.ResourceId
 import project.ResourceType
 
