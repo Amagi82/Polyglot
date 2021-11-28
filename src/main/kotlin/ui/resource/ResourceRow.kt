@@ -29,9 +29,8 @@ import ui.core.onPressEnter
 import ui.core.onPressEsc
 
 @Composable
-fun <T : Resource, M : Metadata<M>> ResourceRow(
-    vm: ResourceTypeViewModel<T, M>,
-    metadata: M,
+fun <T : Resource> ResourceRow(
+    vm: ResourceTypeViewModel<T>,
     displayedLocales: List<LocaleIsoCode>,
     resources: Map<LocaleIsoCode, T>,
     resId: ResourceId,
@@ -46,8 +45,14 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
             .padding(start = 16.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        EditableGroupField(metadata = metadata, isSelectable = !isMultiSelectEnabled) {
-            vm.selectedRows.value = listOf(resId)
+        val resourceGroups by vm.resourceGroups.collectAsState()
+        val group by remember(vm, resId, resourceGroups) {
+            derivedStateOf {
+                resourceGroups.firstNotNullOfOrNull { if (it.value.contains(resId)) it.key else null } ?: ResourceGroup()
+            }
+        }
+        EditableGroupField(current = group, isSelectable = !isMultiSelectEnabled) {
+            vm.selectedRows.value = setOf(resId)
             vm.putSelectedInGroup(it)
         }
         Spacer(Modifier.width(8.dp))
@@ -56,9 +61,9 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
         Row(Modifier.weight(1f)) {
             EditableIdField(resId = resId, isSelectable = !isMultiSelectEnabled, removeResource = vm::removeResource, updateResourceId = vm::updateResourceId)
 
-            when {
-                vm is StringResourceViewModel -> Unit
-                vm is PluralResourceViewModel -> {
+            when (vm) {
+                is StringResourceViewModel -> Unit
+                is PluralResourceViewModel -> {
                     IconButton(
                         resourcePath = if (isPluralExpanded) R.drawable.compress else R.drawable.expand,
                         contentDescription = if (isPluralExpanded) "Collapse quantity options" else "Show all quantity options"
@@ -66,9 +71,9 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
                         isPluralExpanded = !isPluralExpanded
                     }
                 }
-                vm is ArrayResourceViewModel && metadata is ArrayMetadata -> {
+                is ArrayResourceViewModel -> {
                     val focusManager = LocalFocusManager.current
-                    var size by remember(metadata) { mutableStateOf(metadata.size) }
+                    var size by remember(resources) { mutableStateOf(vm.arraySize(resId)) }
                     var sizeFieldHasFocus by remember { mutableStateOf(false) }
                     TextField(
                         value = size.toString(),
@@ -76,11 +81,11 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
                         modifier = Modifier.padding(start = 8.dp).width(64.dp)
                             .onPressEnter(focusManager::clearFocus)
                             .onPressEsc {
-                                size = metadata.size
+                                size = vm.arraySize(resId)
                                 focusManager.clearFocus()
                             }
                             .onFocusChanged {
-                                if (!it.hasFocus && metadata.size != size) {
+                                if (!it.hasFocus && vm.arraySize(resId) != size) {
                                     vm.updateArraySize(resId, size)
                                 }
                                 sizeFieldHasFocus = it.hasFocus
@@ -121,13 +126,13 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
                         updateResource = vm::updateResource
                     )
                 }
-                resource is StringArray? && vm is ArrayResourceViewModel && metadata is ArrayMetadata -> {
+                resource is StringArray? && vm is ArrayResourceViewModel -> {
                     ArrayFields(
                         localeIsoCode = locale,
                         resource = resource ?: StringArray(),
                         isDefaultLocale = i == 0,
                         isSelectable = !isMultiSelectEnabled,
-                        size = metadata.size,
+                        size = vm.arraySize(resId),
                         resId = resId,
                         updateResource = vm::updateResource
                     )
@@ -135,7 +140,8 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
             }
         }
         Spacer(Modifier.width(8.dp))
-        PlatformEditor(resId = resId, platforms = metadata.platforms, togglePlatform = vm::togglePlatform)
+        val excludedResourcesByPlatform by vm.excludedResourcesByPlatform.collectAsState()
+        PlatformEditor(resId = resId, excludedResourcesByPlatform = excludedResourcesByPlatform, togglePlatform = vm::togglePlatform)
     }
 }
 
@@ -316,27 +322,27 @@ private fun DoubleClickToEditTextField(
 
 @Composable
 private fun RowScope.EditableGroupField(
-    metadata: Metadata<*>,
+    current: ResourceGroup,
     isSelectable: Boolean,
-    updateGroupId: (GroupId) -> Unit
+    updateGroupId: (ResourceGroup) -> Unit
 ) {
-    var group by remember(metadata) { mutableStateOf(metadata.group) }
+    var newGroup by remember(current) { mutableStateOf(current) }
     DoubleClickToEditTextField(
-        text = { Text(group.value, modifier = Modifier.weight(0.5f).padding(vertical = 4.dp).then(it)) },
+        text = { Text(newGroup.name, modifier = Modifier.weight(0.5f).padding(vertical = 4.dp).then(it)) },
         textField = { modifier ->
             TextFieldWithCursorPositionEnd(
-                value = group.value,
-                onValueChange = { group = GroupId(it.filter(Char::isLetterOrDigit)) },
+                value = newGroup.name,
+                onValueChange = { newGroup = ResourceGroup(it.filter(Char::isLetterOrDigit)) },
                 modifier = Modifier.weight(0.5f).then(modifier),
                 singleLine = true,
             )
         },
         isSelectable = isSelectable,
         shouldDropFocus = {
-            if (group != metadata.group) updateGroupId(group)
+            if (current != newGroup) updateGroupId(current)
             true
         },
-        cancel = { group = metadata.group })
+        cancel = { newGroup = current })
 }
 
 @Composable
@@ -423,9 +429,13 @@ private fun TextFieldWithCursorPositionEnd(
 }
 
 @Composable
-private fun PlatformEditor(resId: ResourceId, platforms: List<Platform>, togglePlatform: (ResourceId, Platform) -> Unit) {
+private fun PlatformEditor(resId: ResourceId, excludedResourcesByPlatform: Map<Platform, Set<ResourceId>>, togglePlatform: (ResourceId, Platform) -> Unit) {
     Platform.values().forEach { platform ->
-        IconButton(platform.iconId, Modifier.alpha(if (platform in platforms) 1f else 0.1f), contentDescription = platform.name) {
+        IconButton(
+            platform.iconId,
+            Modifier.alpha(if (excludedResourcesByPlatform[platform]?.contains(resId) == true) 0.1f else 1f),
+            contentDescription = platform.name
+        ) {
             togglePlatform(resId, platform)
         }
     }

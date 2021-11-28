@@ -15,9 +15,9 @@ import javax.xml.parsers.DocumentBuilderFactory
 suspend fun importResources(
     vm: ResourceViewModel,
     importFiles: (
-        strings: MutableResourceData<Str, StringMetadata>,
-        plurals: MutableResourceData<Plural, PluralMetadata>,
-        arrays: MutableResourceData<StringArray, ArrayMetadata>
+        strings: MutableResourceData<Str>,
+        plurals: MutableResourceData<Plural>,
+        arrays: MutableResourceData<StringArray>
     ) -> List<File>
 ): List<File> {
     val strings = MutableResourceData(vm.strings)
@@ -28,41 +28,43 @@ suspend fun importResources(
         importFiles(strings, plurals, arrays)
     }
 
+    vm.strings.excludedResourcesByPlatform.value = strings.excludedResourcesByPlatform.toSortedMap()
     vm.strings.localizedResourcesById.value = strings.localizedResourcesById
-    vm.strings.metadataById.value = strings.metadataById.toSortedMap()
-    vm.plurals.localizedResourcesById.value = plurals.localizedResourcesById
-    vm.plurals.metadataById.value = plurals.metadataById.toSortedMap()
-    vm.arrays.localizedResourcesById.value = arrays.localizedResourcesById
-    vm.arrays.metadataById.value = arrays.metadataById.toSortedMap()
 
+    vm.plurals.excludedResourcesByPlatform.value = plurals.excludedResourcesByPlatform.toSortedMap()
+    vm.plurals.localizedResourcesById.value = plurals.localizedResourcesById
+
+    vm.arrays.excludedResourcesByPlatform.value = arrays.excludedResourcesByPlatform.toSortedMap()
+    vm.arrays.localizedResourcesById.value = arrays.localizedResourcesById
     return importedFiles
 }
 
-fun <R : Resource, M : Metadata<M>> Map<ResourceId, R>.mergeWith(
+fun <R : Resource> Map<ResourceId, R>.mergeWith(
     platform: Platform,
     locale: LocaleIsoCode,
     overwrite: Boolean,
-    data: MutableResourceData<R, M>,
+    data: MutableResourceData<R>,
 ) {
     forEach { (resId, resource) ->
-        val localeMap = data.localizedResourcesById.getOrElse(resId) { mapOf() }
-        if (overwrite || !localeMap.contains(locale)) data.localizedResourcesById[resId] = localeMap.plus(locale to resource)
-        data.metadataById.compute(resId) { _, metadata ->
-            when {
-                metadata == null -> Metadata(type = resource::class.type, platforms = listOf(platform))
-                metadata.platforms.contains(platform) -> metadata
-                else -> metadata.copyImpl(platforms = metadata.platforms.plus(platform).sorted())
+        data.excludedResourcesByPlatform.apply {
+            if (data.localizedResourcesById.contains(resId)) {
+                compute(platform) { _, excluded -> excluded?.minus(resId) }
+            } else {
+                Platform.values().forEach { if (it != platform) compute(it) { _, excluded -> excluded.orEmpty().plus(resId) } }
             }
         }
+
+        val localeMap = data.localizedResourcesById.getOrElse(resId) { mapOf() }
+        if (overwrite || !localeMap.contains(locale)) data.localizedResourcesById[resId] = localeMap.plus(locale to resource)
     }
 }
 
-data class MutableResourceData<R : Resource, M : Metadata<M>>(
-    val metadataById: MutableMap<ResourceId, M>,
+data class MutableResourceData<R : Resource>(
+    val excludedResourcesByPlatform: MutableMap<Platform, Set<ResourceId>>,
     val localizedResourcesById: MutableMap<ResourceId, Map<LocaleIsoCode, R>>
 ) {
-    constructor(vm: ResourceTypeViewModel<R, M>) : this(
-        metadataById = vm.metadataById.value.toMutableMap(),
+    constructor(vm: ResourceTypeViewModel<R>) : this(
+        excludedResourcesByPlatform = vm.excludedResourcesByPlatform.value.toMutableMap(),
         localizedResourcesById = vm.localizedResourcesById.value.toMutableMap()
     )
 }

@@ -59,8 +59,8 @@ fun exportAndroidResources(data: ExportProjectData) {
     }
 }
 
-private fun <R : Resource, M : Metadata<M>> addAll(
-    data: ExportResourceData<R, M>,
+private fun <R : Resource> addAll(
+    data: ExportResourceData<R>,
     xmlByLocale: Map<LocaleIsoCode, Element>,
     add: Element.(R) -> Unit
 ) {
@@ -68,17 +68,17 @@ private fun <R : Resource, M : Metadata<M>> addAll(
         xml.appendTextNode("\n")
     }
 
-    for ((group, metadataById) in data.metadataByIdByGroup) {
+    for ((group, resIds) in data.resourceGroups) {
         val localesCommented = mutableMapOf<LocaleIsoCode, Boolean>()
 
-        for ((resId, metadata) in metadataById) {
-            if (ANDROID !in metadata.platforms) continue
+        for (resId in resIds) {
+            if (resId in data.excludedResourcesByPlatform[ANDROID].orEmpty()) continue
             data.localizedResourcesById[resId]?.forEach { (locale, res) ->
                 val xml = xmlByLocale[locale]!!
 
-                if (group.value.isNotEmpty() && localesCommented[locale] != true) {
+                if (group.name.isNotEmpty() && localesCommented[locale] != true) {
                     xml.appendTextNode("\n")
-                    xml.appendComment(group.value)
+                    xml.appendComment(group.name)
                     localesCommented[locale] = true
                 }
 

@@ -17,38 +17,39 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import locales.Locale
 import locales.LocaleIsoCode
-import project.GroupId
-import project.Metadata
+import project.ResourceGroup
 import project.Resource
 import project.ResourceId
+import project.type
 
 @Composable
-fun <R : Resource, M : Metadata<M>> ResourceTable(
-    vm: ResourceTypeViewModel<R, M>,
-    excludedGroups: Set<GroupId>,
+fun <R : Resource> ResourceTable(
+    vm: ResourceTypeViewModel<R>,
+    excludedGroups: Set<ResourceGroup>,
     displayedLocales: List<LocaleIsoCode>,
     isMultiSelectEnabled: Boolean
 ) {
     val state = rememberLazyListState()
 
-    val metadataById by vm.metadataById.collectAsState()
-    val filteredMetadata = metadataById.filter { it.value.type == vm.type && it.value.group !in excludedGroups }
-    val keys = filteredMetadata.keys.toList()
+    val resourceGroups by vm.resourceGroups.collectAsState()
+    val filteredGroups = resourceGroups.filter { it.key !in excludedGroups }
+    val keys = filteredGroups.flatMap { it.value.toSortedSet() }
     val localizedResourcesById by vm.localizedResourcesById.collectAsState()
 
     val selectedRows by vm.selectedRows.collectAsState()
-    var firstClickIndex by remember(metadataById) { mutableStateOf<Int?>(null) }
+    var firstClickIndex by remember(keys) { mutableStateOf<Int?>(null) }
 
     LazyColumn(Modifier.fillMaxSize(), state = state) {
         stickyHeader {
             ResourceTableHeader(displayedLocales)
         }
         items(keys, key = { it.value }) { resId ->
+            val resources = localizedResourcesById[resId].orEmpty()
+            if (resources.any { it.value::class.type != vm.type }) return@items
             ResourceRow(
                 vm = vm,
-                metadata = filteredMetadata[resId]!!,
                 displayedLocales = displayedLocales,
-                resources = localizedResourcesById[resId].orEmpty(),
+                resources = resources,
                 resId = resId,
                 isMultiSelectEnabled = isMultiSelectEnabled,
                 isSelected = resId in selectedRows,
@@ -59,12 +60,12 @@ fun <R : Resource, M : Metadata<M>> ResourceTable(
                     vm.selectedRows.value = when {
                         isCtrlPressed && isSelected -> selectedRows.minus(resId).also { if (it.isEmpty()) firstClickIndex = null }
                         isCtrlPressed -> selectedRows.plus(resId).also { if (firstClickIndex == null) firstClickIndex = clickIndex }
-                        isShiftPressed && selectedRows.isEmpty() -> listOf(resId).also { firstClickIndex = clickIndex }
-                        isShiftPressed && firstIndex != null && clickIndex < firstIndex -> keys.slice(clickIndex..firstIndex)
-                        isShiftPressed && firstIndex != null && clickIndex > firstIndex -> keys.slice(firstIndex..clickIndex)
+                        isShiftPressed && selectedRows.isEmpty() -> setOf(resId).also { firstClickIndex = clickIndex }
+                        isShiftPressed && firstIndex != null && clickIndex < firstIndex -> keys.slice(clickIndex..firstIndex).toSet()
+                        isShiftPressed && firstIndex != null && clickIndex > firstIndex -> keys.slice(firstIndex..clickIndex).toSet()
                         isShiftPressed && firstIndex == clickIndex -> selectedRows
-                        isSelected -> listOf<ResourceId>().also { firstClickIndex = null }
-                        else -> listOf(resId).also { firstClickIndex = clickIndex }
+                        isSelected -> setOf<ResourceId>().also { firstClickIndex = null }
+                        else -> setOf(resId).also { firstClickIndex = clickIndex }
                     }
                 }
             )

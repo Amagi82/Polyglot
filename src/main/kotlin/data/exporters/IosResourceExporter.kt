@@ -167,22 +167,20 @@ private fun createDocumentWithPlistDictElement(): Element = createDocument().app
 private const val KEY = "key"
 private const val STRING = "string"
 
-private fun <R : Resource, M : Metadata<M>> addAll(
-    data: ExportResourceData<R, M>,
+private fun <R : Resource> addAll(
+    data: ExportResourceData<R>,
     add: (ResourceId, LocaleIsoCode, R) -> Unit
 ) {
-    for ((_, metadataById) in data.metadataByIdByGroup) {
-        for ((resId, metadata) in metadataById) {
-            if (IOS !in metadata.platforms) continue
-            data.localizedResourcesById[resId]?.forEach { (locale, resource) ->
-                add(resId, locale, resource)
-            }
+    for ((resId, localeMap) in data.localizedResourcesById) {
+        if (data.excludedResourcesByPlatform[IOS]?.contains(resId) == true) continue
+        localeMap.forEach { (locale, resource) ->
+            add(resId, locale, resource)
         }
     }
 }
 
-private fun <R : Resource, M : Metadata<M>> addAll(
-    data: ExportResourceData<R, M>,
+private fun <R : Resource> addAll(
+    data: ExportResourceData<R>,
     xmlDocumentsByLocale: Map<LocaleIsoCode, Element>,
     add: Element.(R) -> Unit
 ) {
@@ -202,24 +200,25 @@ private val generatedFileWarning = """
         
     """.trimIndent()
 
-private fun <R : Resource, M : Metadata<M>> Writer.appendReferences(
-    data: ExportResourceData<R, M>,
+private fun <R : Resource> Writer.appendReferences(
+    data: ExportResourceData<R>,
     defaultLocale: LocaleIsoCode,
     formatters: List<StringFormatter>
 ) {
-    if (data.metadataByIdByGroup.isEmpty()) return
+    if (data.localizedResourcesById.isEmpty()) return
     appendLine()
     appendLine("\tstruct ${data.type.title.dropLast(1)} {")
 
-    for ((group, metadataById) in data.metadataByIdByGroup) {
-        if (group.value.isNotEmpty()) {
+    for ((group, resIds) in data.resourceGroups) {
+        if (group.name.isNotEmpty()) {
             appendLine()
             appendLine()
             appendLine("\t\t/**")
-            appendLine("\t\t * ${group.value}")
+            appendLine("\t\t * ${group.name}")
             appendLine("\t\t */")
         }
-        for ((resId, _) in metadataById) {
+        for (resId in resIds) {
+            if (data.excludedResourcesByPlatform[IOS]?.contains(resId) == true) continue
             val text = when (val res = data.localizedResourcesById[resId]!![defaultLocale]!!) {
                 is Str -> res.text.sanitized(formatters, isXml = false)
                 is Plural -> res[Quantity.OTHER]!!.sanitized(formatters, isXml = false)

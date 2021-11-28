@@ -26,7 +26,7 @@ fun GroupSettings(vm: ResourceViewModel) {
         groups.forEach { group ->
             val isExcluded = group in excludedGroups
             Chip(
-                text = { Text(group.value.ifEmpty { "(none)" }) },
+                text = { Text(group.name.ifEmpty { "(none)" }) },
                 onClick = { vm.excludedGroups.value = if (isExcluded) excludedGroups.minus(group) else excludedGroups.plus(group) },
                 isClickEnabled = true,
                 leadingIcon = {

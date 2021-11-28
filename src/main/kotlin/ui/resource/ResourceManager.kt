@@ -10,10 +10,12 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.update
-import project.GroupId
+import project.ResourceGroup
 import project.Platform
 import project.ResourceType
 import ui.core.IconButton
@@ -71,7 +73,7 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
                     if (isMultiSelectEnabled) {
                         IconButton(R.drawable.label, contentDescription = "Add to Group") { isLabelDialogShown = true }
                         IconButton(R.drawable.labelOff, contentDescription = "Remove from Group") {
-                            vm.resourceViewModel(selectedTab).putSelectedInGroup(GroupId())
+                            vm.resourceViewModel(selectedTab).putSelectedInGroup(ResourceGroup())
                         }
                     } else {
                         Spacer(Modifier.width(96.dp))
@@ -153,13 +155,13 @@ fun ResourceManager(vm: ResourceViewModel, toggleDarkTheme: () -> Unit, closePro
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun GroupIdSelectionDialog(dismiss: () -> Unit, putSelectedInGroup: (GroupId) -> Unit) {
+private fun GroupIdSelectionDialog(dismiss: () -> Unit, putSelectedInGroup: (ResourceGroup) -> Unit) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        var group by remember { mutableStateOf(GroupId()) }
+        var group by remember { mutableStateOf(ResourceGroup()) }
         AlertDialog(
             onDismissRequest = dismiss,
             confirmButton = {
-                TextButton(onClick = { putSelectedInGroup(group) }, enabled = group.value.isNotEmpty()) {
+                TextButton(onClick = { putSelectedInGroup(group) }, enabled = group.name.isNotEmpty()) {
                     Text("Add")
                 }
             },

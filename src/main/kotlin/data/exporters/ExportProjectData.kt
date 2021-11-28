@@ -7,7 +7,7 @@ data class ExportProjectData(
     val defaultLocale: LocaleIsoCode,
     val locales: List<LocaleIsoCode>,
     val exportUrl: String,
-    val strings: ExportResourceData<Str, StringMetadata>,
-    val plurals: ExportResourceData<Plural, PluralMetadata>,
-    val arrays: ExportResourceData<StringArray, ArrayMetadata>
+    val strings: ExportResourceData<Str>,
+    val plurals: ExportResourceData<Plural>,
+    val arrays: ExportResourceData<StringArray>
 )

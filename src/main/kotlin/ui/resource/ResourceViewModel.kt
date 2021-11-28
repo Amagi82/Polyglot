@@ -5,7 +5,7 @@ import data.exporters.ExportProjectData
 import kotlinx.coroutines.flow.*
 import locales.Locale
 import locales.LocaleIsoCode
-import project.GroupId
+import project.ResourceGroup
 import project.Platform
 import project.ResourceId
 import project.ResourceType
@@ -14,7 +14,7 @@ class ResourceViewModel(projectStore: ProjectStore) {
     val excludedLocales = MutableStateFlow(setOf<LocaleIsoCode>())
     val selectedTab = MutableStateFlow(ResourceType.STRINGS)
     val isMultiSelectEnabled = MutableStateFlow(false)
-    val excludedGroups = MutableStateFlow(setOf<GroupId>())
+    val excludedGroups = MutableStateFlow(setOf<ResourceGroup>())
 
     val projectName = projectStore.name
     val defaultLocale = projectStore.defaultLocale
@@ -25,12 +25,8 @@ class ResourceViewModel(projectStore: ProjectStore) {
     val plurals = PluralResourceViewModel(projectStore)
     val arrays = ArrayResourceViewModel(projectStore)
 
-    val groups: Flow<Set<GroupId>> = combine(strings.metadataById, plurals.metadataById, arrays.metadataById) { strings, plurals, arrays ->
-        buildSet {
-            strings.values.forEach { add(it.group) }
-            plurals.values.forEach { add(it.group) }
-            arrays.values.forEach { add(it.group) }
-        }.toSortedSet()
+    val groups: Flow<Set<ResourceGroup>> = combine(strings.resourceGroups, plurals.resourceGroups, arrays.resourceGroups) { strings, plurals, arrays ->
+        (strings.keys + plurals.keys + arrays.keys).toSortedSet()
     }
 
     fun resourceViewModel(type: ResourceType) = when (type) {
