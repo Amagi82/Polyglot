@@ -53,47 +53,50 @@ fun <T : Resource, M : Metadata<M>> ResourceRow(
             vm.putSelectedInGroup(it)
         }
         Spacer(Modifier.width(8.dp))
-        EditableIdField(resId = resId, isSelectable = !isMultiSelectEnabled, removeResource = vm::removeResource, updateResourceId = vm::updateResourceId)
         var isPluralExpanded by remember { mutableStateOf(false) }
 
-        when {
-            vm is StringResourceViewModel -> Unit
-            vm is PluralResourceViewModel -> {
-                IconButton(
-                    resourcePath = if (isPluralExpanded) R.drawable.compress else R.drawable.expand,
-                    contentDescription = if (isPluralExpanded) "Collapse quantity options" else "Show all quantity options"
-                ) {
-                    isPluralExpanded = !isPluralExpanded
+        Row(Modifier.weight(1f)) {
+            EditableIdField(resId = resId, isSelectable = !isMultiSelectEnabled, removeResource = vm::removeResource, updateResourceId = vm::updateResourceId)
+
+            when {
+                vm is StringResourceViewModel -> Unit
+                vm is PluralResourceViewModel -> {
+                    IconButton(
+                        resourcePath = if (isPluralExpanded) R.drawable.compress else R.drawable.expand,
+                        contentDescription = if (isPluralExpanded) "Collapse quantity options" else "Show all quantity options"
+                    ) {
+                        isPluralExpanded = !isPluralExpanded
+                    }
                 }
-            }
-            vm is ArrayResourceViewModel && metadata is ArrayMetadata -> {
-                var size by remember(metadata) { mutableStateOf(metadata.size) }
-                var sizeFieldHasFocus by remember { mutableStateOf(false) }
-                TextField(
-                    value = size.toString(),
-                    onValueChange = { size = it.filter(Char::isDigit).toIntOrNull()?.coerceAtLeast(1) ?: 1 },
-                    modifier = Modifier.padding(start = 8.dp).width(64.dp)
-                        .composed {
-                            val focusManager = LocalFocusManager.current
-                            onPressEnter(focusManager::clearFocus)
-                            onPressEsc {
-                                size = metadata.size
-                                focusManager.clearFocus()
+                vm is ArrayResourceViewModel && metadata is ArrayMetadata -> {
+                    var size by remember(metadata) { mutableStateOf(metadata.size) }
+                    var sizeFieldHasFocus by remember { mutableStateOf(false) }
+                    TextField(
+                        value = size.toString(),
+                        onValueChange = { size = it.filter(Char::isDigit).toIntOrNull()?.coerceAtLeast(1) ?: 1 },
+                        modifier = Modifier.padding(start = 8.dp).width(64.dp)
+                            .composed {
+                                val focusManager = LocalFocusManager.current
+                                onPressEnter(focusManager::clearFocus)
+                                onPressEsc {
+                                    size = metadata.size
+                                    focusManager.clearFocus()
+                                }
                             }
-                        }
-                        .onFocusChanged {
-                            if (!it.hasFocus && metadata.size != size) {
-                                vm.updateArraySize(resId, size)
-                            }
-                            sizeFieldHasFocus = it.hasFocus
-                        },
-                    label = { Text("Size") },
-                    singleLine = true,
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = if (sizeFieldHasFocus) MaterialTheme.colors.onSurface.copy(alpha = BackgroundOpacity) else Color.Unspecified,
-                        unfocusedIndicatorColor = Color.Transparent
+                            .onFocusChanged {
+                                if (!it.hasFocus && metadata.size != size) {
+                                    vm.updateArraySize(resId, size)
+                                }
+                                sizeFieldHasFocus = it.hasFocus
+                            },
+                        label = { Text("Size") },
+                        singleLine = true,
+                        colors = TextFieldDefaults.textFieldColors(
+                            backgroundColor = if (sizeFieldHasFocus) MaterialTheme.colors.onSurface.copy(alpha = BackgroundOpacity) else Color.Unspecified,
+                            unfocusedIndicatorColor = Color.Transparent
+                        )
                     )
-                )
+                }
             }
         }
 

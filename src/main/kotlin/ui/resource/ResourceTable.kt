@@ -1,7 +1,5 @@
 package ui.resource
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
@@ -41,7 +39,7 @@ fun <R : Resource, M : Metadata<M>> ResourceTable(
 
     LazyColumn(Modifier.fillMaxWidth(), state = state) {
         stickyHeader {
-            ResourceTableHeader(vm.type, displayedLocales)
+            ResourceTableHeader(displayedLocales)
         }
         items(keys, key = { it.value }) { resId ->
             ResourceRow(
@@ -87,22 +85,13 @@ fun <R : Resource, M : Metadata<M>> ResourceTable(
 }
 
 @Composable
-private fun ResourceTableHeader(type: ResourceType, displayedLocales: List<LocaleIsoCode>) {
-    val spacer by animateDpAsState(
-        targetValue = when (type) {
-            ResourceType.STRINGS -> 0.dp
-            ResourceType.PLURALS -> 40.dp
-            ResourceType.ARRAYS -> 64.dp
-        },
-        animationSpec = tween()
-    )
+private fun ResourceTableHeader(displayedLocales: List<LocaleIsoCode>) {
     Row(
         Modifier.fillMaxWidth().background(MaterialTheme.colors.surface).padding(start = 16.dp, top = 12.dp, end = 112.dp, bottom = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text("group", Modifier.weight(0.5f), fontWeight = FontWeight.SemiBold)
         Text("id", Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.width(spacer))
         displayedLocales.forEachIndexed { i, it ->
             Text(Locale[it].displayName(i == 0), Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
         }
