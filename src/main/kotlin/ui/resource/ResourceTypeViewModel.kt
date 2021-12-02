@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.*
 import locales.LocaleIsoCode
 import project.*
 
-sealed class ResourceTypeViewModel<R : Resource>(projectStore: ProjectStore, protected val propertyStore: ResourceStore<R>) {
+sealed class ResourceTypeViewModel<R : Resource>(projectStore: ProjectStore, val propertyStore: ResourceStore<R>) {
     val type: ResourceType = propertyStore.type
     protected val defaultLocale = projectStore.defaultLocale::value
 
