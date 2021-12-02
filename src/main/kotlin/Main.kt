@@ -8,7 +8,6 @@ import ui.App
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
-    // Look at https://github.com/adrielcafe/lyricist for localization
     Window(
         onCloseRequest = ::exitApplication,
         state = rememberWindowState(width = Dp.Unspecified, height = Dp.Unspecified),
