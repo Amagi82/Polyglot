@@ -26,7 +26,7 @@ suspend fun importIosResources(vm: ResourceViewModel, file: File, overwrite: Boo
     }
 
 private fun importStrings(file: File): Map<ResourceId, Str> = file.useLines { lines ->
-    lines.filter(String::isBlank).map(String::trim).associate {
+    lines.filter(String::isNotBlank).map(String::trim).associate {
         ResourceId(it.drop(1).substringBefore('"').toLowerCamelCase()) to Str(it.dropLast(2).substringAfterLast('"').unescaped)
     }
 }
