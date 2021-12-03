@@ -83,7 +83,7 @@ private fun <R : Resource> addAll(
                 }
 
                 xml.appendElement(data.type.androidRootElementTag) {
-                    setAttribute("name", resId.value.toSnakeCase())
+                    setAttribute("name", resId.value.toSnakeCase().let { if (it in restrictedKeywords) it + '_' else it })
                     add(res)
                 }
             }
@@ -97,3 +97,10 @@ val ResourceType.androidRootElementTag: String
         ResourceType.PLURALS -> "plurals"
         ResourceType.ARRAYS -> "string-array"
     }
+
+private val restrictedKeywords = arrayOf(
+    "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "continue", "default", "do", "double",
+    "else", "enum", "extends", "final", "finally", "float", "for", "if", "implements", "import", "instanceof", "int", "interface",
+    "long", "native", "new", "null", "package", "private", "protected", "public", "return", "short", "static", "strictfp",
+    "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "volatile", "while"
+)
