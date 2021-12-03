@@ -1,14 +1,14 @@
 package ui.resource.backdrop
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,12 +22,13 @@ import javax.swing.JFileChooser
 fun ExportSettings(vm: ResourceViewModel) {
     val exportUrls by vm.exportUrls.collectAsState()
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column {
         Text("Export Resources", style = MaterialTheme.typography.h6)
         Platform.values().forEach { platform ->
             DestinationFileSelectionButton(platform, exportUrls[platform] ?: platform.defaultOutputUrl) {
                 vm.exportUrls.value = exportUrls.plus(platform to it)
             }
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
@@ -47,13 +48,10 @@ private fun DestinationFileSelectionButton(platform: Platform, exportUrl: String
             isFileDialogOpen = false
         })
     }
-
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Button(onClick = { isFileDialogOpen = true }, colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.surface)) {
-            Text(platform.displayName)
-        }
-        Text(exportUrl)
+    Button(onClick = { isFileDialogOpen = true }, colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.surface)) {
+        Text(platform.displayName)
     }
+    Text(exportUrl)
 }
 
 @Composable
