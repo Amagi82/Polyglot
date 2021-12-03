@@ -23,6 +23,13 @@ fun GroupSettings(vm: ResourceViewModel) {
 
         Text("Groups", style = MaterialTheme.typography.h6)
 
+        val text = if (excludedGroups.isEmpty()) "Hide all" else "Show all"
+        Chip(
+            text = { Text(text) },
+            onClick = { vm.excludedGroups.value = if (excludedGroups.isEmpty()) groups else setOf() },
+            isClickEnabled = true,
+            trailingIcon = { Icon(painterResource(R.drawable.visibility), contentDescription = text) })
+
         groups.forEach { group ->
             val isExcluded = group in excludedGroups
             Chip(
