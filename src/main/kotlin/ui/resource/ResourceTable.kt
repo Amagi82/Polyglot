@@ -41,7 +41,7 @@ fun <R : Resource> ResourceTable(
     val selectedRows by vm.selectedRows.collectAsState()
     var firstClickIndex by remember(keys) { mutableStateOf<Int?>(null) }
 
-    LazyColumn(Modifier.fillMaxSize(), state = state) {
+    LazyColumn(Modifier.fillMaxSize(), state = state, contentPadding = PaddingValues(bottom = 80.dp)) {
         stickyHeader {
             ResourceTableHeader(displayedLocales)
         }
