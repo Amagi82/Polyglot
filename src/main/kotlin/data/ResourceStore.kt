@@ -62,6 +62,7 @@ abstract class ResourceStore<R : Resource> protected constructor(projectName: St
             }
         }
         localizedResourcesById.update { it.minus(oldId).plus(newId to it[oldId].orEmpty()) }
+        excludedResourcesByPlatform.update { it.mapValues { (_, keys) -> if (keys.contains(oldId)) keys.minus(oldId).plus(newId) else keys } }
 
         for ((k, v) in this) {
             if (k.substringBefore('.') != oldId.value) continue
