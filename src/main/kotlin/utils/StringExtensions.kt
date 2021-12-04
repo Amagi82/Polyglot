@@ -7,10 +7,7 @@ fun String.toLowerCamelCase(): String {
         when {
             sb.isEmpty() -> if (c != '_') sb.append(c.lowercaseChar())
             c == '_' -> hump = true
-            c.isDigit() -> {
-                hump = true
-                sb.append(c)
-            }
+            c.isDigit() -> sb.append(c)
             hump -> {
                 hump = c.isUpperCase()
                 sb.append(c.uppercaseChar())
