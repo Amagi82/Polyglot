@@ -240,7 +240,7 @@ private fun Writer.appendReferenceComment(exampleText: String) {
 private fun Writer.appendReferenceFormattingArgs(id: ResourceId, exampleText: String, type: ResourceType) {
     var i = exampleText.indexOf('%')
     if (i == -1) {
-        appendLine("\t\tstatic let ${id.value} = \"${id.value}\".localized()")
+        appendLine("\t\tstatic let ${if (id.value in restrictedKeywords) "`${id.value}`" else id.value} = \"${id.value}\".localized()")
         return
     }
 
@@ -280,3 +280,10 @@ private fun Writer.appendReferenceFormattingArgs(id: ResourceId, exampleText: St
     appendLine(')')
     appendLine("\t\t}")
 }
+
+private val restrictedKeywords = arrayOf(
+    "associatedtype", "class", "deinit", "enum", "extension", "fileprivate", "func", "import", "init", "inout", "internal", "let",
+    "open", "operator", "private", "protocol", "public", "static", "struct", "subscript", "typealias", "var", "break", "case",
+    "continue", "default", "defer", "do", "else", "fallthrough", "for", "guard", "if", "in", "repeat", "return", "switch", "where",
+    "while", "as", "Any", "catch", "false", "is", "nil", "rethrows", "super", "try", "Self", "throw", "throws", "true", "try"
+)
