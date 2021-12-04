@@ -244,7 +244,7 @@ private fun Writer.appendReferenceFormattingArgs(id: ResourceId, exampleText: St
         return
     }
 
-    append("\t\tstatic func $id(")
+    append("\t\tstatic func ${id.value}(")
     if (type == PLURALS) {
         append("quantity: Int")
         if (i != -1) append(", ")
@@ -266,7 +266,7 @@ private fun Writer.appendReferenceFormattingArgs(id: ResourceId, exampleText: St
         i = exampleText.indexOf('%', i + 1)
     }
     appendLine(") -> String {")
-    append("\t\t\t\"$id\".localized")
+    append("\t\t\t\"${id.value}\".localized")
 
     if (type == PLURALS) {
         append("Plural(quantity: quantity")
