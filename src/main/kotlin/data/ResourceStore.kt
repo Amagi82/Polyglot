@@ -89,6 +89,7 @@ abstract class ResourceStore<R : Resource> protected constructor(projectName: St
             }
         }
         localizedResourcesById.update { it.minus(resId) }
+        excludedResourcesByPlatform.update { it.mapValues { (_, keys) -> keys.minus(resId) } }
         for (k in keys) {
             if (k.substringBefore('.') != resId.value) continue
             remove(k)
