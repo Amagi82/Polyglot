@@ -71,7 +71,7 @@ private fun <R : Resource> addAll(
     for ((group, resIds) in data.resourceGroups) {
         val localesCommented = mutableMapOf<LocaleIsoCode, Boolean>()
 
-        for (resId in resIds) {
+        for (resId in resIds.sorted()) {
             if (resId in data.excludedResourcesByPlatform[ANDROID].orEmpty()) continue
             data.localizedResourcesById[resId]?.forEach { (locale, res) ->
                 val xml = xmlByLocale[locale]!!

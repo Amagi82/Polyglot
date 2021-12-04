@@ -217,7 +217,7 @@ private fun <R : Resource> Writer.appendReferences(
             appendLine("\t\t * ${group.name}")
             appendLine("\t\t */")
         }
-        for (resId in resIds) {
+        for (resId in resIds.sorted()) {
             if (data.excludedResourcesByPlatform[IOS]?.contains(resId) == true) continue
             val text = when (val res = data.localizedResourcesById[resId]!![defaultLocale]!!) {
                 is Str -> res.text.sanitized(formatters, isXml = false)
