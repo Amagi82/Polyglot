@@ -247,7 +247,7 @@ private fun Writer.appendReferenceFormattingArgs(id: ResourceId, exampleText: St
     append("\t\tstatic func ${id.value}(")
     if (type == PLURALS) {
         append("quantity: Int")
-        if (i != -1) append(", ")
+        append(", ")
     }
 
     var ct = 0

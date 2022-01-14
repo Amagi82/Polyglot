@@ -77,7 +77,7 @@ tasks {
             if (svgFiles.isNotEmpty()) {
                 writer.appendLine("\tobject drawable {")
                 svgFiles.forEach {
-                    writer.appendLine("\t\tval ${it.nameWithoutExtension.replace("_black_24dp", "").snakeToLowerCamelCase()} = \"${it.name}\"")
+                    writer.appendLine("\t\tconst val ${it.nameWithoutExtension.replace("_black_24dp", "").snakeToLowerCamelCase()} = \"${it.name}\"")
                 }
                 writer.appendLine("\t}")
             }

@@ -20,7 +20,7 @@ abstract class FilePropertyStore(private val file: File) : PropertyStore(file.ap
     }
 
     protected open fun save() {
-        store() { println("Error saving: $it") }
+        store { println("Error saving: $it") }
     }
 
     protected fun <T> mutableStateFlowOf(propName: String, getter: (String?) -> T, setter: (T) -> String = { "$it" }) =
