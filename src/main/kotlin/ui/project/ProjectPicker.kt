@@ -53,7 +53,7 @@ fun ProjectPicker(onProjectNameSelected: (String) -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun ProjectPickerCreateDialog(projects: List<File>, onProjectNameSelected: (String) -> Unit, onDismiss: () -> Unit) {
     var newProjectName by remember { mutableStateOf("") }

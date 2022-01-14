@@ -28,11 +28,7 @@ tasks.withType<KotlinCompile> {
         jvmTarget = "15"
         freeCompilerArgs = listOf(
             "-Xopt-in=kotlin.RequiresOptIn",
-            "-Xopt-in=kotlin.ExperimentalStdlibApi",
-            "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-Xopt-in=kotlinx.coroutines.FlowPreview",
             "-Xopt-in=kotlinx.coroutines.DelicateCoroutinesApi",
-            "-Xopt-in=androidx.compose.animation.ExperimentalAnimationApi",
             "-Xopt-in=androidx.compose.foundation.ExperimentalFoundationApi",
         )
     }

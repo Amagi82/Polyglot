@@ -3,12 +3,10 @@ package ui.core
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun IconButton(
     resourcePath: String,

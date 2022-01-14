@@ -6,7 +6,6 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -19,7 +18,6 @@ import project.StringArray
 import translation.CloudTranslateApi
 import ui.resource.ResourceViewModel
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun AutoTranslateDropDown(
     vm: ResourceViewModel,

@@ -9,7 +9,6 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -25,7 +24,6 @@ import ui.core.onPressEsc
 import ui.core.outlinedTextFieldColorsOnPrimary
 import ui.resource.ResourceViewModel
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun LocaleSettings(vm: ResourceViewModel, showSnackbar: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
