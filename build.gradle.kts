@@ -3,9 +3,9 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.5.31"
-    kotlin("plugin.serialization") version "1.5.31"
-    id("org.jetbrains.compose") version "1.0.0-rc5"
+    kotlin("jvm") version "1.6.10"
+    kotlin("plugin.serialization") version "1.6.10"
+    id("org.jetbrains.compose") version "1.0.1"
 }
 
 repositories {
@@ -16,11 +16,11 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
-    implementation("io.ktor:ktor-client-core:1.6.5")
-    implementation("io.ktor:ktor-client-cio:1.6.5")
-    implementation("io.ktor:ktor-client-serialization:1.6.5")
-    implementation("io.ktor:ktor-client-logging:1.6.5")
-    implementation("ch.qos.logback:logback-classic:1.2.7")
+    implementation("io.ktor:ktor-client-core:1.6.7")
+    implementation("io.ktor:ktor-client-cio:1.6.7")
+    implementation("io.ktor:ktor-client-serialization:1.6.7")
+    implementation("io.ktor:ktor-client-logging:1.6.7")
+    implementation("ch.qos.logback:logback-classic:1.2.10")
 }
 
 tasks.withType<KotlinCompile> {
